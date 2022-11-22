@@ -19,7 +19,7 @@ dm <- fread("diamonds.csv", sep=",", header = T)
 # Predictions
 
 ```{r}
-haha
+x <- ggplot()
 ```
 
 # Conclusions
