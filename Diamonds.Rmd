@@ -1,0 +1,16 @@
+---
+title: "Diamonds"
+author: "Francisco Arrieta, Emily Schmidt, Lucia Camenisch"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Data Exploration
+
+# Predictions
+
+#Conclusions
