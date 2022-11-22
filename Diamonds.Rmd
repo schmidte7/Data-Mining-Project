@@ -17,6 +17,9 @@ dm <- fread("diamonds.csv", sep=",", header = T)
 ```
 
 # Predictions
+```{r}
+haha
+```
 
 # Conclusions
 
