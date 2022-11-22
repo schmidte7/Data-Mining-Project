@@ -27,3 +27,4 @@ dm <- fread("diamonds.csv", sep=",", header = T)
 # Hello21
 x=1
 x=5
+'hello'
