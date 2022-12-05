@@ -9,11 +9,31 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r Libraries}
+library(data.table)     #for reading data.tables
+library(kableExtra)   #for more elaborate tables
+library(ggplot2)      #for making graphs
+
+```
+
+
 # Data Exploration
 
 ```{r Import Data}
-library(data.table)
+
+
+
+
 dm <- fread("diamonds.csv", sep=",", header = T)
+
+dm$V1 <- NULL
+dim(dm)
+summary(dm)
+str(dm)
+sapply(dm, function(x) length(unique(x)))
+pairs(dm[, c(1, 5:7)])
+
+
 ```
 
 # Predictions
