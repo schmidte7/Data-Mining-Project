@@ -15,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(data.table)
 dm <- fread("diamonds.csv", sep=",", header = T)
 ```
-
+knk
 # Predictions
 
 # Conclusions
