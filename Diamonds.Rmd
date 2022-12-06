@@ -20,7 +20,7 @@ library(DataExplorer)   #for graphing missing value percentages
 ```
 
 
-# Data Exploration
+# Data Exploration 
 
 ```{r Import Data}
 diamonds <- fread("diamonds.csv", sep=",", header = T) # Load your data, diamonds.csv
