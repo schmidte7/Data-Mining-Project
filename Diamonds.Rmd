@@ -17,6 +17,7 @@ library(GGally)         #for making graphs
 library(dplyr)          #for data manipulation
 library(tidyr)          #for changing the shape and hierarchy of a data set
 library(DataExplorer)   #for graphing missing value percentages
+library(car)            #for statistic functions
 ```
 
 
@@ -165,8 +166,19 @@ ggheatmap <- ggplot(melted_cormat, aes(Var2, Var1, fill = value)) +
 print(ggheatmap)
 ```
 
-```{r}
+```{r VIF}
+diamonds_lm <- lm(price ~ carat + length + width + depth + depth_ratio + table, data = diamonds)
+diamonds_lm2 <- lm(price ~ carat + depth_ratio + table, data = diamonds)
+diamonds_lm3 <- lm(price ~ carat + depth + depth_ratio + table, data = diamonds)
 
+diamonds_vif <- vif(diamonds_lm)
+
+diamonds_vif2 <- vif(diamonds_lm2)
+
+diamonds_vif3 <- vif(diamonds_lm3)
+
+
+summary(diamonds_vif)
 ```
 
 
