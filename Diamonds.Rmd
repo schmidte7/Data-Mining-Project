@@ -6,35 +6,87 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, fig.align = "center")
 ```
 
 ```{r Libraries}
 library(data.table)     #for reading data.tables
-library(kableExtra)   #for more elaborate tables
-library(ggplot2)      #for making graphs
-
+library(kableExtra)     #for more elaborate tables
+library(ggplot2)        #for making graphs
+library(GGally)         #for making graphs
+library(dplyr)
+library(tidyr)
 ```
 
 
 # Data Exploration
 
 ```{r Import Data}
+diamonds <- fread("diamonds.csv", sep=",", header = T)
+
+diamonds$V1 <- NULL
+#rename columns to make more clear
+colnames(diamonds)[5] <- "depth_ratio"
+
+colnames(diamonds)[8] <- "length"
+
+colnames(diamonds)[9] <- "width"
+
+colnames(diamonds)[10] <- "depth"
+
+# add variable to confirm the depth ratio  
+#explain the 2 times x in the depth formula
+
+dim(diamonds)
+summary(diamonds)
+str(diamonds)
+sapply(diamonds, function(x) length(unique(x)))
+
+pairs(diamonds[, c(1, 5:10)])
+```
 
 
+```{r Variables check}
+
+unique(diamonds$cut)
 
 
-dm <- fread("diamonds.csv", sep=",", header = T)
+# diamonds$substraction <- diamonds$x - diamonds$y
+# hist(diamonds$substraction)
+#delete all values in x, y, z that are too disproportionate
+#delete all values in x, y, z that are 0
 
-dm$V1 <- NULL
-dim(dm)
-summary(dm)
-str(dm)
-sapply(dm, function(x) length(unique(x)))
-pairs(dm[, c(1, 5:7)])
+
 
 
 ```
+
+```{r,fig.width = 6, fig.height = 4}
+
+scaterrplot <- ggpairs(diamonds, title = "Scatterplot Matrix",
+                      columns = c(1, 5:10),
+                      proportions = "auto",
+                      columnLabels = c("Carat","Depth","Table", "Width", "Height", "",
+                      "License","Consumption"),
+                      upper = list(continuous = wrap('cor',size = 3)),) 
+
+scaterrplot
+```
+
+```{r}
+diamonds %>% gather() %>% head() # Reshaping the data which means it collects a set of column names and places them into a single “key” column
+
+histograms <- ggplot(gather(data = diamonds[, c(1, 5:10)]),aes(value)) +
+  geom_histogram(aes(y=..density..),bins = 10, color = "white", fill = "blue") + # Creates bin sizing and sets the lines as white
+  geom_density(alpha= .2, fill="#56B4E9") +
+  facet_wrap(~key,scales = "free") + # Converting the graphs into panels
+  ggtitle("Quantitative Variable Analysis") + # Title name
+  ylab("Count") + xlab("Value") + # Label names
+  theme_classic() # A classic theme, with x and y axis lines and no grid lines
+
+histograms
+```
+
 
 # Predictions
 
