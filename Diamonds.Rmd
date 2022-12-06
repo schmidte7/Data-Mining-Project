@@ -1,12 +1,52 @@
 ---
 title: "Diamonds"
-author: "Francisco Arrieta, Emily Schmidt, and Lucia Camenisch"
+author: "Francisco Arrieta, Emily Schmidt and Lucia Camenisch"
 date: "`r Sys.Date()`"
-output: html_document
+output:
+  html_document:
+    toc: true             # creating a table of contents (toc)
+    toc_float: 
+      collapsed: false    # toc does not collapse and is shown as a sidebar (toc_float)
+    number_sections: true # document sections are numbered
+    theme: cosmo
 ---
+
+```{=html}
+<style>
+body{
+  color: #2F91AE;
+  background-color: #F2F2F2;
+}
+pre{
+  background-color: #96EAE3;
+}
+pre:not([class]){
+  background-color: #15DDD8;
+}
+.toc-content{
+  padding-left: 10px;
+  padding-right: 10px;
+}
+.col-sm-8 {
+  width: 75%;
+}
+code {
+  color: #333333;
+  background-color: #96EAE3;
+}
+</style>
+```
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(message = FALSE, warning = FALSE, fig.align = "center")
+```
+
+```{r Colors, include=FALSE}
+#Aqua =         "#15DDD8"
+#Dark Blue =    "#2F91AE"
+#Yellow =       "#F9D53E"
+#Light Gray =   "#F2F2F2"
+#Light Aqua =   "#96EAE3"
 ```
 
 ```{r Libraries}
@@ -18,14 +58,6 @@ library(dplyr)          #for data manipulation
 library(tidyr)          #for changing the shape and hierarchy of a data set
 library(DataExplorer)   #for graphing missing value percentages
 library(car)            #for statistic functions
-```
-
-```{r Colors}
-#Aqua =         "#15DDD8"
-#Dark Blue =    "#2F91AE"
-#Yellow =       "#F9D53E"
-#Light Gray =   "#F2F2F2"
-#Light Aqua =   "#96EAE3"
 ```
 
 # Data Exploration 
@@ -102,7 +134,7 @@ diamonds[, diff := NULL]
 ```
 
 
-```{r Variables check}
+```{r ordering cols}
 # Reorder data table to group like variable types 
 diamonds <- diamonds[, c(7, 2:4, 1, 8:10, 5:6)]
 ```
