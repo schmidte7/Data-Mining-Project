@@ -27,11 +27,8 @@ diamonds <- fread("diamonds.csv", sep=",", header = T)
 diamonds$V1 <- NULL
 #rename columns to make more clear
 colnames(diamonds)[5] <- "depth_ratio"
-
 colnames(diamonds)[8] <- "length"
-
 colnames(diamonds)[9] <- "width"
-
 colnames(diamonds)[10] <- "depth"
 
 # add variable to confirm the depth ratio  
@@ -42,35 +39,65 @@ summary(diamonds)
 str(diamonds)
 sapply(diamonds, function(x) length(unique(x)))
 
-pairs(diamonds[, c(1, 5:10)])
+# pairs(diamonds[, c(1, 5:10)])
 ```
 
 
 ```{r Variables check}
+# carat no problems
 
 unique(diamonds$cut)
+diamonds$cut <- as.factor(diamonds$cut)
+diamonds$cut <- ordered(diamonds$cut, levels = c("Fair", "Good", "Very Good", "Premium", "Ideal"))
+
+unique(diamonds$color)
+diamonds$color <- as.factor(diamonds$color)
+diamonds$color <- ordered(diamonds$color, levels = c("J", "I", "H", "G", "F", "E", "D"))
+
+unique(diamonds$clarity)
+diamonds$clarity <- as.factor(diamonds$clarity)
+diamonds$clarity <- ordered(diamonds$clarity, levels = c("I1", "SI2", "SI1", "VS2", "VS1", "VVS2", "VVS1", "IF"))
+
+# table is ok
+
+# price is ok
+
+# for dimensions take out 0
+nrow(diamonds[depth %in% 0,]) # remove 20 rows which have 0 in depth
+# zeros in depth include zeros in length and width
+diamonds <- diamonds[depth > 0, ]
+
+diamonds[, subtraction := abs(length - width)]
+nrow(diamonds[subtraction>10,]) # remove 2 rows
+diamonds <- diamonds[subtraction <= 10, ]
+
+diamonds[, depth_check := round(100*(2*depth)/((length + width)), 1)]
+diamonds[, diff := abs(depth_check-depth_ratio)]
+# treshold at 0.3? anastasia
+nrow(diamonds[diff > 0.3,]) # we remove 268 rows
+diamonds <- diamonds[diff <= 0.3,]
+# hist(diamonds[diff >= 0.4 & diff < 1, diff], breaks = 50)
+
+diamonds[, subtraction := NULL]
+diamonds[, depth_check := NULL]
+diamonds[, diff := NULL]
+
+# total rows removed are 275
+```
 
 
-# diamonds$substraction <- diamonds$x - diamonds$y
-# hist(diamonds$substraction)
-#delete all values in x, y, z that are too disproportionate
-#delete all values in x, y, z that are 0
-
-
-
-
+```{r Variables check}
+diamonds <- diamonds[, c(7, 2:4, 1, 8:10, 5:6)]
 ```
 
 ```{r,fig.width = 6, fig.height = 4}
 
-scaterrplot <- ggpairs(diamonds, title = "Scatterplot Matrix",
-                      columns = c(1, 5:10),
-                      proportions = "auto",
-                      columnLabels = c("Carat","Depth","Table", "Width", "Height", "",
-                      "License","Consumption"),
-                      upper = list(continuous = wrap('cor',size = 3)),) 
+# ggpairs(diamonds[, c(1, 5:10)], title = "Scatterplot Matrix",
+#         proportions = "auto",
+#         columnLabels = c("Price", "Carat", "Length", "Width", "Depth","Depth Ratio","Table"),
+#         upper = list(continuous = wrap('cor',size = 3)),) + theme_light()
 
-scaterrplot
+
 ```
 
 ```{r}
