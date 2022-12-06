@@ -20,6 +20,13 @@ library(DataExplorer)   #for graphing missing value percentages
 library(car)            #for statistic functions
 ```
 
+```{r Colors}
+#Aqua =         "#15DDD8"
+#Dark Blue =    "#2F91AE"
+#Yellow =       "#F9D53E"
+#Light Gray =   "#F2F2F2"
+#Light Aqua =   "#96EAE3"
+```
 
 # Data Exploration 
 
