@@ -231,18 +231,18 @@ Test <- diamonds[test.index, ]
 
 
 ```{r VIF}
-diamonds_lm <- lm(price ~ carat + length + width + depth + depth_ratio + table, data = diamonds)
-diamonds_lm2 <- lm(price ~ carat + depth_ratio + table, data = diamonds)
-diamonds_lm3 <- lm(price ~ carat + depth + depth_ratio + table, data = diamonds)
+#diamonds_lm <- lm(price ~ carat + length + width + depth + depth_ratio + table, data = diamonds)
+#diamonds_lm2 <- lm(price ~ carat + depth_ratio + table, data = diamonds)
+#diamonds_lm3 <- lm(price ~ carat + depth + depth_ratio + table, data = diamonds)
 
-diamonds_vif <- vif(diamonds_lm)
-VIF(diamonds[, c(5:8)])
-diamonds_vif2 <- vif(diamonds_lm2)
+#diamonds_vif <- vif(diamonds_lm)
+#VIF(diamonds[, c(5:8)])
+#diamonds_vif2 <- vif(diamonds_lm2)
 
-diamonds_vif3 <- vif(diamonds_lm3)
+#diamonds_vif3 <- vif(diamonds_lm3)
 
 
-summary(diamonds_vif)
+#summary(diamonds_vif)
 ```
 
 
