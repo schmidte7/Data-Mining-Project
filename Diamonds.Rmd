@@ -145,7 +145,7 @@ diamonds[, diff := NULL]
 diamonds <- diamonds[, c(7, 2:4, 1, 8:10, 5:6)]
 ```
 
-```{r,fig.width = 6, fig.height = 4}
+```{r ggpairs, fig.width = 6, fig.height = 4}
 # Used ggpairs to create a scatterplot matrix
 # ggpairs(diamonds[, c(1, 5:10)], title = "Scatterplot Matrix",
 #          proportions = "auto",
