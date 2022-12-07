@@ -58,6 +58,7 @@ library(dplyr)          #for data manipulation
 library(tidyr)          #for changing the shape and hierarchy of a data set
 library(DataExplorer)   #for graphing missing value percentages
 library(car)            #for statistic functions
+library(ellipse)        #for mapping correlation
 
 source("VIF.R")
 ```
@@ -74,17 +75,22 @@ colnames(diamonds)[5] <- "depth_ratio" # depth to depth_ratio
 colnames(diamonds)[8] <- "length" # x to length
 colnames(diamonds)[9] <- "width"  # y to width
 colnames(diamonds)[10] <- "depth" # z to depth
+```
 
-# add variable to confirm the depth ratio  
-#explain the 2 times x in the depth formula
+## Dimension Summary 
 
+```{r Data Exploration}
 dim(diamonds) # Dimensions of data
 summary(diamonds) # Produce result summaries of all variables
 str(diamonds) # Type of variables
 
 # Number of unique values in each variable
 sapply(diamonds, function(x) length(unique(x)))
+```
 
+## Missing Values
+
+```{r Missing Values}
 # Missing values analysis
 plot_missing(diamonds) # Plots the percentages of missing values
 
@@ -94,8 +100,6 @@ plot_missing(diamonds) # Plots the percentages of missing values
 
 ```{r Variables check}
 # carat no problems
-
-
 unique(diamonds$cut) # Review unique values for cut
 diamonds$cut <- as.factor(diamonds$cut) # Factor the cut to five levels 
 diamonds$cut <- ordered(diamonds$cut, levels = c("Fair", "Good", "Very Good", "Premium", "Ideal")) # Ordered from worst to best
@@ -149,7 +153,9 @@ diamonds <- diamonds[, c(7, 2:4, 1, 8:10, 5:6)]
 #          upper = list(continuous = wrap('cor',size = 3)),) + theme_light()
 ```
 
-```{r}
+## Variable Visualisation
+
+```{r Histograms}
 diamonds %>% gather() %>% head() # Reshaping the data which means it collects a set of column names and places them into a single “key” column
 
 histograms <- ggplot(gather(data = diamonds[, c(1, 5:10)]),aes(value)) +
@@ -163,7 +169,7 @@ histograms <- ggplot(gather(data = diamonds[, c(1, 5:10)]),aes(value)) +
 histograms
 ```
 
-```{r}
+```{r Correlation}
 # Create heatmap to show variable correlation
 cormat <- round(cor(diamonds[, c(1, 5:10)]),2) # Round the correlation coefficient to two decimal places
 
@@ -207,8 +213,7 @@ ggheatmap <- ggplot(melted_cormat, aes(Var2, Var1, fill = value)) +
 print(ggheatmap)
 ```
 
-```{r}
-library(ellipse)
+```{r Correlation Plot}
 plotcorr(cor(diamonds[, -c(2:4)]))
 ```
 
@@ -228,7 +233,7 @@ Valid <- diamonds[valid.index, ]
 Test <- diamonds[test.index, ]
 ```
 
-
+# Dimension Reduction Analysis
 
 ```{r VIF}
 #diamonds_lm <- lm(price ~ carat + length + width + depth + depth_ratio + table, data = diamonds)
@@ -246,12 +251,40 @@ Test <- diamonds[test.index, ]
 ```
 
 
-# Predictions
+# Variable Prediction and Model Performance Evaluation
+
+## Linear Regression
 
 ```{r}
 
 ```
 
+## $k$-NN
+
+```{r}
+
+```
+
+## Regression Tree
+
+```{r}
+
+```
+
+
+## NeuralNetworks
+
+```{r}
+
+```
+
+## Ensembles
+
+```{r}
+
+```
+
+# Model Performance Summary
+
 # Conclusions
 
-# Final Title
