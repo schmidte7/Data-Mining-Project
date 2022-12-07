@@ -221,7 +221,7 @@ train.index <- sample(c(1:nrow(diamonds)), 0.5*nrow(diamonds))
 # generating validation set index taken from the complementary of training set
 valid.index <- sample(setdiff(c(1:nrow(diamonds)), train.index), 0.3*nrow(diamonds))
 # defining test set index as complementary of (train.index + valid.index)
-test.index <- setdiff(row.names(diamonds), union(train.index, valid.index))
+test.index <- as.numeric(setdiff(row.names(diamonds), union(train.index, valid.index)))
 # creating data tables Train, Valid and Test using the indexes
 Train <- diamonds[train.index, ]
 Valid <- diamonds[valid.index, ]
