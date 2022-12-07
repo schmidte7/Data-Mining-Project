@@ -156,65 +156,61 @@ diamonds <- diamonds[, c(7, 2:4, 1, 8:10, 5:6)]
 ## Variable Visualisation
 
 ```{r Histograms}
-diamonds %>% gather() %>% head() # Reshaping the data which means it collects a set of column names and places them into a single “key” column
-
-histograms <- ggplot(gather(data = diamonds[, c(1, 5:10)]),aes(value)) +
-  geom_histogram(aes(y=..density..),bins = 10, color = "white", fill = "blue") + # Creates bin sizing and sets the lines as white
-  geom_density(alpha= .2, fill="#56B4E9") +
-  facet_wrap(~key,scales = "free") + # Converting the graphs into panels
+ggplot(gather(data = diamonds[, c(1, 5:10)]), aes(value)) +
+  geom_histogram(aes(y = after_stat(density)),
+                 bins = 10,
+                 color = "white",
+                 fill = "#F9D53E") + # Creates bin sizing and sets the lines as white
+  geom_density(alpha = .2, fill = "#F9D53E") +
+  facet_wrap(~ key, scales = "free") + # Converting the graphs into panels
   ggtitle("Quantitative Variable Analysis") + # Title name
   ylab("Count") + xlab("Value") + # Label names
   theme_classic() # A classic theme, with x and y axis lines and no grid lines
-
-histograms
 ```
 
 ```{r Correlation}
 # Create heatmap to show variable correlation
-cormat <- round(cor(diamonds[, c(1, 5:10)]),2) # Round the correlation coefficient to two decimal places
-
-melted_cormat <- melt(cormat) # One way to reshape and elongate the data frame
-
-# Get upper triangle of the correlation matrix
-  get_upper_tri <- function(cormat){ 
-    cormat[lower.tri(cormat)]<- NA
-    return(cormat)
-  }
-
-# Rename the correlation coefficient value
-upper_tri <- get_upper_tri(cormat)
-upper_tri
+# Round the correlation coefficient to two decimal places
+cormat <- round(cor(diamonds[, c(1, 5:10)]), 2)
 
 # Use correlation between variables as distance
 reorder_cormat <- function(cormat){ 
 dd <- as.dist((1-cormat)/2)
 hc <- hclust(dd)
 cormat <-cormat[hc$order, hc$order]
+return(cormat)
 }
 
 # Reorder the correlation matrix
 cormat <- reorder_cormat(cormat)
-upper_tri <- get_upper_tri(cormat)
+
+# Keeping only upper triangular matrix
+# upper_tri returns TRUE/FALSE for each coordinate (TRUE -> part of upper triangle)
+# multiplying will thus keep the upper triangle values and set the others to 0
+cormat <- cormat*upper.tri(cormat, diag = TRUE)
+# Values of the lower triangle (0) are replaced by NA
+cormat[cormat == 0] <- NA
 
 # Melt the correlation matrix
-melted_cormat <- melt(upper_tri, na.rm = TRUE)
+cormat <- reshape2::melt(cormat, na.rm = TRUE)
 
 # Create a ggheatmap with multiple characteristics 
-ggheatmap <- ggplot(melted_cormat, aes(Var2, Var1, fill = value)) +
+ggplot(cormat, aes(Var2, Var1, fill = value)) +
   geom_tile(color = "white") +
-  scale_fill_gradient2(low = "purple", high = "blue", mid = "white", midpoint = 0, limit = c(-1,1), space = "Lab", name="Pearson\nCorrelation") +
+  scale_fill_gradient2(low = "#15DDD8", high = "#F9D53E", mid = "white",
+                       midpoint = 0, limit = c(-1,1), space = "Lab", name="Pearson\nCorrelation") +
   ggtitle("Correlation Heatmap") + # Title name
   theme_minimal() + # Minimal theme, keeps in the lines
   theme(axis.text.x = element_text(angle = 45, vjust = 1, size = 12, hjust = 1)) +
   coord_fixed() +
   geom_text(aes(Var2, Var1, label = value), color = "black", size = 2)
 
-# Print the heat map
-print(ggheatmap)
+rm(cormat, reorder_cormat)
 ```
 
 ```{r Correlation Plot}
-plotcorr(cor(diamonds[, -c(2:4)]))
+plotcorr(cor(diamonds[, -c(2:4)]), col = "#F9D53E",
+         main = "Pearson correlation ellipses for numerical variables")
 ```
 
 ```{r train-valid-test}
