@@ -58,6 +58,8 @@ library(dplyr)          #for data manipulation
 library(tidyr)          #for changing the shape and hierarchy of a data set
 library(DataExplorer)   #for graphing missing value percentages
 library(car)            #for statistic functions
+
+source("VIF.R")
 ```
 
 # Data Exploration 
@@ -141,10 +143,10 @@ diamonds <- diamonds[, c(7, 2:4, 1, 8:10, 5:6)]
 
 ```{r,fig.width = 6, fig.height = 4}
 # Used ggpairs to create a scatterplot matrix
-ggpairs(diamonds[, c(1, 5:10)], title = "Scatterplot Matrix",
-         proportions = "auto",
-         columnLabels = c("Price", "Carat", "Length", "Width", "Depth","Depth Ratio","Table"),
-         upper = list(continuous = wrap('cor',size = 3)),) + theme_light()
+# ggpairs(diamonds[, c(1, 5:10)], title = "Scatterplot Matrix",
+#          proportions = "auto",
+#          columnLabels = c("Price", "Carat", "Length", "Width", "Depth","Depth Ratio","Table"),
+#          upper = list(continuous = wrap('cor',size = 3)),) + theme_light()
 ```
 
 ```{r}
@@ -205,13 +207,36 @@ ggheatmap <- ggplot(melted_cormat, aes(Var2, Var1, fill = value)) +
 print(ggheatmap)
 ```
 
+```{r}
+library(ellipse)
+plotcorr(cor(diamonds[, -c(2:4)]))
+```
+
+```{r train-valid-test}
+# set seed for reproducing the partition
+set.seed(111)
+
+# generating training set index
+train.index <- sample(c(1:nrow(diamonds)), 0.5*nrow(diamonds))
+# generating validation set index taken from the complementary of training set
+valid.index <- sample(setdiff(c(1:nrow(diamonds)), train.index), 0.3*nrow(diamonds))
+# defining test set index as complementary of (train.index + valid.index)
+test.index <- setdiff(row.names(diamonds), union(train.index, valid.index))
+# creating data tables Train, Valid and Test using the indexes
+Train <- diamonds[train.index, ]
+Valid <- diamonds[valid.index, ]
+Test <- diamonds[test.index, ]
+```
+
+
+
 ```{r VIF}
 diamonds_lm <- lm(price ~ carat + length + width + depth + depth_ratio + table, data = diamonds)
 diamonds_lm2 <- lm(price ~ carat + depth_ratio + table, data = diamonds)
 diamonds_lm3 <- lm(price ~ carat + depth + depth_ratio + table, data = diamonds)
 
 diamonds_vif <- vif(diamonds_lm)
-
+VIF(diamonds[, c(5:8)])
 diamonds_vif2 <- vif(diamonds_lm2)
 
 diamonds_vif3 <- vif(diamonds_lm3)
