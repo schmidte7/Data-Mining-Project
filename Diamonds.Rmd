@@ -145,12 +145,12 @@ diamonds[, diff := NULL]
 diamonds <- diamonds[, c(7, 2:4, 1, 8:10, 5:6)]
 ```
 
-```{r,fig.width = 6, fig.height = 4}
-# Used ggpairs to create a scatterplot matrix
-# ggpairs(diamonds[, c(1, 5:10)], title = "Scatterplot Matrix",
-#          proportions = "auto",
-#          columnLabels = c("Price", "Carat", "Length", "Width", "Depth","Depth Ratio","Table"),
-#          upper = list(continuous = wrap('cor',size = 3)),) + theme_light()
+```{r,fig.width = 6, fig.height = 4, echo = FALSE, eval = FALSE}
+#Used ggpairs to create a scatterplot matrix
+ggpairs(diamonds[, c(1, 5:10)], title = "Scatterplot Matrix",
+         proportions = "auto",
+         columnLabels = c("Price", "Carat", "Length", "Width", "Depth","Depth Ratio","Table"),
+         upper = list(continuous = wrap('cor',size = 3)),) + theme_light()
 ```
 
 ## Variable Visualisation
@@ -323,7 +323,7 @@ system.time(
 diaNeuralNet <- neuralnet(price ~ ., 
                           data = train_diamonds_norm,
                           linear.output = TRUE, 
-                          hidden = 1)
+                          hidden = 2)
 )
 
 stopCluster(cl)
