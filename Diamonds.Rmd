@@ -60,7 +60,7 @@ library(DataExplorer)   #for graphing missing value percentages
 library(car)            #for statistic functions
 library(ellipse)        #for mapping correlation
 
-source("VIF.R")
+#source("VIF.R")
 ```
 
 # Data Exploration 
@@ -274,9 +274,40 @@ Test <- diamonds[test.index, ]
 
 ## NeuralNetworks
 
-```{r}
+```{r Set Libraries}
+library(neuralnet)      #for constructing neural networks
+library(Metrics)        #for calculating RMSE
+library(caret)          #for dummy variables
+library(fastDummies)
+```
+
+
+```{r Dummy ariables}
+#create dummy columns 
+diamonds_dummies <- dummy_cols(diamonds, select_columns = c("cut", "color", "clarity"))
+diamonds_dummies <- diamonds_dummies[,-c(2:4)]
 
 ```
+
+```{r Partitioning}
+train_diamonds <- diamonds_dummies[train.index,]
+valid_diamonds <- diamonds_dummies[valid.index,]
+```
+
+
+```{r Normalize}
+#create data frames to normalize
+train_diamonds_norm <- train_diamonds
+valid_diamonds_norm <- valid_diamonds
+
+# use preProcess() to normalize non-categorical variables
+norm_values <- preProcess(train_diamonds, method= c("range"))
+
+train_diamonds_norm <- predict(norm_values, train_diamonds)
+valid_diamonds_norm <- predict(norm_values, valid_diamonds)
+
+```
+
 
 ## Ensembles
 
