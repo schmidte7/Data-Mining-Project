@@ -47,6 +47,11 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE, fig.align = "center")
 #Yellow =       "#F9D53E"
 #Light Gray =   "#F2F2F2"
 #Light Aqua =   "#96EAE3"
+
+#library("colorspace")
+#pal <- choose_palette()
+#display.brewer.all()
+
 ```
 
 ```{r Libraries}
@@ -66,6 +71,10 @@ library(rattle) # Graphical Data Interface
 library(RColorBrewer) # Contains a ready-to-use color palettes for creating beautiful graphics
 library(Metrics) # RMSE()
 library(forecast)       # accuracy
+library(caret)
+library(randomForest)
+library(adabag)
+
 #source("VIF.R")
 ```
 
@@ -157,17 +166,26 @@ diamonds <- diamonds[, c(7, 2:4, 1, 8:10, 5:6)]
 ```
 
 ```{r}
+ggplot(aes(x = carat, y = price), data = diamonds) + 
+  geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
+  scale_color_brewer(type = 'div',
+                     guide = guide_legend(title = 'Clarity', reverse = T,
+                                          override.aes = list(alpha = 1, size = 2))) +                         
+  ggtitle('Price by Carat and Clarity')
+```
+
+
+
+```{r}
 diamonds %>% gather() %>% head() # Reshaping the data which means it collects a set of column names and places them into a single “key” column
 
-histograms <- ggplot(gather(data = diamonds[, c(1, 5:10)]),aes(value)) +
+ggplot(gather(data = diamonds[, c(1, 5:10)]),aes(value)) +
   geom_histogram(aes(y=..density..),bins = 10, color = "white", fill = "blue") + # Creates bin sizing and sets the lines as white
   geom_density(alpha= .2, fill="#56B4E9") +
   facet_wrap(~key,scales = "free") + # Converting the graphs into panels
   ggtitle("Quantitative Variable Analysis") + # Title name
   ylab("Count") + xlab("Value") + # Label names
   theme_classic() # A classic theme, with x and y axis lines and no grid lines
-
-histograms
 ```
 
 ```{r}
@@ -242,40 +260,155 @@ Train <- diamonds_tree[train.index, ]
 Valid <- diamonds_tree[valid.index, ]
 ```
 
-```{r Regression Tree, fig.width = 10, fig.height = 4}
+```{r Correlation - Price and Continuous Variables}
+price_correlation <- with(diamonds,
+     data.frame(cor_length_price = cor(length, price),
+                cor_width_price = cor(width, price),
+                cor_depth_price = cor(depth, price),
+                cor_depth_ratio_price = cor(depth_ratio, price),
+                cor_table_price2 = cor(table, price),
+                cor_carat_price3 = cor(carat, price)
+     )
+)
+
+kable(price_correlation) %>% kable_classic() 
+```
+
+
+```{r Regression (All) Tree, fig.width = 10, fig.height = 4}
 RegressTree <- rpart(price ~ ., 
               data = Train, 
               method = "anova") 
 
 # Generates a cost complexity parameter table that provides the complexity parameter value
-printcp(RegressTree)
+summary(RegressTree)
 
 # Count number of leaves 
 length(RegressTree$frame$var[RegressTree$frame$var == "<leaf>"]) # 
 
 # Plots a regression tree
-fancyRpartPlot(RegressTree, caption = NULL, main = "Regression Tree", palettes = "GnBu", digits = -3)
-```
-
-```{r}
-RegressTree$cptable
+fancyRpartPlot(RegressTree, caption = NULL, main = "Regression Tree", palettes = "YlGnBu", digits = -3)
 ```
 
 ```{r}
 # kable and kable_styling as before
 # we multiply by 100, divide by the sum and round the percentages to 2 decimals.
-kable_styling(kable(round(100*RegressTree$variable.importance / sum(RegressTree$variable.importance), 2),
-                    col.names = "Importance %"), full_width = FALSE)
+kable_styling(kable(round(100*RegressTree$variable.importance / sum(RegressTree$variable.importance), 2), col.names = "Importance %"), full_width = FALSE)
+```
+
+```{r RegressTree RSME}
+RegressTree_pred = predict(RegressTree, newdata= Train)
+RMSE_RT = sqrt(mean((Train$price-RegressTree_pred)^2))
+RMSE_RT
 ```
 
 ```{r}
-# Training data accuracy
+RegressTree2 <- rpart(price ~ length+width+depth+carat+cut+color+clarity, 
+              data = Train, 
+              method = "anova") 
+
+# Generates a cost complexity parameter table that provides the complexity parameter value
+summary(RegressTree2)
+
+# Count number of leaves 
+length(RegressTree$frame$var[RegressTree2$frame$var == "<leaf>"]) # 
+
+# Plots a regression tree
+fancyRpartPlot(RegressTree2, caption = NULL, main = "Exclusion Regression Tree", palettes = "YlGnBu", digits = -3)
+```
+
+```{r}
+# kable and kable_styling as before
+# we multiply by 100, divide by the sum and round the percentages to 2 decimals.
+kable_styling(kable(round(100*RegressTree2$variable.importance / sum(RegressTree2$variable.importance), 2), col.names = "Importance %"), full_width = FALSE)
+```
+
+```{r RegressTree2 RSME}
+p <- predict(RegressTree2, Train)
+RMSE <- sqrt(mean((Train$price-p)^2))
+RMSE
+
+result = rmse(Train$price, p)
+result
+result2 = mse(Train$price, p)
+result2
+
+R_sq <- (cor(Train$price,p))^2
+R_pct <- R_sq*100
+R_pct
+
+RegressTree2_pred = predict(RegressTree2, newdata= Train)
+RMSE_RT2 = sqrt(mean((Train$price-RegressTree2_pred)^2))
+RMSE_RT2
+
+# Calculate MSE
+MSE_RT2 <- mean((Train$price-RegressTree2_pred)^2)
+MSE_RT2
+```
+
+```{r}
 accuracy(predict(RegressTree, Train), Train$price)
 
+accuracy(predict(RegressTree, Valid), Valid$price)
+```
+
+
+
+```{r}
+pred_Diamond_test <- predict(RegressTree2, newdata = Valid)
+head(pred_Diamond_test,14)
+```
+
+```{r}
+#Get the lowest CP value from CP table
+min.xerror <- RegressTree2$cptable[which.min(RegressTree2$cptable[,"xerror"]),"CP"]
+
+min.xerror
+```
+
+```{r}
+plotcp(RegressTree2)
+```
+
+
+```{r}
+RegressTree_pruned <- prune(RegressTree2, cp = min.xerror) 
+
+# Draw the prune tree
+fancyRpartPlot(RegressTree_pruned, caption = NULL, main = "'Pruned' Regression Tree", palettes = "YlGnBu", digits = -3)
+```
+
+```{r}
+pred_RegressTree_pruned <- predict(RegressTree_pruned, newdata = Train)
+
+fitcorr <- format(cor(Valid$price, pred_RegressTree_pruned)^2, digits=4)
+
+fitcorr
 ```
 
 
 # Predictions
+
+```{r Boosted Tree}
+# Boosted tree
+set.seed(111)
+tree_bagged <- boosting(train$price ~., data = Train)
+tree_bagged
+```
+
+
+```{r Bagged Tree}
+# Boosted tree
+set.seed(111)
+tree_boosted = boosting(price~.,data = Train[, c(-1)])
+tree_boosted
+```
+
+```{r Random Forest}
+rdf.model <- randomForest(price~ ., ntree= 100, data = Train)
+plot(rdf.model)
+rdf.model
+```
 
 ```{r}
 
