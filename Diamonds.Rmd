@@ -279,6 +279,7 @@ library(neuralnet)      #for constructing neural networks
 library(Metrics)        #for calculating RMSE
 library(caret)          #for dummy variables
 library(fastDummies)
+library(doParallel)     #for parallel computing of neural networks
 ```
 
 
@@ -287,6 +288,8 @@ library(fastDummies)
 diamonds_dummies <- dummy_cols(diamonds, select_columns = c("cut", "color", "clarity"))
 diamonds_dummies <- diamonds_dummies[,-c(2:4)]
 
+#rename column to avoid issues with Neural net function
+colnames(diamonds_dummies)[10] = "cut_Very_Good"
 ```
 
 ```{r Partitioning}
@@ -297,8 +300,8 @@ valid_diamonds <- diamonds_dummies[valid.index,]
 
 ```{r Normalize}
 #create data frames to normalize
-train_diamonds_norm <- train_diamonds
-valid_diamonds_norm <- valid_diamonds
+train_diamonds_norm <- as.data.frame(train_diamonds)
+valid_diamonds_norm <- as.data.frame(valid_diamonds)
 
 # use preProcess() to normalize non-categorical variables
 norm_values <- preProcess(train_diamonds, method= c("range"))
@@ -306,6 +309,69 @@ norm_values <- preProcess(train_diamonds, method= c("range"))
 train_diamonds_norm <- predict(norm_values, train_diamonds)
 valid_diamonds_norm <- predict(norm_values, valid_diamonds)
 
+```
+
+
+```{r Parallel Computing}
+detectCores()
+getDoParWorkers()
+cl <- makeCluster(4)
+registerDoParallel(cl)
+set.seed(1)
+system.time(
+#create neural network 
+diaNeuralNet <- neuralnet(price ~ ., 
+                          data = train_diamonds_norm,
+                          linear.output = TRUE, 
+                          hidden = 1)
+)
+
+stopCluster(cl)
+```
+
+
+## Neural Network with Layers = 1 and Nodes = 2
+
+```{r NN Layers 1 Nodes 2}
+# create neural network plot
+plot(diaNeuralNet, rep="best", show.weights = T, col.entry = "#00C1D5", col.hidden = "#387C2C", col.out = "#7F35B2", intercept = F)
+
+# predict value
+
+```
+
+
+## Measuring errors (Layers = 1, Nodes = 2)
+
+```{r RMSE Layers 1 Nodes 2}
+#a function to convert normalized values to original values
+valRescale <- function (x) { 
+  value <- (x * (max(train_diamonds$price)- min(diamonds$price))) + min(diamonds$price) 
+  return(value)
+}
+
+# predict values of Data using Neural net
+dia_train_pred <- neuralnet::compute(diaNeuralNet, train_diamonds_norm)$net.result
+
+
+# Calculate Root Mean Square Error (RMSE) using Metrics package
+rs_actual_1 <- valRescale(train_diamonds_norm$price)
+rs_pred_1 <- valRescale(dia_train_pred)
+
+#calculate RMSE
+RMSE_T_1 <- rmse(rs_actual_1, rs_pred_1)
+
+#calculate for Validation data
+dia_valid_pred <- neuralnet::compute(diaNeuralNet, valid_diamonds_norm)$net.result
+
+rs_actual_V_1 <- valRescale(valid_diamonds_norm$price)
+rs_pred_V_1 <- valRescale(dia_valid_pred)
+
+RMSE_V_1 <- rmse(rs_actual_V_1, rs_pred_V_1)
+
+#display Results
+RMSE_T_1
+RMSE_V_1
 ```
 
 
