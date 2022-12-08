@@ -58,8 +58,15 @@ library(dplyr)          #for data manipulation
 library(tidyr)          #for changing the shape and hierarchy of a data set
 library(DataExplorer)   #for graphing missing value percentages
 library(car)            #for statistic functions
-
-source("VIF.R")
+library(rpart)          # trees
+library(rpart.plot)     # plot trees
+library(forecast)       # accuracy
+library(ggplot2)        # visualizations
+library(rattle) # Graphical Data Interface
+library(RColorBrewer) # Contains a ready-to-use color palettes for creating beautiful graphics
+library(Metrics) # RMSE()
+library(forecast)       # accuracy
+#source("VIF.R")
 ```
 
 # Data Exploration 
@@ -228,9 +235,42 @@ Valid <- diamonds[valid.index, ]
 Test <- diamonds[test.index, ]
 ```
 
+```{r Data Processing - Trees}
+diamonds_tree <- diamonds
 
+Train <- diamonds_tree[train.index, ]
+Valid <- diamonds_tree[valid.index, ]
+```
+
+```{r Regression Tree, fig.width = 10, fig.height = 4}
+RegressTree <- rpart(price ~ ., 
+              data = Train, 
+              method = "anova") 
+
+# Generates a cost complexity parameter table that provides the complexity parameter value
+printcp(RegressTree)
+
+# Count number of leaves 
+length(RegressTree$frame$var[RegressTree$frame$var == "<leaf>"]) # 
+
+# Plots a regression tree
+fancyRpartPlot(RegressTree, caption = NULL, main = "Regression Tree", palettes = "GnBu", digits = -3)
+```
 
 ```{r}
+RegressTree$cptable
+```
+
+```{r}
+# kable and kable_styling as before
+# we multiply by 100, divide by the sum and round the percentages to 2 decimals.
+kable_styling(kable(round(100*RegressTree$variable.importance / sum(RegressTree$variable.importance), 2),
+                    col.names = "Importance %"), full_width = FALSE)
+```
+
+```{r}
+# Training data accuracy
+accuracy(predict(RegressTree, Train), Train$price)
 
 ```
 
