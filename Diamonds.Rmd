@@ -411,7 +411,53 @@ rdf.model
 ```
 
 ```{r}
+# number of trees with lowest MSE
+which.min(rdf.model$mse)
 
+# RMSE of this optimal random forest
+sqrt(rdf.model$mse[which.min(rdf.model$mse)])
+```
+
+```{r}
+library(rsample)      # data splitting 
+# create training and validation data 
+
+set.seed(111)
+diamond_split <- initial_split(diamonds, prop = .6)
+diamond_train <- training(diamond_split)
+diamons_test  <- testing(diamond_split)
+
+valid_split <- initial_split(diamond_train, .8)
+
+# training data
+diamond_train_v2 <- analysis(valid_split)
+
+diamonds_valid <- rsample::assessment(Valid)
+x_test <- diamonds_valid[setdiff(names(diamonds_valid), "Price")]
+y_test <- diamonds_valid$price
+
+rf_oob_comp <- randomForest(
+  formula = price ~ .,
+  data    = diamonds_valid,
+  xtest   = x_test,
+  ytest   = y_test
+)
+
+# extract OOB & validation errors
+oob <- sqrt(rf_oob_comp$mse)
+validation <- sqrt(rf_oob_comp$test$mse)
+
+# compare error rates
+tibble::tibble(
+  `Out of Bag Error` = oob,
+  `Test error` = validation,
+  ntrees = 1:rf_oob_comp$ntree
+) %>%
+  gather(Metric, RMSE, -ntrees) %>%
+  ggplot(aes(ntrees, RMSE, color = Metric)) +
+  geom_line() +
+  scale_y_continuous(labels = scales::dollar) +
+  xlab("Number of trees")
 ```
 
 # Conclusions
