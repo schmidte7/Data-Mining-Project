@@ -91,6 +91,12 @@ colnames(diamonds)[8] <- "length" # x to length
 colnames(diamonds)[9] <- "width"  # y to width
 colnames(diamonds)[10] <- "depth" # z to depth
 
+diamonds = as.data.frame(diamonds)
+
+diamonds["cut"][diamonds["cut"] == 'Very Good'] <- 'Very_Good'
+
+diamonds = as.data.table(diamonds)
+
 # add variable to confirm the depth ratio  
 #explain the 2 times x in the depth formula
 
@@ -114,7 +120,7 @@ plot_missing(diamonds) # Plots the percentages of missing values
 
 unique(diamonds$cut) # Review unique values for cut
 diamonds$cut <- as.factor(diamonds$cut) # Factor the cut to five levels 
-diamonds$cut <- ordered(diamonds$cut, levels = c("Fair", "Good", "Very Good", "Premium", "Ideal")) # Ordered from worst to best
+diamonds$cut <- ordered(diamonds$cut, levels = c("Fair", "Good", "Very_Good", "Premium", "Ideal")) # Ordered from worst to best
 
 unique(diamonds$color) # Review unique values for color
 diamonds$color <- as.factor(diamonds$color) # Factor the color to seven levels 
@@ -123,6 +129,8 @@ diamonds$color <- ordered(diamonds$color, levels = c("J", "I", "H", "G", "F", "E
 unique(diamonds$clarity) # Review unique values for clarity
 diamonds$clarity <- as.factor(diamonds$clarity) # Factor the clarity to eight levels 
 diamonds$clarity <- ordered(diamonds$clarity, levels = c("I1", "SI2", "SI1", "VS2", "VS1", "VVS2", "VVS1", "IF")) # Ordered from worst to best
+
+
 
 # table is ok
 
@@ -174,6 +182,9 @@ ggplot(aes(x = carat, y = price), data = diamonds) +
   ggtitle('Price by Carat and Clarity')
 ```
 
+```{r}
+plot(diamonds$depth_ratio,diamonds$price)
+```
 
 
 ```{r}
@@ -347,9 +358,9 @@ MSE_RT2
 ```
 
 ```{r}
-accuracy(predict(RegressTree, Train), Train$price)
+forecast::accuracy(predict(RegressTree, Train), Train$price)
 
-accuracy(predict(RegressTree, Valid), Valid$price)
+forecast::accuracy(predict(RegressTree, Valid), Valid$price)
 ```
 
 
@@ -390,21 +401,27 @@ fitcorr
 # Predictions
 
 ```{r Boosted Tree}
+
+Train$cut <- as.factor(Train$cut)
+Train$color <- as.factor(Train$color)
+Train$clarity <- as.factor(Train$clarity)
+
 # Boosted tree
 set.seed(111)
-tree_bagged <- boosting(train$price ~., data = Train)
-tree_bagged
+tree_boost <- boosting(price ~., data = Train)
+tree_boost
 ```
 
 
 ```{r Bagged Tree}
-# Boosted tree
+# Bagged tree
 set.seed(111)
-tree_boosted = boosting(price~.,data = Train[, c(-1)])
-tree_boosted
+tree_bagged = bagging(price~.,data = Train[, c(-1)])
+tree_bagged
 ```
 
 ```{r Random Forest}
+options(scipen = 9999)
 rdf.model <- randomForest(price~ ., ntree= 100, data = Train)
 plot(rdf.model)
 rdf.model
@@ -416,6 +433,8 @@ which.min(rdf.model$mse)
 
 # RMSE of this optimal random forest
 sqrt(rdf.model$mse[which.min(rdf.model$mse)])
+
+forecast::accuracy(predict(rdf.model, Valid), Valid$price)
 ```
 
 ```{r}
