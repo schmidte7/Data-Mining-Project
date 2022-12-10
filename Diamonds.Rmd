@@ -312,6 +312,47 @@ valid_diamonds_norm <- predict(norm_values, valid_diamonds)
 ```
 
 
+```{r}
+  layer1 = c(6,12,18,24,30)
+  layer2 = c(6,12,18,24,30)
+  layer3 = c(6,12,18,24,30)
+
+  cv.folds = 5
+
+  total.param.permutations = length(layer1) * length(layer2) * length(layer3)
+
+  seeds <- vector(mode = "list", length = cv.folds + 1)
+  set.seed(1)  
+  for(i in 1:cv.folds) seeds[[i]]<- sample.int(n=1, total.param.permutations, replace = TRUE)
+  seeds[[cv.folds + 1]]<-sample.int(1, 1, replace = TRUE) #for the last model
+
+  nn.grid <- expand.grid(layer1 = layer1, layer2 = layer2, layer3 = layer3)
+
+  cl <- makeCluster(detectCores()*0.5) # use 50% of cores only, leave rest for other tasks
+  registerDoParallel(cl)
+
+  train_control <- caret::trainControl(method = "cv" 
+                                       ,number=cv.folds 
+                                       ,seeds = seeds # user defined seeds for parallel processing
+                                       ,verboseIter = TRUE
+                                       ,allowParallel = TRUE
+                                       )
+
+  stopCluster(cl)
+  registerDoSEQ()
+
+  tic("Total Time to NN Training: ")
+  set.seed(1)
+  model.nn.caret = caret::train(form = formula,
+                       data = scaled.train.data,
+                       method = 'neuralnet',
+                       tuneGrid = nn.grid,
+                       trControl = train_control
+                       )
+ toc()
+```
+
+
 ```{r Parallel Computing}
 detectCores()
 getDoParWorkers()
@@ -323,7 +364,15 @@ system.time(
 diaNeuralNet <- neuralnet(price ~ ., 
                           data = train_diamonds_norm,
                           linear.output = TRUE, 
-                          hidden = 2)
+                          hidden = 1)
+)
+
+
+system.time(
+  model.nn.caret = caret::train(form = formula,
+                       data = train_diamonds_norm,
+                       method = 'neuralnet'
+                       )
 )
 
 stopCluster(cl)
