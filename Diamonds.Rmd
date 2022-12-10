@@ -51,16 +51,23 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE, fig.align = "center")
 
 ```{r Libraries}
 library(data.table)     #for reading data.tables
-# library(kableExtra)     #for more elaborate tables
 library(ggplot2)        #for making graphs
+library(tidyr)          #for changing the shape and hierarchy of a data set
+library(ellipse)        #for mapping correlation
+library(e1071)          #for skewness
+library(caret)          #for preProcess() and accuracy()
+library(fastDummies)    #for creating dummies
+# library(kableExtra)     #for more elaborate tables
 # library(GGally)         #for making graphs
 # library(dplyr)          #for data manipulation
-library(tidyr)          #for changing the shape and hierarchy of a data set
 # library(DataExplorer)   #for graphing missing value percentages
 # library(car)            #for statistic functions
-library(ellipse)        #for mapping correlation
-# 
-# source("VIF.R")
+
+
+source("VIF.R")
+source("ProcStep.R")
+source("GlobalCrit.R")
+options(scipen = 999)
 ```
 
 # Data Exploration 
@@ -140,7 +147,7 @@ diamonds <- diamonds[, c(7, 2:4, 1, 8:10, 5:6)]
 ```{r Histograms}
 ggplot(gather(data = diamonds[, c(1, 5:10)]), aes(value)) +
   geom_histogram(aes(y = after_stat(density)),
-                 bins = 10,
+#                 bins = 10,
                  color = "white",
                  fill = "#F9D53E") + # Creates bin sizing with colors
   geom_density(alpha = .2, fill = "#F9D53E") +
@@ -204,11 +211,115 @@ train.index <- sample(c(1:nrow(diamonds)), 0.5*nrow(diamonds))
 # generating validation set index taken from the complementary of training set
 valid.index <- sample(setdiff(c(1:nrow(diamonds)), train.index), 0.3*nrow(diamonds))
 # defining test set index as complementary of (train.index + valid.index)
-test.index <- as.numeric(setdiff(row.names(diamonds), union(train.index, valid.index)))
+test.index <- as.integer(setdiff(row.names(diamonds), union(train.index, valid.index)))
 ```
 
 
 ## Linear Regression
 
 
+```{r}
+Train <- diamonds[train.index, ]
+Valid <- diamonds[valid.index, ]
+Test  <- diamonds[ test.index, ]
+```
+
+
+```{r vif}
+VIF(y = diamonds$price, matx = diamonds[, -c(1)])
+VIF(y = diamonds$price, matx = diamonds[, -c(1, 6, 7, 8)])
+
+plotcorr(cor(diamonds[, -c(2:4, 6:8)]), col = "#F9D53E",
+         main = "Pearson correlation ellipses for numerical variables")
+```
+
+```{r skewness}
+sapply(Train[, c(1, 5:10)], skewness)
+Train$price <- log(Train$price)
+Train$carat <- log(Train$carat)
+Train$table <- log(Train$table)
+sapply(Train[, c(1, 5:10)], skewness)
+```
+
+```{r hist-unskewed}
+ggplot(gather(data = Train[, c(1, 5:10)]), aes(value)) +
+  geom_histogram(aes(y = after_stat(density)),
+                 color = "white",
+                 fill = "#F9D53E") +             # Creates bin sizing with colors
+  geom_density(alpha = .2, fill = "#F9D53E") +
+  facet_wrap(~ key, scales = "free") +           # Converting the graphs into panels
+  ggtitle("Histograms of numerical variables") + # Title name
+  ylab("Count") + xlab("Value") +                # Label names
+  theme_classic()                                # Theme with x and y axis lines and no grid lines
+```
+
+```{r normalizing}
+norm.values <- preProcess(Train[, c(1, 5:10)], method=c("center", "scale"))
+
+Train[, c(1, 5:10)] <- predict(norm.values, Train[, c(1, 5:10)])
+Valid[, c(1, 5:10)] <- predict(norm.values, Valid[, c(1, 5:10)])
+ Test[, c(1, 5:10)] <- predict(norm.values,  Test[, c(1, 5:10)])
+```
+
+```{r}
+LM = lm(price ~. , data = Train)
+summary(LM)
+
+Train2 <- Train[, -c(6:8)]
+LM2 = lm(price ~ ., data = Train2)
+summary(LM2)
+```
+
+
+```{r}
+# ProcStep(matx = Train[, -c(1)], y = Train$price, method = 'forward')
+# ProcStep(matx = Train[, -c(1)], y = Train$price, method = 'backward')
+GlobalCrit(LM)
+GlobalCrit(LM2)
+rm(Train2)
+```
+
+
+with all variables:
+  cut              
+  color            
+  clarity          
+  carat            
+  length           
+  depth            
+  depth_ratio
+  
+taking out the correlated ones:
+  cut              
+  color            
+  clarity          
+  carat            
+  depth_ratio  
+
+```{r}
+LM3 = lm(price ~ . , data = Train[, c(1:6, 8, 9)])
+summary(LM3)
+LM4 = lm(price ~ . , data = Train[, c(1:5, 9)])
+summary(LM4)
+```
+
+```{r}
+TrainD = dummy_cols(Train,
+                    select_columns = c("cut", "color", "clarity"),
+                    remove_first_dummy = TRUE,
+                    remove_selected_columns = TRUE)
+
+LM5 = lm(price ~. , data = TrainD)
+summary(LM5)
+
+TrainD2 <- TrainD[, -c(3:5)]
+LM6 = lm(price ~ ., data = TrainD2)
+summary(LM6)
+```
+
+```{r}
+# GlobalCrit(LM5)
+# GlobalCrit(LM6)
+rm(TrainD2)
+```
 
