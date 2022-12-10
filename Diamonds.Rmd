@@ -218,7 +218,7 @@ test.index <- as.integer(setdiff(row.names(diamonds), union(train.index, valid.i
 ## Linear Regression
 
 
-```{r}
+```{r train-valid-test}
 Train <- diamonds[train.index, ]
 Valid <- diamonds[valid.index, ]
 Test  <- diamonds[ test.index, ]
@@ -261,22 +261,47 @@ Valid[, c(1, 5:10)] <- predict(norm.values, Valid[, c(1, 5:10)])
  Test[, c(1, 5:10)] <- predict(norm.values,  Test[, c(1, 5:10)])
 ```
 
-```{r}
-LM = lm(price ~. , data = Train)
-summary(LM)
-
-Train2 <- Train[, -c(6:8)]
-LM2 = lm(price ~ ., data = Train2)
-summary(LM2)
+```{r LM-complete}
+LM_complete = lm(price ~. , data = Train)
+summary(LM_complete)
 ```
 
 
-```{r}
-# ProcStep(matx = Train[, -c(1)], y = Train$price, method = 'forward')
-# ProcStep(matx = Train[, -c(1)], y = Train$price, method = 'backward')
-GlobalCrit(LM)
-GlobalCrit(LM2)
-rm(Train2)
+```{r LM-minus-corr}
+Train_minus_corr <- Train[, -c(6:8)]
+LM_minus_corr = lm(price ~ ., data = Train_minus_corr)
+summary(LM_minus_corr)
+```
+
+
+```{r iterative-search-complete}
+LM_backward = step(LM_complete, direction = "backward")
+summary(LM_backward)   # like LM_CpAIC_complete
+LM_forward = step(LM_complete, direction = "forward")
+summary(LM_forward)    # no selection
+LM_stepwise = step(LM_complete, direction = "both")
+summary(LM_stepwise)   # like LM_CpAIC_complete
+```
+
+
+```{r iterative-search-minus-corr}
+LM_backward_minus_corr = step(LM_minus_corr, direction = "backward")
+summary(LM_backward_minus_corr)   # like LM_CpAIC_minus_corr
+LM_forward_minus_corr = step(LM_minus_corr, direction = "forward")
+summary(LM_forward_minus_corr)    # no selection
+LM_stepwise_minus_corr = step(LM_minus_corr, direction = "both")
+summary(LM_stepwise_minus_corr)   # like LM_CpAIC_minus_corr
+```
+
+
+```{r global-methods}
+GlobalCrit(LM_complete)
+GlobalCrit(LM_minus_corr)
+
+LM_CpAIC_complete = lm(price ~ . , data = Train[, c(1:6, 8, 9)])
+summary(LM_CpAIC_complete)
+LM_CpAIC_minus_corr = lm(price ~ . , data = Train[, c(1:5, 9)])
+summary(LM_CpAIC_minus_corr)
 ```
 
 
@@ -296,30 +321,50 @@ taking out the correlated ones:
   carat            
   depth_ratio  
 
-```{r}
-LM3 = lm(price ~ . , data = Train[, c(1:6, 8, 9)])
-summary(LM3)
-LM4 = lm(price ~ . , data = Train[, c(1:5, 9)])
-summary(LM4)
-```
 
-```{r}
+
+```{r dummies-and-dummies-minus-corr}
 TrainD = dummy_cols(Train,
                     select_columns = c("cut", "color", "clarity"),
                     remove_first_dummy = TRUE,
                     remove_selected_columns = TRUE)
 
-LM5 = lm(price ~. , data = TrainD)
-summary(LM5)
+TrainD_minus_corr <- TrainD[, -c(3:5)]
 
-TrainD2 <- TrainD[, -c(3:5)]
-LM6 = lm(price ~ ., data = TrainD2)
-summary(LM6)
+LM_dummies <- lm(price ~ . , data = TrainD)
+summary(LM_dummies)
+
+LM_dummies_minus_corr <- lm(price ~ . , data = TrainD_minus_corr)
+summary(LM_dummies_minus_corr)
+```
+
+
+```{r iterative-search-dummies}
+LM_backward_dummies = step(LM_dummies, direction = "backward")
+summary(LM_backward_dummies)   # missing width and table
+LM_forward_dummies = step(LM_dummies, direction = "forward")
+summary(LM_forward_dummies)    # no selection
+LM_stepwise_dummies = step(LM_dummies, direction = "both")
+summary(LM_stepwise_dummies)   # missing width and table
+```
+
+
+```{r iterative-search-dummies-minus-corr}
+LM_backward_dummies_minus_corr = step(LM_dummies_minus_corr, direction = "backward")
+summary(LM_backward_dummies_minus_corr)   # missing table
+LM_forward_dummies_minus_corr = step(LM_dummies_minus_corr, direction = "forward")
+summary(LM_forward_dummies_minus_corr)    # no selection
+LM_stepwise_dummies_minus_corr = step(LM_dummies_minus_corr, direction = "both")
+summary(LM_stepwise_dummies_minus_corr)   # missing table
+```
+
+
+```{r}
+# GlobalCrit(LM_backward_dummies)
+# GlobalCrit(LM_backward_dummies_minus_corr)
 ```
 
 ```{r}
-# GlobalCrit(LM5)
-# GlobalCrit(LM6)
-rm(TrainD2)
+
 ```
 
