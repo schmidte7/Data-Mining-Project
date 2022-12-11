@@ -73,7 +73,8 @@ library(Metrics) # RMSE()
 library(forecast)       # accuracy
 library(caret)
 library(randomForest)
-library(adabag)
+library(gbm)            # boosting
+library(ipred)
 
 #source("VIF.R")
 ```
@@ -292,7 +293,7 @@ RegressTree <- rpart(price ~ .,
               method = "anova") 
 
 # Generates a cost complexity parameter table that provides the complexity parameter value
-summary(RegressTree)
+#summary(RegressTree)
 
 # Count number of leaves 
 length(RegressTree$frame$var[RegressTree$frame$var == "<leaf>"]) # 
@@ -319,7 +320,7 @@ RegressTree2 <- rpart(price ~ length+width+depth+carat+cut+color+clarity,
               method = "anova") 
 
 # Generates a cost complexity parameter table that provides the complexity parameter value
-summary(RegressTree2)
+#summary(RegressTree2)
 
 # Count number of leaves 
 length(RegressTree$frame$var[RegressTree2$frame$var == "<leaf>"]) # 
@@ -390,17 +391,17 @@ fancyRpartPlot(RegressTree_pruned, caption = NULL, main = "'Pruned' Regression T
 ```
 
 ```{r}
-pred_RegressTree_pruned <- predict(RegressTree_pruned, newdata = Train)
+#pred_RegressTree_pruned <- predict(RegressTree_pruned, newdata = Train)
 
-fitcorr <- format(cor(Valid$price, pred_RegressTree_pruned)^2, digits=4)
+#fitcorr <- format(cor(Valid$price, pred_RegressTree_pruned)^2, digits=4)
 
-fitcorr
+#fitcorr
 ```
 
 
 # Predictions
 
-```{r Boosted Tree}
+```{r}
 
 Train$cut <- as.factor(Train$cut)
 Train$color <- as.factor(Train$color)
@@ -408,17 +409,80 @@ Train$clarity <- as.factor(Train$clarity)
 
 # Boosted tree
 set.seed(111)
-tree_boost <- boosting(price ~., data = Train)
-tree_boost
+tree_boost10 <- gbm(price ~., data = Train, distribution = "gaussian", n.trees = 10)
+tree_boost10
+
+summary(tree_boost10)
 ```
 
+```{r}
+# Boosted tree
+set.seed(111)
+tree_boost30 <- gbm(price ~., data = Train, distribution = "gaussian", n.trees = 30)
+tree_boost30
+
+summary(tree_boost30)
+```
+
+```{r}
+# Boosted tree
+set.seed(111)
+tree_boost100 <- gbm(price ~., data = Train, distribution = "gaussian", cv.folds = 3)
+tree_boost100
+
+summary(tree_boost100)
+```
+
+```{r}
+ntree_opt_cv <- gbm.perf(tree_boost100, method = "cv")
+
+ntree_opt_oob <- gbm.perf(tree_boost100, method = "OOB")
+```
+
+
+```{r}
+pred_boost <- predict.gbm(object = tree_boost100, newdata = Valid, n.trees = 100)
+
+head(tree_boost100,14)
+```
+
+```{r}
+forecast::accuracy(predict(tree_boost100, Valid), Valid$price)
+```
 
 ```{r Bagged Tree}
 # Bagged tree
 set.seed(111)
-tree_bagged = bagging(price~.,data = Train[, c(-1)])
-tree_bagged
+tree_bagging <- bagging(price ~., data = Train, coob = TRUE)
+tree_bagging
 ```
+
+```{r}
+pred.imp <- varImp(tree_bagging)
+pred.imp
+
+#sort variable importance descending
+VI_plot <- pred.imp[order(pred.imp$Overall, decreasing=TRUE),]
+
+#visualize variable importance with horizontal bar plot
+barplot(pred.imp$Overall,
+        names.arg=rownames(pred.imp),
+        horiz=TRUE,
+        col='steelblue',
+        xlab='Variable Importance')
+```
+
+```{r}
+forecast::accuracy(predict(tree_bagging, Valid), Valid$price)
+```
+
+
+```{r}
+pred_bagged <- predict(tree_bagging, newdata = Valid)
+
+head(pred_bagged,14)
+```
+
 
 ```{r Random Forest}
 options(scipen = 9999)
@@ -431,52 +495,7 @@ rdf.model
 # number of trees with lowest MSE
 which.min(rdf.model$mse)
 
-# RMSE of this optimal random forest
-sqrt(rdf.model$mse[which.min(rdf.model$mse)])
-
 forecast::accuracy(predict(rdf.model, Valid), Valid$price)
-```
-
-```{r}
-library(rsample)      # data splitting 
-# create training and validation data 
-
-set.seed(111)
-diamond_split <- initial_split(diamonds, prop = .6)
-diamond_train <- training(diamond_split)
-diamons_test  <- testing(diamond_split)
-
-valid_split <- initial_split(diamond_train, .8)
-
-# training data
-diamond_train_v2 <- analysis(valid_split)
-
-diamonds_valid <- rsample::assessment(Valid)
-x_test <- diamonds_valid[setdiff(names(diamonds_valid), "Price")]
-y_test <- diamonds_valid$price
-
-rf_oob_comp <- randomForest(
-  formula = price ~ .,
-  data    = diamonds_valid,
-  xtest   = x_test,
-  ytest   = y_test
-)
-
-# extract OOB & validation errors
-oob <- sqrt(rf_oob_comp$mse)
-validation <- sqrt(rf_oob_comp$test$mse)
-
-# compare error rates
-tibble::tibble(
-  `Out of Bag Error` = oob,
-  `Test error` = validation,
-  ntrees = 1:rf_oob_comp$ntree
-) %>%
-  gather(Metric, RMSE, -ntrees) %>%
-  ggplot(aes(ntrees, RMSE, color = Metric)) +
-  geom_line() +
-  scale_y_continuous(labels = scales::dollar) +
-  xlab("Number of trees")
 ```
 
 # Conclusions
