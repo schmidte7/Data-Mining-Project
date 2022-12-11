@@ -59,6 +59,18 @@ library(tidyr)          #for changing the shape and hierarchy of a data set
 library(DataExplorer)   #for graphing missing value percentages
 library(car)            #for statistic functions
 library(ellipse)        #for mapping correlation
+library(naniar)         #for missing values 
+library(RColorBrewer)   #for graph colors
+library(rattle)         #Graphical Data Interface
+
+library(rpart)          #for regression trees
+library(rpart.plot)     #for plot trees
+library(forecast)       #for accuracy
+library(ggplot2)        #for visualizations
+library(caret)          #for variable importance
+library(randomForest)   #for randomForest
+library(gbm)            #for boosting
+library(ipred)          #for bagging
 
 source("VIF.R")
 ```
@@ -75,6 +87,15 @@ colnames(diamonds)[5] <- "depth_ratio" # depth to depth_ratio
 colnames(diamonds)[8] <- "length" # x to length
 colnames(diamonds)[9] <- "width"  # y to width
 colnames(diamonds)[10] <- "depth" # z to depth
+
+# Set data to frame to rename 'cut' item ("Very Good")
+#diamonds = as.data.frame(diamonds)
+
+# Rename variable cut to fix spacing
+#diamonds["cut"][diamonds["cut"] == 'Very Good'] <- 'Very_Good'
+
+# Reset dataframe back to datatable for analysis
+#diamonds = as.data.table(diamonds)
 ```
 
 ## Dimension Summary 
@@ -92,7 +113,7 @@ sapply(diamonds, function(x) length(unique(x)))
 
 ```{r Missing Values}
 # Missing values analysis
-plot_missing(diamonds) # Plots the percentages of missing values
+gg_miss_var(diamonds) + ggtitle("Missing values")
 
 # pairs(diamonds[, c(1, 5:10)])
 ```
@@ -153,9 +174,19 @@ diamonds <- diamonds[, c(7, 2:4, 1, 8:10, 5:6)]
 #          upper = list(continuous = wrap('cor',size = 3)),) + theme_light()
 ```
 
+```{r Price by Carat and Clarity}
+# Create plot that looks at carat and price
+ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Carat and Clarity')
+```
+
+```{r Depth Ratio vs Price}
+plot(diamonds$depth_ratio,diamonds$price, col = "#F9D53E")
+```
+
 ## Variable Visualisation
 
-```{r Histograms}
+```{r Histograms,fig.width = 4, fig.height = 4}
 ggplot(gather(data = diamonds[, c(1, 5:10)]), aes(value)) +
   geom_histogram(aes(y = after_stat(density)),
                  bins = 10,
@@ -168,7 +199,7 @@ ggplot(gather(data = diamonds[, c(1, 5:10)]), aes(value)) +
   theme_classic() # A classic theme, with x and y axis lines and no grid lines
 ```
 
-```{r Correlation}
+```{r Correlation,fig.width = 4, fig.height = 4}
 # Create heatmap to show variable correlation
 # Round the correlation coefficient to two decimal places
 cormat <- round(cor(diamonds[, c(1, 5:10)]), 2)
@@ -208,7 +239,7 @@ ggplot(cormat, aes(Var2, Var1, fill = value)) +
 rm(cormat, reorder_cormat)
 ```
 
-```{r Correlation Plot}
+```{r Correlation Plot,fig.width = 5, fig.height = 5}
 plotcorr(cor(diamonds[, -c(2:4)]), col = "#F9D53E",
          main = "Pearson correlation ellipses for numerical variables")
 ```
@@ -263,10 +294,273 @@ Test <- diamonds[test.index, ]
 
 ## Regression Tree
 
-```{r}
+```{r RT - Train, Valid, Test }
+#Rename data specifically for regression trees
+diamonds_tree <- diamonds
 
+# Creating data tables Train, Valid and Test using the indexes for the regression tree section
+Train <- diamonds[train.index, ]
+Valid <- diamonds[valid.index, ]
+Test <- diamonds[test.index, ]
 ```
 
+```{r Price Correlation}
+# Correlation between price and quantitative variables
+price_correlation <- with(diamonds_tree,
+     data.frame(cor_length_price = cor(length, price), cor_width_price = cor(width, price), cor_depth_price = cor(depth, price), cor_depth_ratio_price = cor(depth_ratio, price), cor_table_price2 = cor(table, price), cor_carat_price3 = cor(carat, price)))
+
+# Transpose data and put into kable format
+transpose <- t(sort(round(price_correlation,4),decreasing = FALSE))
+kable_corr <- kable(transpose) %>% kable_classic() 
+kable_corr
+```
+
+```{r Default Regression Tree}
+# Use rpart() to run tree on continuous response 
+RegressTree <- rpart(price ~ ., 
+              data = Train, 
+              method = "anova") 
+
+# Generates a cost complexity parameter table that provides the complexity parameter value
+#summary(RegressTree)
+
+# Plots a regression tree
+fancyRpartPlot(RegressTree, caption = NULL, main = "Regression Tree", palettes = "YlGnBu", digits = -3)
+
+# Count number of leaves 
+length(RegressTree$frame$var[RegressTree$frame$var == "<leaf>"]) 
+```
+
+```{r ktable Importance - RegressTree}
+# kable and kable_styling as before
+# We multiply by 100, divide by the sum and round the percentages to 2 decimals
+kable_styling(kable(round(100*RegressTree$variable.importance / sum(RegressTree$variable.importance), 2), col.names = "Importance %"), full_width = FALSE)
+```
+
+```{r Error Details on Default Tree - Train}
+# Predict errors using accuracy() 
+tree_train_error <- forecast::accuracy(predict(RegressTree, Train), Train$price)
+
+kable(tree_train_error) %>% kable_classic() 
+```
+
+```{r R-adjusted on Default Tree - Train}
+# Calculate R^2 
+p <- predict(RegressTree, Train)
+R_sq <- (cor(Train$price,p))^2
+R_pct <- R_sq*100
+R_pct
+```
+
+```{r Default Tree Predictions}
+# Predict the diamond price with validation
+pred_Diamond_test <- predict(RegressTree, newdata = Valid)
+
+# Display first 14 observations
+head(pred_Diamond_test,14)
+```
+
+```{r Default Regression Tree Minus Variables}
+RegressTree2 <- rpart(price ~ length+width+depth+carat+cut+color+clarity, 
+              data = Train, 
+              method = "anova") 
+
+# Generates a cost complexity parameter table that provides the complexity parameter value
+#summary(RegressTree2)
+
+# Plots a regression tree
+fancyRpartPlot(RegressTree2, caption = NULL, main = "Exclusion Regression Tree", palettes = "YlGnBu", digits = -3)
+```
+
+```{r ktable Importance - RegressTree2}
+# kable and kable_styling as before
+# We multiply by 100, divide by the sum and round the percentages to 2 decimals
+kable_styling(kable(round(100*RegressTree2$variable.importance / sum(RegressTree2$variable.importance), 2), col.names = "Importance %"), full_width = FALSE)
+```
+
+```{r Error Details on RegressTree2}
+# Predict errors using accuracy() 
+tree_train_error2 <- forecast::accuracy(predict(RegressTree2, Train), Train$price)
+
+kable(tree_train_error2) %>% kable_classic() 
+```
+
+```{r R-adjusted on RegressTree2}
+# Calculate R^2 
+p2 <- predict(RegressTree2, Train)
+R_sq2 <- (cor(Train$price,p2))^2
+R_pct2 <- R_sq2*100
+R_pct2
+```
+
+```{r Default Tree Predictions2}
+# Predict the diamond price with validation
+pred_Diamond_test2 <- predict(RegressTree2, newdata = Valid)
+
+# Display first 14 observations
+head(pred_Diamond_test2,14)
+```
+
+```{r CP Value}
+#Get the lowest CP value from CP table
+min.xerror <- RegressTree2$cptable[which.min(RegressTree2$cptable[,"xerror"]),"CP"]
+
+min.xerror
+```
+```{r Plot Cp}
+#Plot the optimal Cp value
+plotcp(RegressTree2)
+```
+
+```{r Pruned Regression Tree Minus Variables}
+RegressTree_pruned <- prune(RegressTree2, cp = min.xerror) 
+
+# Draw the prune tree
+fancyRpartPlot(RegressTree_pruned, caption = NULL, main = "'Pruned' Regression Tree", palettes = "YlGnBu", digits = -3)
+```
+
+```{r Error Details on Prune_RegressTree2}
+# Predict errors using accuracy() 
+tree_train_error3 <- forecast::accuracy(predict(RegressTree_pruned, Train), Train$price)
+
+kable(tree_train_error3) %>% kable_classic() 
+```
+
+```{r R-adjusted on Prune_RegressTree2}
+# Calculate R^2 
+p3 <- predict(RegressTree_pruned, Train)
+R_sq3 <- (cor(Train$price,p3))^2
+R_pct3 <- R_sq3*100
+R_pct3
+```
+
+```{r Boosted Tree 10, fig.width = 5, fig.height = 5}
+# Boosted tree
+set.seed(111)
+tree_boost10 <- gbm(price ~., data = Train, distribution = "gaussian", n.trees = 10, interaction.depth = 6, shrinkage = 0.01)
+
+# Interaction Depth specifies the maximum depth of each tree( i.e. highest level of variable interactions allowed while training the model). Default is 1.
+# Shrinkage is considered as the learning rate. It is used for reducing, or shrinking, the impact of each additional fitted base-learner (tree).  It reduces the size of incremental steps and thus penalizes the importance of each consecutive iteration. Default is 0.1
+#n.trees: Integer specifying the total number of trees to fit. This is equivalent to the number of iterations and the number of basis functions in the additive expansion. Default is 100.
+
+
+tree_boost10
+
+summary(tree_boost10, color = "#F9D53E")
+```
+
+```{r Error Details on tree_boost10}
+# Predict errors using accuracy() 
+tree_boost10_train <- forecast::accuracy(predict(tree_boost10, Train), Train$price)
+
+kable(tree_boost10_train) %>% kable_classic() 
+```
+
+```{r Boosted Tree 30, fig.width = 5, fig.height = 5}
+# Boosted tree
+set.seed(111)
+tree_boost30 <- gbm(price ~., data = Train, distribution = "gaussian", n.trees = 30)
+tree_boost30
+
+summary(tree_boost30)
+```
+
+```{r Error Details on tree_boost30}
+# Predict errors using accuracy() 
+tree_boost30_train <- forecast::accuracy(predict(tree_boost30, Train), Train$price)
+
+kable(tree_boost30_train) %>% kable_classic() 
+```
+
+```{r Boosted Tree 100, fig.width = 5, fig.height = 5}
+# Boosted tree
+set.seed(111)
+tree_boost100 <- gbm(price ~., data = Train, distribution = "gaussian", cv.folds = 3)
+
+# cv.folds: Number of cross-validation folds to perform. If cv.folds>1 then gbm, in addition to the usual fit, will perform a cross-validation, calculate an estimate of generalization error returned in cv.error.
+
+tree_boost100
+
+summary(tree_boost100)
+```
+
+```{r Error Details on tree_boost100}
+# Predict errors using accuracy() 
+tree_boost100_train <- forecast::accuracy(predict(tree_boost100, Train), Train$price)
+
+kable(tree_boost100_train) %>% kable_classic()
+```
+
+```{r Boosted Tree 100 with oob}
+ntree_opt_oob <- gbm.perf(tree_boost100, method = "OOB")
+ntree_opt_oob
+
+# Indicate the method used to estimate the optimal number of boosting iterations. method = "OOB" computes the out-of-bag estimate and method = "test" uses the test (or validation) dataset to compute an out-of-sample estimate. method = "cv" extracts the optimal number of iterations using cross-validation if gbm was called with cv.folds > 1.
+```
+
+```{r Predict Boosting}
+pred_boost <- predict.gbm(tree_boost100, newdata = Valid)
+```
+
+```{r Bagged Tree}
+# Bagged tree
+set.seed(111)
+tree_bagging <- bagging(price ~., data = Train, coob = TRUE)
+tree_bagging
+```
+
+```{r VI for Bagging}
+# Variable importance for bagging
+pred_imp <- as.data.frame(varImp(tree_bagging))
+pred_imp <- data.frame(overall = pred_imp$Overall,
+           names   = rownames(pred_imp))
+
+pred_imp[order(pred_imp$overall,decreasing = T),]
+```
+
+```{r Plot IV ,fig.width = 5, fig.height = 5}
+pred_imp <- varImp(tree_bagging)
+
+#sort variable importance descending
+VI_plot <- pred_imp[order(pred_imp$Overall, decreasing=TRUE),]
+
+#visualize variable importance with horizontal bar plot
+barplot(sort(pred_imp$Overall, decreasing = FALSE),
+        names.arg=rownames(pred_imp),
+        horiz=TRUE,
+        col="#F9D53E",
+        xlab='Variable Importance')
+```
+
+```{r Errors Bagging}
+tree_bagging_train <- forecast::accuracy(predict(tree_bagging, Train), Train$price)
+
+kable(tree_bagging_train) %>% kable_classic()
+```
+
+```{r}
+pred_bagged <- predict(tree_bagging, newdata = Valid)
+
+head(pred_bagged,14)
+```
+
+
+```{r randomForest}
+options(scipen = 9999)
+rdf_model <- randomForest(price~ ., ntree= 100, data = Train)
+plot(rdf_model)
+```
+
+```{r Optimal Random Trees}
+# Number of trees with lowest MSE
+which.min(rdf_model$mse)
+```
+
+```{r}
+rdf_model_train <- forecast::accuracy(predict(rdf_model, Train), Train$price)
+
+kable(rdf_model_train) %>% kable_classic()
+```
 
 ## NeuralNetworks
 

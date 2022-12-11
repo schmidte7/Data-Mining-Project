@@ -1,0 +1,285 @@
+---
+title: "Diamonds"
+author: "Francisco Arrieta, Emily Schmidt and Lucia Camenisch"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true             # creating a table of contents (toc)
+    toc_float: 
+      collapsed: false    # toc does not collapse and is shown as a sidebar (toc_float)
+    number_sections: true # document sections are numbered
+    theme: cosmo
+---
+
+```{=html}
+<style>
+body{
+  color: #2F91AE;
+  background-color: #F2F2F2;
+}
+pre{
+  background-color: #96EAE3;
+}
+pre:not([class]){
+  background-color: #15DDD8;
+}
+.toc-content{
+  padding-left: 10px;
+  padding-right: 10px;
+}
+.col-sm-8 {
+  width: 75%;
+}
+code {
+  color: #333333;
+  background-color: #96EAE3;
+}
+</style>
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, fig.align = "center")
+```
+
+```{r Colors, include=FALSE}
+#Aqua =         "#15DDD8"
+#Dark Blue =    "#2F91AE"
+#Yellow =       "#F9D53E"
+#Light Gray =   "#F2F2F2"
+#Light Aqua =   "#96EAE3"
+```
+
+```{r Libraries}
+library(data.table)     #for reading data.tables
+library(kableExtra)     #for more elaborate tables
+library(ggplot2)        #for making graphs
+library(GGally)         #for making graphs
+library(dplyr)          #for data manipulation
+library(tidyr)          #for changing the shape and hierarchy of a data set
+library(DataExplorer)   #for graphing missing value percentages
+library(car)            #for statistic functions
+library(ellipse)        #for mapping correlation
+library(naniar)         #for missing values 
+
+source("VIF.R")
+```
+
+# Data Exploration 
+
+```{r Import Data}
+diamonds <- fread("diamonds.csv", sep=",", header = T) # Load your data, diamonds.csv
+
+diamonds$V1 <- NULL # Remove column 'V1' as it is similar to an ID variable - no additional meaning derived
+
+# Rename columns for more precise names
+colnames(diamonds)[5] <- "depth_ratio" # depth to depth_ratio
+colnames(diamonds)[8] <- "length" # x to length
+colnames(diamonds)[9] <- "width"  # y to width
+colnames(diamonds)[10] <- "depth" # z to depth
+```
+
+## Dimension Summary 
+
+```{r Data Exploration}
+dim(diamonds) # Dimensions of data
+summary(diamonds) # Produce result summaries of all variables
+str(diamonds) # Type of variables
+
+# Number of unique values in each variable
+sapply(diamonds, function(x) length(unique(x)))
+```
+
+## Missing Values
+
+```{r Missing Values}
+# Visualize missing values
+gg_miss_var(diamonds) + ggtitle("Missing values")
+
+# pairs(diamonds[, c(1, 5:10)])
+```
+
+
+```{r Variables check}
+# carat no problems
+unique(diamonds$cut) # Review unique values for cut
+diamonds$cut <- as.factor(diamonds$cut) # Factor the cut to five levels 
+diamonds$cut <- ordered(diamonds$cut, levels = c("Fair", "Good", "Very Good", "Premium", "Ideal")) # Ordered from worst to best
+
+unique(diamonds$color) # Review unique values for color
+diamonds$color <- as.factor(diamonds$color) # Factor the color to seven levels 
+diamonds$color <- ordered(diamonds$color, levels = c("J", "I", "H", "G", "F", "E", "D")) # Ordered from worst to best
+
+unique(diamonds$clarity) # Review unique values for clarity
+diamonds$clarity <- as.factor(diamonds$clarity) # Factor the clarity to eight levels 
+diamonds$clarity <- ordered(diamonds$clarity, levels = c("I1", "SI2", "SI1", "VS2", "VS1", "VVS2", "VVS1", "IF")) # Ordered from worst to best
+
+# table is ok
+
+# price is ok
+
+# Remove values of 0 for for dimensions which includes zeros in length and width
+nrow(diamonds[depth %in% 0,]) # Remove 20 rows due to depth = 0.0
+diamonds <- diamonds[depth > 0, ] # Include only values with depth greater than zero
+
+# Create formula to check the absolute value of length to width, comparison 
+diamonds[, subtraction := abs(length - width)]
+nrow(diamonds[subtraction>10,]) # Remove 2 rows due their extreme subtraction value (~59 and ~26)
+diamonds <- diamonds[subtraction <= 10, ] # Include only values with subtraction less than ten
+
+diamonds[, depth_check := round(100*(2*depth)/((length + width)), 1)]
+diamonds[, diff := abs(depth_check-depth_ratio)]
+# treshold at 0.3? anastasia
+nrow(diamonds[diff > 0.3,]) # we remove 268 rows
+diamonds <- diamonds[diff <= 0.3,]
+# hist(diamonds[diff >= 0.4 & diff < 1, diff], breaks = 50)
+
+# Removed created columns needed to clean the data
+diamonds[, subtraction := NULL]
+diamonds[, depth_check := NULL]
+diamonds[, diff := NULL]
+# Total rows remove: 275 observations
+```
+
+
+```{r ordering cols}
+# Reorder data table to group like variable types 
+diamonds <- diamonds[, c(7, 2:4, 1, 8:10, 5:6)]
+```
+
+```{r ggpairs, fig.width = 6, fig.height = 4}
+# Used ggpairs to create a scatterplot matrix
+# ggpairs(diamonds[, c(1, 5:10)], title = "Scatterplot Matrix",
+#          proportions = "auto",
+#          columnLabels = c("Price", "Carat", "Length", "Width", "Depth","Depth Ratio","Table"),
+#          upper = list(continuous = wrap('cor',size = 3)),) + theme_light()
+```
+
+## Variable Visualisation
+
+```{r Histograms}
+ggplot(gather(data = diamonds[, c(1, 5:10)]), aes(value)) +
+  geom_histogram(aes(y = after_stat(density)),
+                 bins = 10,
+                 color = "white",
+                 fill = "#F9D53E") + # Creates bin sizing and sets the lines as white
+  geom_density(alpha = .2, fill = "#F9D53E") +
+  facet_wrap(~ key, scales = "free") + # Converting the graphs into panels
+  ggtitle("Quantitative Variable Analysis") + # Title name
+  ylab("Count") + xlab("Value") + # Label names
+  theme_classic() # A classic theme, with x and y axis lines and no grid lines
+```
+
+```{r Correlation}
+# Create heatmap to show variable correlation
+# Round the correlation coefficient to two decimal places
+cormat <- round(cor(diamonds[, c(1, 5:10)]), 2)
+
+# Use correlation between variables as distance
+reorder_cormat <- function(cormat){ 
+dd <- as.dist((1-cormat)/2)
+hc <- hclust(dd)
+cormat <-cormat[hc$order, hc$order]
+return(cormat)
+}
+
+# Reorder the correlation matrix
+cormat <- reorder_cormat(cormat)
+
+# Keeping only upper triangular matrix
+# upper_tri returns TRUE/FALSE for each coordinate (TRUE -> part of upper triangle)
+# multiplying will thus keep the upper triangle values and set the others to 0
+cormat <- cormat*upper.tri(cormat, diag = TRUE)
+# Values of the lower triangle (0) are replaced by NA
+cormat[cormat == 0] <- NA
+
+# Melt the correlation matrix
+cormat <- reshape2::melt(cormat, na.rm = TRUE)
+
+# Create a ggheatmap with multiple characteristics 
+ggplot(cormat, aes(Var2, Var1, fill = value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "#15DDD8", high = "#F9D53E", mid = "white",
+                       midpoint = 0, limit = c(-1,1), space = "Lab", name="Pearson\nCorrelation") +
+  ggtitle("Correlation Heatmap") + # Title name
+  theme_minimal() + # Minimal theme, keeps in the lines
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, size = 12, hjust = 1)) +
+  coord_fixed() +
+  geom_text(aes(Var2, Var1, label = value), color = "black", size = 2)
+
+rm(cormat, reorder_cormat)
+```
+
+```{r Correlation Plot}
+plotcorr(cor(diamonds[, -c(2:4)]), col = "#F9D53E",
+         main = "Pearson correlation ellipses for numerical variables")
+```
+
+```{r train-valid-test}
+# set seed for reproducing the partition
+set.seed(111)
+
+# generating training set index
+train.index <- sample(c(1:nrow(diamonds)), 0.5*nrow(diamonds))
+# generating validation set index taken from the complementary of training set
+valid.index <- sample(setdiff(c(1:nrow(diamonds)), train.index), 0.3*nrow(diamonds))
+# defining test set index as complementary of (train.index + valid.index)
+test.index <- as.numeric(setdiff(row.names(diamonds), union(train.index, valid.index)))
+# creating data tables Train, Valid and Test using the indexes
+Train <- diamonds[train.index, ]
+Valid <- diamonds[valid.index, ]
+Test <- diamonds[test.index, ]
+```
+
+# Dimension Reduction Analysis
+
+```{r VIF}
+#diamonds_lm <- lm(price ~ carat + length + width + depth + depth_ratio + table, data = diamonds)
+#diamonds_lm2 <- lm(price ~ carat + depth_ratio + table, data = diamonds)
+#diamonds_lm3 <- lm(price ~ carat + depth + depth_ratio + table, data = diamonds)
+
+#diamonds_vif <- vif(diamonds_lm)
+#VIF(diamonds[, c(5:8)])
+#diamonds_vif2 <- vif(diamonds_lm2)
+
+#diamonds_vif3 <- vif(diamonds_lm3)
+
+
+#summary(diamonds_vif)
+```
+
+
+# Variable Prediction and Model Performance Evaluation
+
+## Linear Regression
+
+```{r}
+
+```
+
+## $k$-NN
+
+```{r}
+
+```
+
+## Regression Tree
+```{r}
+
+```
+
+## NeuralNetworks
+
+```{r}
+
+```
+
+## Ensembles
+
+```{r}
+
+```
+
+# Model Performance Summary
+
+# Conclusions
+
