@@ -280,21 +280,32 @@ library(Metrics)        #for calculating RMSE
 library(caret)          #for dummy variables
 library(fastDummies)
 library(doParallel)     #for parallel computing of neural networks
+library(compiler)
+library(keras)
+library(tensorflow)
+
+path_to_python <- install_python()
+virtualenv_create("r-reticulate", python = path_to_python)
+tf$constant("Hello Tensorflow!")
+
 ```
 
 
 ```{r Dummy ariables}
 #create dummy columns 
-diamonds_dummies <- dummy_cols(diamonds, select_columns = c("cut", "color", "clarity"))
+diamonds_dummies <- diamonds
+diamonds_dummies <- dummy_cols(diamonds_dummies, select_columns = c("cut", "color", "clarity"))
 diamonds_dummies <- diamonds_dummies[,-c(2:4)]
 
 #rename column to avoid issues with Neural net function
-colnames(diamonds_dummies)[10] = "cut_Very_Good"
+colnames(diamonds_dummies_cut)[10] = "cut_Very_Good"
+
+dim(diamonds_dummies)
 ```
 
 ```{r Partitioning}
-train_diamonds <- diamonds_dummies[train.index,]
-valid_diamonds <- diamonds_dummies[valid.index,]
+train_diamonds <- diamonds_dummies_cut[train.index,]
+valid_diamonds <- diamonds_dummies_cut[valid.index,]
 ```
 
 
@@ -312,45 +323,42 @@ valid_diamonds_norm <- predict(norm_values, valid_diamonds)
 ```
 
 
-```{r}
-  layer1 = c(6,12,18,24,30)
-  layer2 = c(6,12,18,24,30)
-  layer3 = c(6,12,18,24,30)
+```{r Keras}
+detectCores()
+getDoParWorkers()
+cl <- makeCluster(4)
+registerDoParallel(cl)
 
-  cv.folds = 5
+NNN <- cmpfun(train)
+set.seed(111)
+system.time(model <- keras_model_sequential() %>%
+                layer_dense(units = 1, activation = "relu", input_shape = c(26)) %>%
+                layer_dense(units = 1))
+            
+model  %>% compile(loss = mse,
+                   optimizer = "rmsprop",
+                   metrics = "rmse")           
 
-  total.param.permutations = length(layer1) * length(layer2) * length(layer3)
+NeuralNetKeras <- model %>%
+                  fit(x= train_diamonds_norm,
+                      y =train_diamonds_norm$price,
+                      epochs = 100,
+                      batch_size = 32,
+                      validation_split = 0.4)
 
-  seeds <- vector(mode = "list", length = cv.folds + 1)
-  set.seed(1)  
-  for(i in 1:cv.folds) seeds[[i]]<- sample.int(n=1, total.param.permutations, replace = TRUE)
-  seeds[[cv.folds + 1]]<-sample.int(1, 1, replace = TRUE) #for the last model
 
-  nn.grid <- expand.grid(layer1 = layer1, layer2 = layer2, layer3 = layer3)
+# diaNeuralNet_1_1 <- tensorflow::train(price ~ .,
+#                           data = train_diamonds_norm,
+#                          method = "mlpKerasDropout",
+#                          trControl = trainControl(method = "cv", number = 10))
 
-  cl <- makeCluster(detectCores()*0.5) # use 50% of cores only, leave rest for other tasks
-  registerDoParallel(cl)
-
-  train_control <- caret::trainControl(method = "cv" 
-                                       ,number=cv.folds 
-                                       ,seeds = seeds # user defined seeds for parallel processing
-                                       ,verboseIter = TRUE
-                                       ,allowParallel = TRUE
-                                       )
-
-  stopCluster(cl)
-  registerDoSEQ()
-
-  tic("Total Time to NN Training: ")
-  set.seed(1)
-  model.nn.caret = caret::train(form = formula,
-                       data = scaled.train.data,
-                       method = 'neuralnet',
-                       tuneGrid = nn.grid,
-                       trControl = train_control
-                       )
- toc()
+stopCluster(cl)
 ```
+```{r}
+predictions <- predict(model, train_diamonds)
+predictions
+```
+
 
 
 ```{r Parallel Computing}
@@ -359,20 +367,14 @@ getDoParWorkers()
 cl <- makeCluster(4)
 registerDoParallel(cl)
 set.seed(1)
+
+NNN <- cmpfun(neuralnet)
 system.time(
-#create neural network 
-diaNeuralNet <- neuralnet(price ~ ., 
+#create neural network
+diaNeuralNet <-neuralnet(price ~ .,
                           data = train_diamonds_norm,
-                          linear.output = TRUE, 
+                          linear.output = TRUE,
                           hidden = 1)
-)
-
-
-system.time(
-  model.nn.caret = caret::train(form = formula,
-                       data = train_diamonds_norm,
-                       method = 'neuralnet'
-                       )
 )
 
 stopCluster(cl)
