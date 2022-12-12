@@ -185,22 +185,31 @@ library(magrittr)
 
 # separating dependent variable from explanatory variables in x_train and y_train
 # converting them to tensors (input type to be used by tensorflow)
-x_train <- train_diamonds_norm[, -c(1)]
-x_train <- as.array(unlist(x_train),
-                    dim = dim(x_train),
-                    dimnames = list(rownames(x_train), colnames(x_train)))
-x_train <- as_tensor(x_train, shape = dim(train_diamonds_norm[, -c(1)]))
-x_train2 <- as_tensor(train_diamonds_norm[, -c(1)])
+# x_train <- train_diamonds_norm[, -c(1)]
+# x_train <- as.array(unlist(x_train),
+#                     dim = dim(x_train),
+#                     dimnames = list(rownames(x_train), colnames(x_train)))
+# x_train <- as_tensor(x_train, shape = dim(train_diamonds_norm[, -c(1)]))
+# x_train2 <- as_tensor(train_diamonds_norm[, -c(1)])
+
 x_train <- as_tensor(train_diamonds_norm[, -c(1)])
 y_train <- as_tensor(train_diamonds_norm$price)
+x_train
+y_train
 
 # same for validation set
 x_valid <- as_tensor(valid_diamonds_norm[, -c(1)])
 y_valid <- as_tensor(valid_diamonds_norm$price)
+x_valid
+y_valid
 
 # creating NN model
 # input_shape must be the number of input nodes (26)
 # as seen in the book, we use the popular sigmoid activation function g(s) = 1/(1 + e^-s)
+
+rm(model)
+tf$random$set_seed(111)
+
 model <- keras_model_sequential(input_shape = ncol(x_train)) %>%
   layer_dense(26, activation = "sigmoid", name = "HiddenLayer") %>%  # 1st hidden layer (26 nodes)
   layer_dense(1, activation = "sigmoid", name = "outputLayer")       # output layer (1 node)
@@ -279,6 +288,7 @@ y_valid_real <- diamonds[valid.index, price]
 # copmuting accuracy measures of validation set
 accuracy(object = y_valid_pred, x = y_valid_real)
 ```
+
 
 
 ```{r}
