@@ -51,14 +51,14 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE, fig.align = "center")
 
 ```{r Libraries}
 library(data.table)     #for reading data.tables
-library(kableExtra)     #for more elaborate tables
-library(ggplot2)        #for making graphs
-library(GGally)         #for making graphs
-library(dplyr)          #for data manipulation
-library(tidyr)          #for changing the shape and hierarchy of a data set
-library(DataExplorer)   #for graphing missing value percentages
-library(car)            #for statistic functions
-library(ellipse)        #for mapping correlation
+# library(kableExtra)     #for more elaborate tables
+# library(ggplot2)        #for making graphs
+# library(GGally)         #for making graphs
+# library(dplyr)          #for data manipulation
+# library(tidyr)          #for changing the shape and hierarchy of a data set
+# library(DataExplorer)   #for graphing missing value percentages
+# library(car)            #for statistic functions
+# library(ellipse)        #for mapping correlation
 
 #source("VIF.R")
 ```
@@ -136,7 +136,7 @@ train.index <- sample(c(1:nrow(diamonds)), 0.5*nrow(diamonds))
 # generating validation set index taken from the complementary of training set
 valid.index <- sample(setdiff(c(1:nrow(diamonds)), train.index), 0.3*nrow(diamonds))
 # defining test set index as complementary of (train.index + valid.index)
-test.index <- as.numeric(setdiff(row.names(diamonds), union(train.index, valid.index)))
+test.index <- as.integer(setdiff(row.names(diamonds), union(train.index, valid.index)))
 # creating data tables Train, Valid and Test using the indexes
 ```
 
@@ -185,6 +185,12 @@ library(magrittr)
 
 # separating dependent variable from explanatory variables in x_train and y_train
 # converting them to tensors (input type to be used by tensorflow)
+x_train <- train_diamonds_norm[, -c(1)]
+x_train <- as.array(unlist(x_train),
+                    dim = dim(x_train),
+                    dimnames = list(rownames(x_train), colnames(x_train)))
+x_train <- as_tensor(x_train, shape = dim(train_diamonds_norm[, -c(1)]))
+x_train2 <- as_tensor(train_diamonds_norm[, -c(1)])
 x_train <- as_tensor(train_diamonds_norm[, -c(1)])
 y_train <- as_tensor(train_diamonds_norm$price)
 
