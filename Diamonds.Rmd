@@ -47,11 +47,6 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE, fig.align = "center")
 #Yellow =       "#F9D53E"
 #Light Gray =   "#F2F2F2"
 #Light Aqua =   "#96EAE3"
-
-#library("colorspace")
-#pal <- choose_palette()
-#display.brewer.all()
-
 ```
 
 ```{r Libraries}
@@ -63,20 +58,9 @@ library(dplyr)          #for data manipulation
 library(tidyr)          #for changing the shape and hierarchy of a data set
 library(DataExplorer)   #for graphing missing value percentages
 library(car)            #for statistic functions
-library(rpart)          # trees
-library(rpart.plot)     # plot trees
-library(forecast)       # accuracy
-library(ggplot2)        # visualizations
-library(rattle) # Graphical Data Interface
-library(RColorBrewer) # Contains a ready-to-use color palettes for creating beautiful graphics
-library(Metrics) # RMSE()
-library(forecast)       # accuracy
-library(caret)
-library(randomForest)
-library(gbm)            # boosting
-library(ipred)
+library(ellipse)        #for mapping correlation
+library(naniar)         #for missing values 
 
-#source("VIF.R")
 ```
 
 # Data Exploration 
@@ -92,24 +76,32 @@ colnames(diamonds)[8] <- "length" # x to length
 colnames(diamonds)[9] <- "width"  # y to width
 colnames(diamonds)[10] <- "depth" # z to depth
 
-diamonds = as.data.frame(diamonds)
+# Set data to frame to rename 'cut' item ("Very Good")
+#diamonds = as.data.frame(diamonds)
 
-diamonds["cut"][diamonds["cut"] == 'Very Good'] <- 'Very_Good'
+# Rename variable cut to fix spacing
+#diamonds["cut"][diamonds["cut"] == 'Very Good'] <- 'Very_Good'
 
-diamonds = as.data.table(diamonds)
+# Reset dataframe back to datatable for analysis
+#diamonds = as.data.table(diamonds)
+```
 
-# add variable to confirm the depth ratio  
-#explain the 2 times x in the depth formula
+## Dimension Summary 
 
+```{r Data Exploration}
 dim(diamonds) # Dimensions of data
 summary(diamonds) # Produce result summaries of all variables
 str(diamonds) # Type of variables
 
 # Number of unique values in each variable
 sapply(diamonds, function(x) length(unique(x)))
+```
 
+## Missing Values
+
+```{r Missing Values}
 # Missing values analysis
-plot_missing(diamonds) # Plots the percentages of missing values
+gg_miss_var(diamonds) + ggtitle("Missing values")
 
 # pairs(diamonds[, c(1, 5:10)])
 ```
@@ -117,11 +109,9 @@ plot_missing(diamonds) # Plots the percentages of missing values
 
 ```{r Variables check}
 # carat no problems
-
-
 unique(diamonds$cut) # Review unique values for cut
 diamonds$cut <- as.factor(diamonds$cut) # Factor the cut to five levels 
-diamonds$cut <- ordered(diamonds$cut, levels = c("Fair", "Good", "Very_Good", "Premium", "Ideal")) # Ordered from worst to best
+diamonds$cut <- ordered(diamonds$cut, levels = c("Fair", "Good", "Very Good", "Premium", "Ideal")) # Ordered from worst to best
 
 unique(diamonds$color) # Review unique values for color
 diamonds$color <- as.factor(diamonds$color) # Factor the color to seven levels 
@@ -130,8 +120,6 @@ diamonds$color <- ordered(diamonds$color, levels = c("J", "I", "H", "G", "F", "E
 unique(diamonds$clarity) # Review unique values for clarity
 diamonds$clarity <- as.factor(diamonds$clarity) # Factor the clarity to eight levels 
 diamonds$clarity <- ordered(diamonds$clarity, levels = c("I1", "SI2", "SI1", "VS2", "VS1", "VVS2", "VVS1", "IF")) # Ordered from worst to best
-
-
 
 # table is ok
 
@@ -166,7 +154,7 @@ diamonds[, diff := NULL]
 diamonds <- diamonds[, c(7, 2:4, 1, 8:10, 5:6)]
 ```
 
-```{r,fig.width = 6, fig.height = 4}
+```{r ggpairs, fig.width = 6, fig.height = 4}
 # Used ggpairs to create a scatterplot matrix
 # ggpairs(diamonds[, c(1, 5:10)], title = "Scatterplot Matrix",
 #          proportions = "auto",
@@ -174,79 +162,85 @@ diamonds <- diamonds[, c(7, 2:4, 1, 8:10, 5:6)]
 #          upper = list(continuous = wrap('cor',size = 3)),) + theme_light()
 ```
 
-```{r}
-ggplot(aes(x = carat, y = price), data = diamonds) + 
-  geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
-  scale_color_brewer(type = 'div',
-                     guide = guide_legend(title = 'Clarity', reverse = T,
-                                          override.aes = list(alpha = 1, size = 2))) +                         
-  ggtitle('Price by Carat and Clarity')
+```{r Price by Carat and Clarity}
+# Create plot that looks at carat and price
+ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Carat and Clarity')
 ```
 
-```{r}
-plot(diamonds$depth_ratio,diamonds$price)
+```{r Price Correlation}
+# Correlation between price and quantitative variables
+price_correlation <- with(diamonds,
+     data.frame(cor_length_price = cor(length, price), cor_width_price = cor(width, price), cor_depth_price = cor(depth, price), cor_depth_ratio_price = cor(depth_ratio, price), cor_table_price2 = cor(table, price), cor_carat_price3 = cor(carat, price)))
+
+# Transpose data and put into kable format
+transpose <- t(sort(round(price_correlation,4),decreasing = FALSE))
+kable_corr <- kable(transpose) %>% kable_classic() 
+kable_corr
 ```
 
+```{r Depth Ratio vs Price}
+plot(diamonds$depth_ratio,diamonds$price, col = "#F9D53E")
+```
 
-```{r}
-diamonds %>% gather() %>% head() # Reshaping the data which means it collects a set of column names and places them into a single “key” column
+## Variable Visualisation
 
-ggplot(gather(data = diamonds[, c(1, 5:10)]),aes(value)) +
-  geom_histogram(aes(y=..density..),bins = 10, color = "white", fill = "blue") + # Creates bin sizing and sets the lines as white
-  geom_density(alpha= .2, fill="#56B4E9") +
-  facet_wrap(~key,scales = "free") + # Converting the graphs into panels
+```{r Histograms,fig.width = 4, fig.height = 4}
+ggplot(gather(data = diamonds[, c(1, 5:10)]), aes(value)) +
+  geom_histogram(aes(y = after_stat(density)),
+                 bins = 10,
+                 color = "white",
+                 fill = "#F9D53E") + # Creates bin sizing and sets the lines as white
+  geom_density(alpha = .2, fill = "#F9D53E") +
+  facet_wrap(~ key, scales = "free") + # Converting the graphs into panels
   ggtitle("Quantitative Variable Analysis") + # Title name
   ylab("Count") + xlab("Value") + # Label names
   theme_classic() # A classic theme, with x and y axis lines and no grid lines
 ```
 
-```{r}
+```{r Correlation, fig.width = 4, fig.height = 4}
 # Create heatmap to show variable correlation
-cormat <- round(cor(diamonds[, c(1, 5:10)]),2) # Round the correlation coefficient to two decimal places
-
-melted_cormat <- melt(cormat) # One way to reshape and elongate the data frame
-
-# Get upper triangle of the correlation matrix
-  get_upper_tri <- function(cormat){ 
-    cormat[lower.tri(cormat)]<- NA
-    return(cormat)
-  }
-
-# Rename the correlation coefficient value
-upper_tri <- get_upper_tri(cormat)
-upper_tri
+# Round the correlation coefficient to two decimal places
+cormat <- round(cor(diamonds[, c(1, 5:10)]), 2)
 
 # Use correlation between variables as distance
 reorder_cormat <- function(cormat){ 
 dd <- as.dist((1-cormat)/2)
 hc <- hclust(dd)
 cormat <-cormat[hc$order, hc$order]
+return(cormat)
 }
 
 # Reorder the correlation matrix
 cormat <- reorder_cormat(cormat)
-upper_tri <- get_upper_tri(cormat)
+
+# Keeping only upper triangular matrix
+# upper_tri returns TRUE/FALSE for each coordinate (TRUE -> part of upper triangle)
+# multiplying will thus keep the upper triangle values and set the others to 0
+cormat <- cormat*upper.tri(cormat, diag = TRUE)
+# Values of the lower triangle (0) are replaced by NA
+cormat[cormat == 0] <- NA
 
 # Melt the correlation matrix
-melted_cormat <- melt(upper_tri, na.rm = TRUE)
+cormat <- reshape2::melt(cormat, na.rm = TRUE)
 
 # Create a ggheatmap with multiple characteristics 
-ggheatmap <- ggplot(melted_cormat, aes(Var2, Var1, fill = value)) +
+ggplot(cormat, aes(Var2, Var1, fill = value)) +
   geom_tile(color = "white") +
-  scale_fill_gradient2(low = "purple", high = "blue", mid = "white", midpoint = 0, limit = c(-1,1), space = "Lab", name="Pearson\nCorrelation") +
+  scale_fill_gradient2(low = "#15DDD8", high = "#F9D53E", mid = "white",
+                       midpoint = 0, limit = c(-1,1), space = "Lab", name="Pearson\nCorrelation") +
   ggtitle("Correlation Heatmap") + # Title name
   theme_minimal() + # Minimal theme, keeps in the lines
   theme(axis.text.x = element_text(angle = 45, vjust = 1, size = 12, hjust = 1)) +
   coord_fixed() +
   geom_text(aes(Var2, Var1, label = value), color = "black", size = 2)
 
-# Print the heat map
-print(ggheatmap)
+rm(cormat, reorder_cormat)
 ```
 
-```{r}
-library(ellipse)
-plotcorr(cor(diamonds[, -c(2:4)]))
+```{r Correlation Plot,fig.width = 5, fig.height = 5}
+plotcorr(cor(diamonds[, -c(2:4)]), col = "#F9D53E",
+         main = "Pearson correlation ellipses for numerical variables")
 ```
 
 ```{r train-valid-test}
@@ -265,29 +259,117 @@ Valid <- diamonds[valid.index, ]
 Test <- diamonds[test.index, ]
 ```
 
-```{r Data Processing - Trees}
+# Dimension Reduction Analysis
+
+```{r VIF}
+#diamonds_lm <- lm(price ~ carat + length + width + depth + depth_ratio + table, data = diamonds)
+#diamonds_lm2 <- lm(price ~ carat + depth_ratio + table, data = diamonds)
+#diamonds_lm3 <- lm(price ~ carat + depth + depth_ratio + table, data = diamonds)
+
+#diamonds_vif <- vif(diamonds_lm)
+#VIF(diamonds[, c(5:8)])
+#diamonds_vif2 <- vif(diamonds_lm2)
+
+#diamonds_vif3 <- vif(diamonds_lm3)
+
+
+#summary(diamonds_vif)
+```
+
+
+# Variable Prediction and Model Performance Evaluation
+
+## Linear Regression
+
+```{r}
+
+```
+
+## $k$-NN
+
+```{r}
+library(FNN)      #for finding k nearest neighbor
+```
+
+
+```{r}
+diamonds_dummies <- diamonds
+diamonds_dummies <- dummy_cols(diamonds_dummies, select_columns = c("cut", "color", "clarity"))
+diamonds_dummies <- diamonds_dummies[,-c(2:4)]
+
+#rename column to avoid issues with Neural net function
+colnames(diamonds_dummies)[10] = "cut_Very_Good"
+
+```
+
+
+```{r}
+#create data frames to normalize
+knn_train <- diamonds_dummies[train.index,]
+knn_valid <- diamonds_dummies[valid.index,]
+
+knn_train_norm <- knn_train
+knn_valid_norm <- knn_valid
+
+# use preProcess() to normalize non-categorical variables
+norm_values <- preProcess(knn_train[, c(1:7)], method=c("center", "scale"))
+
+knn_train_norm[, c(1:7)] <- predict(norm_values, knn_train[, c(1:7)])
+knn_valid_norm[,c(1:7)] <- predict(norm_values, knn_valid[, c(1:7)])
+
+# Compute k=1 nearest neighbor 
+nn1 <- FNN::knn.reg(train = knn_train_norm[, -1], 
+          test = knn_train_norm[, -1],
+          y= knn_train_norm[, 1],
+          k = 1)
+
+length(knn_train_norm[, -1])
+length(knn_train_norm[, 1])
+
+
+nn1$
+summary(nn1)
+
+#display results
+row.names(knn_train)[attr(nn1, "nn.index")]
+nn1
+```
+
+
+## Regression Tree
+
+### Loading Libraries
+
+```{r Libraries}
+library(RColorBrewer)   #for graph colors
+library(rattle)         #Graphical Data Interface
+library(rpart)          #for regression trees
+library(rpart.plot)     #for plot trees
+library(forecast)       #for accuracy
+library(ggplot2)        #for visualizations
+library(caret)          #for variable importance
+library(randomForest)   #for randomForest
+library(gbm)            #for boosting
+library(ipred)          #for bagging
+library(xgboost)        #for fitting GBMs
+library(vip)            #for variable importance
+```
+
+### Partitioning
+
+```{r RT - Train, Valid, Test }
+#Rename data specifically for regression trees
 diamonds_tree <- diamonds
 
-Train <- diamonds_tree[train.index, ]
-Valid <- diamonds_tree[valid.index, ]
+# Creating data tables Train, Valid and Test using the indexes for the regression tree section
+Train <- diamonds[train.index, ]
+Valid <- diamonds[valid.index, ]
 ```
 
-```{r Correlation - Price and Continuous Variables}
-price_correlation <- with(diamonds,
-     data.frame(cor_length_price = cor(length, price),
-                cor_width_price = cor(width, price),
-                cor_depth_price = cor(depth, price),
-                cor_depth_ratio_price = cor(depth_ratio, price),
-                cor_table_price2 = cor(table, price),
-                cor_carat_price3 = cor(carat, price)
-     )
-)
+### Regression Tree
 
-kable(price_correlation) %>% kable_classic() 
-```
-
-
-```{r Regression (All) Tree, fig.width = 10, fig.height = 4}
+```{r Default Regression Tree}
+# Use rpart() to run tree on continuous response 
 RegressTree <- rpart(price ~ ., 
               data = Train, 
               method = "anova") 
@@ -295,26 +377,37 @@ RegressTree <- rpart(price ~ .,
 # Generates a cost complexity parameter table that provides the complexity parameter value
 #summary(RegressTree)
 
-# Count number of leaves 
-length(RegressTree$frame$var[RegressTree$frame$var == "<leaf>"]) # 
-
 # Plots a regression tree
 fancyRpartPlot(RegressTree, caption = NULL, main = "Regression Tree", palettes = "YlGnBu", digits = -3)
+
+# Count number of leaves 
+length(RegressTree$frame$var[RegressTree$frame$var == "<leaf>"]) 
 ```
 
-```{r}
+```{r ktable Importance - RegressTree}
 # kable and kable_styling as before
-# we multiply by 100, divide by the sum and round the percentages to 2 decimals.
-kable_styling(kable(round(100*RegressTree$variable.importance / sum(RegressTree$variable.importance), 2), col.names = "Importance %"), full_width = FALSE)
+# We multiply by 100, divide by the sum and round the percentages to 2 decimals
+kable_styling(kable(round(100*RegressTree$variable.importance / sum(RegressTree$variable.importance), 2), col.names = "Importance %"), full_width = FALSE) %>% kable_classic() 
 ```
 
-```{r RegressTree RSME}
-RegressTree_pred = predict(RegressTree, newdata= Train)
-RMSE_RT = sqrt(mean((Train$price-RegressTree_pred)^2))
-RMSE_RT
+```{r Error Details on Default Tree - Valid}
+# Predict errors using accuracy() 
+tree_aa1 <- forecast::accuracy(predict(RegressTree, Valid), Valid$price)
+
+kable(tree_aa1) %>% kable_classic() 
 ```
 
-```{r}
+```{r Default Tree Predictions}
+# Predict the diamond price with validation
+pred_Diamond_test <- predict(RegressTree, newdata = Valid)
+
+# Display first 14 observations
+head(pred_Diamond_test,14)
+```
+
+### 'Exlcusion' Regression Tree 
+
+```{r Default Regression Tree Minus Variables}
 RegressTree2 <- rpart(price ~ length+width+depth+carat+cut+color+clarity, 
               data = Train, 
               method = "anova") 
@@ -322,133 +415,167 @@ RegressTree2 <- rpart(price ~ length+width+depth+carat+cut+color+clarity,
 # Generates a cost complexity parameter table that provides the complexity parameter value
 #summary(RegressTree2)
 
-# Count number of leaves 
-length(RegressTree$frame$var[RegressTree2$frame$var == "<leaf>"]) # 
-
 # Plots a regression tree
 fancyRpartPlot(RegressTree2, caption = NULL, main = "Exclusion Regression Tree", palettes = "YlGnBu", digits = -3)
 ```
 
-```{r}
+```{r ktable Importance - RegressTree2}
 # kable and kable_styling as before
-# we multiply by 100, divide by the sum and round the percentages to 2 decimals.
-kable_styling(kable(round(100*RegressTree2$variable.importance / sum(RegressTree2$variable.importance), 2), col.names = "Importance %"), full_width = FALSE)
+# We multiply by 100, divide by the sum and round the percentages to 2 decimals
+kable_styling(kable(round(100*RegressTree2$variable.importance / sum(RegressTree2$variable.importance), 2), col.names = "Importance %"), full_width = FALSE) %>% kable_classic() 
 ```
 
-```{r RegressTree2 RSME}
-p <- predict(RegressTree2, Train)
-RMSE <- sqrt(mean((Train$price-p)^2))
-RMSE
+```{r Error Details on RegressTree2 - Valid}
+# Predict errors using accuracy() 
+tree_aa2 <- forecast::accuracy(predict(RegressTree2, Valid), Valid$price)
 
-result = rmse(Train$price, p)
-result
-result2 = mse(Train$price, p)
-result2
-
-R_sq <- (cor(Train$price,p))^2
-R_pct <- R_sq*100
-R_pct
-
-RegressTree2_pred = predict(RegressTree2, newdata= Train)
-RMSE_RT2 = sqrt(mean((Train$price-RegressTree2_pred)^2))
-RMSE_RT2
-
-# Calculate MSE
-MSE_RT2 <- mean((Train$price-RegressTree2_pred)^2)
-MSE_RT2
+kable(tree_aa2) %>% kable_classic() 
 ```
 
-```{r}
-forecast::accuracy(predict(RegressTree, Train), Train$price)
+```{r Default Tree Predictions2}
+# Predict the diamond price with validation
+pred_Diamond_test2 <- predict(RegressTree2, newdata = Valid)
 
-forecast::accuracy(predict(RegressTree, Valid), Valid$price)
+# Display first 14 observations
+head(pred_Diamond_test2,14)
 ```
 
-
-
-```{r}
-pred_Diamond_test <- predict(RegressTree2, newdata = Valid)
-head(pred_Diamond_test,14)
-```
-
-```{r}
+```{r CP Value}
 #Get the lowest CP value from CP table
 min.xerror <- RegressTree2$cptable[which.min(RegressTree2$cptable[,"xerror"]),"CP"]
 
 min.xerror
 ```
 
-```{r}
+```{r Plot Cp}
+#Plot the optimal Cp value
 plotcp(RegressTree2)
 ```
 
+### Pruned Regression Tree
 
-```{r}
+```{r Pruned Regression Tree Minus Variables}
 RegressTree_pruned <- prune(RegressTree2, cp = min.xerror) 
 
 # Draw the prune tree
 fancyRpartPlot(RegressTree_pruned, caption = NULL, main = "'Pruned' Regression Tree", palettes = "YlGnBu", digits = -3)
 ```
 
-```{r}
-#pred_RegressTree_pruned <- predict(RegressTree_pruned, newdata = Train)
+```{r Error Details on Prune_RegressTree2 - Valid}
+# Predict errors using accuracy() 
+tree_aa3 <- forecast::accuracy(predict(RegressTree_pruned, Valid), Valid$price)
 
-#fitcorr <- format(cor(Valid$price, pred_RegressTree_pruned)^2, digits=4)
-
-#fitcorr
+kable(tree_aa3) %>% kable_classic() 
 ```
 
-
-# Predictions
+### Boosted Tree
 
 ```{r}
+set.seed(111)
+bst <- xgboost(
+data = data.matrix(subset(Train, select = -price)),
+label = Train$price,
+objective = "reg:squarederror",
+nrounds = 100,
+max_depth = 5,
+eta = 0.3,
+verbose = 0 # suppress printing
+)
 
-Train$cut <- as.factor(Train$cut)
-Train$color <- as.factor(Train$color)
-Train$clarity <- as.factor(Train$clarity)
+vip::vip(bst, aesthetics = list(fill = "#F9D53E")) +
+  ggtitle("XGBoosted Tree Variable Importance") + # Title name
+  xlab("Variable") + # Label names
+  theme_classic() # A classic theme, with x and y axis lines and no grid lines
 
+bst
+
+```
+
+**Source**: https://cran.r-project.org/web/packages/vip/vignettes/vip-introduction.pdf
+
+```{r}
+min(bst$test.error.mean)
+```
+
+```{r Boosted Tree 10}
 # Boosted tree
 set.seed(111)
-tree_boost10 <- gbm(price ~., data = Train, distribution = "gaussian", n.trees = 10)
+tree_boost10 <- gbm(price ~., data = Train, distribution = "gaussian", n.trees = 10, interaction.depth = 6, shrinkage = 0.01)
+
+# Interaction Depth specifies the maximum depth of each tree( i.e. highest level of variable interactions allowed while training the model). Default is 1.
+# Shrinkage is considered as the learning rate. It is used for reducing, or shrinking, the impact of each additional fitted base-learner (tree).  It reduces the size of incremental steps and thus penalizes the importance of each consecutive iteration. Default is 0.1
+#n.trees: Integer specifying the total number of trees to fit. This is equivalent to the number of iterations and the number of basis functions in the additive expansion. Default is 100.
+
+
 tree_boost10
 
-summary(tree_boost10)
+vip::vip(tree_boost10, aesthetics = list(fill = "#F9D53E")) +
+  ggtitle("Boosted Tree Variable Importance") + # Title name
+  xlab("Variable") + # Label names
+  theme_classic() # A classic theme, with x and y axis lines and no grid lines
 ```
 
-```{r}
+```{r Error Details on tree_boost10 - Valid}
+# Predict errors using accuracy() 
+tree_aa4 <- forecast::accuracy(predict(tree_boost10, Valid), Valid$price)
+
+kable(tree_aa4) %>% kable_classic() 
+```
+
+```{r Boosted Tree 30}
 # Boosted tree
 set.seed(111)
 tree_boost30 <- gbm(price ~., data = Train, distribution = "gaussian", n.trees = 30)
-tree_boost30
 
-summary(tree_boost30)
+vip::vip(tree_boost30, aesthetics = list(fill = "#F9D53E")) +
+  ggtitle("Boosted Tree Variable Importance") + # Title name
+  xlab("Variable") + # Label names
+  theme_classic() # A classic theme, with x and y axis lines and no grid lines
+
+tree_boost30
 ```
 
-```{r}
+```{r Error Details on tree_boost30}
+# Predict errors using accuracy() 
+tree_aa5 <- forecast::accuracy(predict(tree_boost30, Train), Train$price)
+
+kable(tree_aa5) %>% kable_classic() 
+```
+
+```{r Boosted Tree 100}
 # Boosted tree
 set.seed(111)
 tree_boost100 <- gbm(price ~., data = Train, distribution = "gaussian", cv.folds = 3)
+
+# cv.folds: Number of cross-validation folds to perform. If cv.folds>1 then gbm, in addition to the usual fit, will perform a cross-validation, calculate an estimate of generalization error returned in cv.error.
+
+vip::vip(tree_boost100, aesthetics = list(fill = "#F9D53E")) +
+  ggtitle("Boosted Tree Variable Importance") + # Title name
+  xlab("Variable") + # Label names
+  theme_classic() # A classic theme, with x and y axis lines and no grid lines
+
 tree_boost100
-
-summary(tree_boost100)
 ```
 
-```{r}
-ntree_opt_cv <- gbm.perf(tree_boost100, method = "cv")
+```{r Error Details on tree_boost100}
+# Predict errors using accuracy() 
+tree_aa6 <- forecast::accuracy(predict(tree_boost100, Valid), Valid$price)
 
+kable(tree_aa6) %>% kable_classic()
+```
+
+```{r Boosted Tree 100 with oob}
 ntree_opt_oob <- gbm.perf(tree_boost100, method = "OOB")
+ntree_opt_oob
+
+# Indicate the method used to estimate the optimal number of boosting iterations. method = "OOB" computes the out-of-bag estimate and method = "test" uses the test (or validation) dataset to compute an out-of-sample estimate. method = "cv" extracts the optimal number of iterations using cross-validation if gbm was called with cv.folds > 1.
 ```
 
-
-```{r}
-pred_boost <- predict.gbm(object = tree_boost100, newdata = Valid, n.trees = 100)
-
-head(tree_boost100,14)
+```{r Predict Boosting}
+pred_boost <- predict.gbm(tree_boost100, newdata = Valid)
 ```
 
-```{r}
-forecast::accuracy(predict(tree_boost100, Valid), Valid$price)
-```
+### Bagging Tree
 
 ```{r Bagged Tree}
 # Bagged tree
@@ -457,25 +584,27 @@ tree_bagging <- bagging(price ~., data = Train, coob = TRUE)
 tree_bagging
 ```
 
-```{r}
-pred.imp <- varImp(tree_bagging)
-pred.imp
+```{r Plot IV}
+pred_imp <- varImp(tree_bagging)
 
 #sort variable importance descending
-VI_plot <- pred.imp[order(pred.imp$Overall, decreasing=TRUE),]
+VI_plot <- pred_imp[order(pred_imp$Overall, decreasing=FALSE),]
 
 #visualize variable importance with horizontal bar plot
-barplot(pred.imp$Overall,
-        names.arg=rownames(pred.imp),
+barplot(sort(pred_imp$Overall, decreasing = FALSE),
+        names.arg=rownames(pred_imp),
         horiz=TRUE,
-        col='steelblue',
-        xlab='Variable Importance')
+        col="#F9D53E", las = 1)
+
+# Add a main title and bottom and left axis labels
+title("Variable Importance ", xlab="Importance")
 ```
 
-```{r}
-forecast::accuracy(predict(tree_bagging, Valid), Valid$price)
-```
+```{r Errors Bagging}
+tree_aa7 <- forecast::accuracy(predict(tree_bagging, Valid), Valid$price)
 
+kable(tree_aa7) %>% kable_classic()
+```
 
 ```{r}
 pred_bagged <- predict(tree_bagging, newdata = Valid)
@@ -483,21 +612,467 @@ pred_bagged <- predict(tree_bagging, newdata = Valid)
 head(pred_bagged,14)
 ```
 
+### RandomForest
 
-```{r Random Forest}
+```{r randomForest}
 options(scipen = 9999)
-rdf.model <- randomForest(price~ ., ntree= 100, data = Train)
-plot(rdf.model)
-rdf.model
+
+# Create randomForest
+set.seed(111)
+rdf_model <- randomForest(price~ ., ntree= 60, data = Train)
+plot(rdf_model)
+```
+
+```{r Optimal Random Trees}
+# Number of trees with lowest MSE
+# Compared with 80 and 100 trees, the trade-off with both of those were small so we stuck with 60 trees
+which.min(rdf_model$mse)
 ```
 
 ```{r}
-# number of trees with lowest MSE
-which.min(rdf.model$mse)
+options(scipen = 9999)
 
-forecast::accuracy(predict(rdf.model, Valid), Valid$price)
+# Create variable importance chart
+vip::vip(rdf_model, aesthetics = list(fill = "#F9D53E")) +
+  ggtitle("RandomTree Variable Importance") + # Title name
+  xlab("Variable") + # Label names
+  theme_classic() # A classic theme, with x and y axis lines and no grid lines
 ```
+
+```{r}
+tree_aa8 <- forecast::accuracy(predict(rdf_model, Valid), Valid$price)
+
+kable(tree_aa8) %>% kable_classic()
+```
+
+### Create Regression Tree Summary Table
+
+```{r}
+Tree_res <- data.frame("Model_Tree" = c("Regression Tree",
+                                 "Exclusion RT",
+                                 "Pruned RT",
+                                 "Boost10",
+                                 "Boost30",
+                                 "Boost100",
+                                 "Bagging",
+                                 "RandomForest"),
+                     "ME" = "",
+                     "RMSE" = "",
+                     "MAE"= "",
+                     "MPE" = "",
+                     "MAPE" = "")
+
+rownames(Tree_res) <- Tree_res$Model_Tree
+Tree_res$Model_Tree = NULL
+
+str(round(get(paste("tree_aa", "1", sep ="")),2))
+
+for (i in 1:8) {
+  Tree_res[i,]= round(get(paste("tree_aa", i, sep ="")),2)
+}
+
+kable_styling(kable(Tree_res, full_width = FALSE))
+
+barplot(RMSEplotdata, col = "#F9D53E")
+RMSEplotdata <- t(Tree_res$RMSE)
+colnames(RMSEplotdata) <- t(rownames(Tree_res))
+
+```
+
+## NeuralNetworks
+
+### Loading Libraries
+
+```{r Set Libraries}
+library(forecast)        #for calculating RMSE
+library(caret)          #for dummy variables
+library(fastDummies)
+library(keras)          #front-end library for neural networks
+library(tensorflow)     #backend python library for neural network
+library(magrittr)
+tf$constant("Hello Tensorflow!")
+```
+
+### Data preprocessing
+
+```{r Dummy ariables}
+#create dummy columns 
+diamonds_dummies <- dummy_cols(diamonds, select_columns = c("cut", "color", "clarity"))
+diamonds_dummies <- diamonds_dummies[,-c(2:4)]
+
+#rename column to avoid issues with Neural net function
+colnames(diamonds_dummies)[10] = "cut_Very_Good"
+```
+
+### Partitioning
+
+```{r Partitioning}
+train_diamonds <- diamonds_dummies[train.index,]
+valid_diamonds <- diamonds_dummies[valid.index,]
+```
+
+### Normalizing Data
+
+```{r Normalize}
+# use preProcess() to normalize non-categorical variables
+norm_values <- preProcess(train_diamonds[1:7], method= c("range"))
+
+train_diamonds_norm <- predict(norm_values, train_diamonds)
+valid_diamonds_norm <- predict(norm_values, valid_diamonds)
+```
+
+### Model 1 (Layers = 1, Nodes = 1)
+
+* Creating Model 1
+
+```{r NN L1 N1 Model}
+#create data sets to train and validate the model
+#train
+x_train <- c(t(train_diamonds_norm[, -c(1)]))
+x_train <- as.array(x_train,
+                    dim(t(train_diamonds_norm[, -c(1)])),
+                    dimnames = list(rownames(x_train), colnames(x_train)))
+x_train <- as_tensor(x_train, shape = dim(train_diamonds_norm[, -c(1)]))
+y_train <- as_tensor(train_diamonds_norm$price)
+
+#validation
+x_valid <- c(t(valid_diamonds_norm[, -c(1)]))
+x_valid <- as.array(x_valid,
+                    dim(t(valid_diamonds_norm[, -c(1)])),
+                    dimnames = list(rownames(x_valid), colnames(x_valid)))
+x_valid <- as_tensor(x_valid, shape = dim(valid_diamonds_norm[, -c(1)]))
+y_valid <- as_tensor(valid_diamonds_norm$price)
+
+#create model
+rm(model_1_1) #to prevent retraining of existing model
+tf$random$set_seed(111)
+model_1_1 <- keras_model_sequential(input_shape = ncol(x_train)) %>%
+  layer_dense(1, activation = "sigmoid", name = "HiddenLayer") %>%  # 1st hidden layer (26 nodes)
+  layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
+  
+
+#compile the model to be trained            
+model_1_1 %>% compile(
+  optimizer = optimizer_adam(),
+  loss = loss_mean_squared_error(),
+  metric = metric_root_mean_squared_error()
+  )
+
+#train the model and find the lowest rmse
+history <- model_1_1 %>% fit(
+    x = x_train,
+    y = y_train,
+    validation_data = c(x_valid, y_valid),
+    verbose = FALSE
+    )
+```
+
+* Measuring Error Model 1
+
+```{r L1 N1 Pred}
+# prediction values of validation set
+y_valid_pred <- predict(model_1_1, x_valid)
+
+# fetching a and b from standardization for scaling back price
+a <- norm_values$ranges[1,1]
+b <- norm_values$ranges[2,1]
+
+valRescale <- function (x) { 
+  value <- (x * (b-a) + a)
+  return(value)
+}
+
+# scaling back price predictions
+y_valid_pred <- valRescale(y_valid_pred)
+
+# we have to change the class of y_valid_pred
+class(y_valid_pred)
+y_valid_pred <- as.numeric(y_valid_pred)
+class(y_valid_pred)
+
+# taking real values of validation set from original data (which wasn't standardized!)
+y_valid_real <- diamonds[valid.index, price]
+
+# copmuting accuracy measures of validation set
+acc_1 <- accuracy(object = y_valid_pred, x = y_valid_real)
+acc_1
+
+```
+
+### Model 2 (Layers = 1, Nodes = 26)
+
+* Creating Model 2
+
+```{r L1 N26 Model}
+#create model
+rm(model_1_26) #to prevent retraining of existing model
+tf$random$set_seed(111)
+model_1_26 <- keras_model_sequential(input_shape = ncol(x_train)) %>%
+  layer_dense(26, activation = "sigmoid", name = "HiddenLayer") %>%  # 1st hidden layer (26 nodes)
+  layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
+  
+
+#compile the model to be trained            
+model_1_26 %>% compile(
+  optimizer = optimizer_adam(),
+  loss = loss_mean_squared_error(),
+  metric = metric_root_mean_squared_error()
+  )
+
+#train the model and find the lowest rmse
+history <- model_1_26 %>% fit(
+    x = x_train,
+    y = y_train,
+    validation_data = c(x_valid, y_valid),
+    verbose = FALSE
+    )
+```
+
+* Measuring Error Model 2
+
+```{r L1 N26 Pred}
+# prediction values of validation set
+y_valid_pred_1_26 <- predict(model_1_26, x_valid)
+
+# scaling back price predictions
+y_valid_pred_1_26 <- valRescale(y_valid_pred_1_26)
+
+# we have to change the class of y_valid_pred
+y_valid_pred_1_26 <- as.numeric(y_valid_pred_1_26)
+
+# copmuting accuracy measures of validation set
+acc_2 <- accuracy(object = y_valid_pred_1_26, x = y_valid_real)
+acc_2
+```
+
+### Model 3 (Layers = 1, Nodes = 13)
+
+* Creating Model 3
+
+```{r L1 N26 Model}
+#create model
+rm(model_1_13) #to prevent retraining of existing model
+tf$random$set_seed(111)
+model_1_13 <- keras_model_sequential(input_shape = ncol(x_train)) %>%
+  layer_dense(13, activation = "sigmoid", name = "HiddenLayer") %>%  # 1st hidden layer (26 nodes)
+  layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
+  
+
+#compile the model to be trained            
+model_1_13 %>% compile(
+  optimizer = optimizer_adam(),
+  loss = loss_mean_squared_error(),
+  metric = metric_root_mean_squared_error()
+  )
+
+#train the model and find the lowest rmse
+history <- model_1_13 %>% fit(
+    x = x_train,
+    y = y_train,
+    validation_data = c(x_valid, y_valid),
+    verbose = FALSE
+    )
+```
+
+* Measuring Error Model 3
+
+```{r L1 N26 Pred}
+# prediction values of validation set
+y_valid_pred_1_13 <- predict(model_1_13, x_valid)
+
+# scaling back price predictions
+y_valid_pred_1_13 <- valRescale(y_valid_pred_1_13)
+
+# we have to change the class of y_valid_pred
+y_valid_pred_1_13 <- as.numeric(y_valid_pred_1_13)
+
+# copmuting accuracy measures of validation set
+acc_3 <- accuracy(object = y_valid_pred_1_13, x = y_valid_real)
+acc_3
+```
+
+### Model 4 (Layers = 2, Nodes = 26)
+
+* Creating Model 4
+
+```{r L2 N26 Model}
+#create model
+rm(model_2_26) #to prevent retraining of existing model
+tf$random$set_seed(111)
+model_2_26 <- keras_model_sequential(input_shape = ncol(x_train)) %>%
+  layer_dense(26, activation = "sigmoid", name = "HiddenLayer") %>%  # 1st hidden layer (26 nodes)
+  layer_dense(26, activation = "sigmoid", name = "HiddenLayer2") %>%  # 1st hidden layer (26 nodes)
+  layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
+  
+
+#compile the model to be trained            
+model_2_26 %>% compile(
+  optimizer = optimizer_adam(),
+  loss = loss_mean_squared_error(),
+  metric = metric_root_mean_squared_error()
+  )
+
+#train the model and find the lowest rmse
+history <- model_2_26 %>% fit(
+    x = x_train,
+    y = y_train,
+    validation_data = c(x_valid, y_valid),
+    verbose = FALSE
+    )
+```
+
+* Measuring Error Model 4
+
+```{r L2 N26 Pred}
+# prediction values of validation set
+y_valid_pred_2_26 <- predict(model_2_26, x_valid)
+
+# scaling back price predictions
+y_valid_pred_2_26 <- valRescale(y_valid_pred_2_26)
+
+# we have to change the class of y_valid_pred
+y_valid_pred_2_26 <- as.numeric(y_valid_pred_2_26)
+
+# copmuting accuracy measures of validation set
+acc_4 <- accuracy(object = y_valid_pred_2_26, x = y_valid_real)
+acc_4
+```
+
+
+### Model 5 with Initializer (Layers = 2, Nodes = 26, GlorotNormal)
+
+* Creating Model 5
+
+```{r L2 N26 Glot Model}
+#create model
+rm(model_2_26G) #to prevent retraining of existing model
+tf$random$set_seed(111)
+model_2_26G <- keras_model_sequential(input_shape = ncol(x_train)) %>%
+  layer_dense(26, activation = "sigmoid", name = "HiddenLayer", kernel_initializer = "GlorotNormal") %>%  # 1st hidden layer (26 nodes)
+  layer_dense(26, activation = "sigmoid", name = "HiddenLayer2", kernel_initializer = "GlorotNormal") %>%  # 1st hidden layer (26 nodes)
+  layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
+  
+
+#compile the model to be trained            
+model_2_26G %>% compile(
+  optimizer = optimizer_adam(),
+  loss = loss_mean_squared_error(),
+  metric = metric_root_mean_squared_error()
+  )
+
+#train the model and find the lowest rmse
+history <- model_2_26G %>% fit(
+    x = x_train,
+    y = y_train,
+    validation_data = c(x_valid, y_valid),
+    verbose = FALSE
+    )
+```
+
+* Measuring Error Model 5
+
+```{r L2 N26 Glot Pred}
+# prediction values of validation set
+y_valid_pred_2_26G <- predict(model_2_26G, x_valid)
+
+# scaling back price predictions
+y_valid_pred_2_26G <- valRescale(y_valid_pred_2_26G)
+
+# we have to change the class of y_valid_pred
+y_valid_pred_2_26G <- as.numeric(y_valid_pred_2_26G)
+
+# copmuting accuracy measures of validation set
+acc_5 <- accuracy(object = y_valid_pred_2_26G, x = y_valid_real)
+acc_5
+```
+
+
+### Model 6 with Initializer and Learning Rate (Layers = 2, Nodes = 26, GlorotNormal, LR = 0.005)
+
+* Creating model 6
+
+```{r L2 N26 Glot LR Model}
+#create model
+rm(model_2_26GLR) #to prevent retraining of existing model
+tf$random$set_seed(111)
+model_2_26GLR <- keras_model_sequential(input_shape = ncol(x_train)) %>%
+  layer_dense(26, activation = "sigmoid", name = "HiddenLayer", kernel_initializer = "GlorotNormal") %>%  # 1st hidden layer (26 nodes)
+  layer_dense(26, activation = "sigmoid", name = "HiddenLayer2", kernel_initializer = "GlorotNormal") %>%  # 1st hidden layer (26 nodes)
+  layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
+  
+
+#compile the model to be trained            
+model_2_26GLR %>% compile(
+  optimizer = optimizer_adam(learning_rate = 0.009),
+  loss = loss_mean_squared_error(),
+  metric = metric_root_mean_squared_error()
+  )
+
+#train the model and find the lowest rmse
+history <- model_2_26GLR %>% fit(
+    x = x_train,
+    y = y_train,
+    validation_data = c(x_valid, y_valid),
+    verbose = FALSE
+    )
+```
+
+* Measuring Error Model 6
+ 
+```{r L2 N26 Glot LR Pred}
+# prediction values of validation set
+y_valid_pred_2_26GLR <- predict(model_2_26GLR, x_valid)
+
+# scaling back price predictions
+y_valid_pred_2_26GLR <- valRescale(y_valid_pred_2_26GLR)
+
+# we have to change the class of y_valid_pred
+y_valid_pred_2_26GLR <- as.numeric(y_valid_pred_2_26GLR)
+
+# copmuting accuracy measures of validation set
+acc_6 <- accuracy(object = y_valid_pred_2_26GLR, x = y_valid_real)
+acc_6
+```
+
+### Create Neural Net Summary Table
+
+```{r}
+NN_res <- data.frame("Model" = c("L1 N1",
+                                 "L1 N26",
+                                 "L1 N13",
+                                 "L2 N26",
+                                 "L2 N26 G",
+                                 "L2 N26 G LR"),
+                     "ME" = "",
+                     "RMSE" = "",
+                     "MAE"= "",
+                     "MPE" = "",
+                     "MAPE" = "")
+
+rownames(NN_res) <- NN_res$Model
+NN_res$Model = NULL
+
+str(round(get(paste("acc_", "1", sep ="")),2))
+
+for (i in 1:6) {
+  NN_res[i,]= round(get(paste("acc_", i, sep ="")),2)
+}
+
+kable_styling(kable(NN_res, full_width = FALSE))
+
+RMSEplotdata <- t(NN_res$RMSE)
+colnames(RMSEplotdata) <- t(rownames(NN_res))
+barplot(RMSEplotdata, col = "yellow")
+
+```
+
+## Ensembles
+
+```{r}
+
+```
+
+# Model Performance Summary
 
 # Conclusions
 
-# Final Title
