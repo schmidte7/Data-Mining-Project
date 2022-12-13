@@ -327,6 +327,7 @@ library(fastDummies)
 library(keras)          #front-end library for neural networks
 library(tensorflow)     #backend python library for neural network
 library(magrittr)
+tf$constant("Hello Tensorflow!")
 ```
 
 
@@ -374,25 +375,26 @@ x_valid <- as_tensor(x_valid, shape = dim(valid_diamonds_norm[, -c(1)]))
 y_valid <- as_tensor(valid_diamonds_norm$price)
 
 #create model
-rm(model) #to prevent retraining of existing model
+rm(model_1_1) #to prevent retraining of existing model
 tf$random$set_seed(111)
-model <- keras_model_sequential(input_shape = ncol(x_train)) %>%
+model_1_1 <- keras_model_sequential(input_shape = ncol(x_train)) %>%
   layer_dense(1, activation = "sigmoid", name = "HiddenLayer") %>%  # 1st hidden layer (26 nodes)
   layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
   
 
 #compile the model to be trained            
-model %>% compile(
+model_1_1 %>% compile(
   optimizer = optimizer_adam(),
   loss = loss_mean_squared_error(),
   metric = metric_root_mean_squared_error()
   )
 
 #train the model and find the lowest rmse
-history <- model %>% fit(
+history <- model_1_1 %>% fit(
     x = x_train,
     y = y_train,
-    validation_data = c(x_valid, y_valid)
+    validation_data = c(x_valid, y_valid),
+    verbose = FALSE
     )
 ```
 
@@ -404,8 +406,13 @@ y_valid_pred <- predict(model, x_valid)
 a <- norm_values$ranges[1,1]
 b <- norm_values$ranges[2,1]
 
+valRescale <- function (x) { 
+  value <- (x * (b-a) + a)
+  return(value)
+}
+
 # scaling back price predictions
-y_valid_pred <- (b-a)*y_valid_pred + a
+y_valid_pred <- valRescale(y_valid_pred)
 
 # we have to change the class of y_valid_pred
 class(y_valid_pred)
@@ -416,7 +423,8 @@ class(y_valid_pred)
 y_valid_real <- diamonds[valid.index, price]
 
 # copmuting accuracy measures of validation set
-accuracy(object = y_valid_pred, x = y_valid_real)
+acc_1_1 <- accuracy(object = y_valid_pred, x = y_valid_real)
+acc_1_1
 
 ```
 
@@ -442,86 +450,243 @@ model_1_26 %>% compile(
 history <- model_1_26 %>% fit(
     x = x_train,
     y = y_train,
-    validation_data = c(x_valid, y_valid)
+    validation_data = c(x_valid, y_valid),
+    verbose = FALSE
     )
 ```
-```
+
 
 ```{r}
 # prediction values of validation set
-y_valid_pred <- predict(model, x_valid)
+y_valid_pred_1_26 <- predict(model_1_26, x_valid)
 
+# scaling back price predictions
+y_valid_pred_1_26 <- valRescale(y_valid_pred_1_26)
+
+# we have to change the class of y_valid_pred
+y_valid_pred_1_26 <- as.numeric(y_valid_pred_1_26)
+
+# copmuting accuracy measures of validation set
+acc_1_26 <- accuracy(object = y_valid_pred_1_26, x = y_valid_real)
+acc_1_26
 ```
 
+### NN (Layers = 1, Nodes = 13)
 
-
-
-```{r Keras}
-#create data sets to train and validate the model
-#train
-x_train <- c(t(train_diamonds_norm[, -c(1)]))
-x_train <- as.array(x_train,
-                    dim(t(train_diamonds_norm[, -c(1)])),
-                    dimnames = list(rownames(x_train), colnames(x_train)))
-x_train <- as_tensor(x_train, shape = dim(train_diamonds_norm[, -c(1)]))
-y_train <- as_tensor(train_diamonds_norm$price)
-
-#validation
-x_valid <- c(t(valid_diamonds_norm[, -c(1)]))
-x_valid <- as.array(x_valid,
-                    dim(t(valid_diamonds_norm[, -c(1)])),
-                    dimnames = list(rownames(x_valid), colnames(x_valid)))
-x_valid <- as_tensor(x_valid, shape = dim(valid_diamonds_norm[, -c(1)]))
-y_valid <- as_tensor(valid_diamonds_norm$price)
-
+```{r NN L1 N26 Model}
 #create model
-rm(model) #to prevent retraining of existing model
+rm(model_1_13) #to prevent retraining of existing model
 tf$random$set_seed(111)
-model <- keras_model_sequential(input_shape = ncol(x_train)) %>%
-  layer_dense(26, activation = "sigmoid", name = "HiddenLayer", kernel_initializer = "GlorotNormal") %>%  # 1st hidden layer (26 nodes)
-  layer_dense(26, activation = "sigmoid", name = "HiddenLayer2", kernel_initializer = "GlorotNormal") %>%
-  layer_dense(26, activation = "sigmoid", name = "HiddenLayer3", kernel_initializer = "GlorotNormal") %>%
+model_1_13 <- keras_model_sequential(input_shape = ncol(x_train)) %>%
+  layer_dense(13, activation = "sigmoid", name = "HiddenLayer") %>%  # 1st hidden layer (26 nodes)
   layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
   
 
 #compile the model to be trained            
-model %>% compile(
-  optimizer = optimizer_adam(learning_rate = 0.05),
+model_1_13 %>% compile(
+  optimizer = optimizer_adam(),
   loss = loss_mean_squared_error(),
   metric = metric_root_mean_squared_error()
   )
 
 #train the model and find the lowest rmse
-history <- model %>% fit(
+history <- model_1_13 %>% fit(
     x = x_train,
     y = y_train,
-    validation_data = c(x_valid, y_valid)
+    validation_data = c(x_valid, y_valid),
+    verbose = FALSE
     )
 ```
 
 
+```{r}
+# prediction values of validation set
+y_valid_pred_1_13 <- predict(model_1_13, x_valid)
 
+# scaling back price predictions
+y_valid_pred_1_13 <- valRescale(y_valid_pred_1_13)
 
+# we have to change the class of y_valid_pred
+y_valid_pred_1_13 <- as.numeric(y_valid_pred_1_13)
 
-
-```{r Parallel Computing}
-detectCores()
-getDoParWorkers()
-cl <- makeCluster(4)
-registerDoParallel(cl)
-set.seed(1)
-
-NNN <- cmpfun(neuralnet)
-system.time(
-#create neural network
-diaNeuralNet <-neuralnet(price ~ .,
-                          data = train_diamonds_norm,
-                          linear.output = TRUE,
-                          hidden = 1)
-)
-
-stopCluster(cl)
+# copmuting accuracy measures of validation set
+acc_1_13 <- accuracy(object = y_valid_pred_1_13, x = y_valid_real)
+acc_1_13
 ```
+
+### NN (Layers = 2, Nodes = 26)
+
+```{r NN L1 N26 Model}
+#create model
+rm(model_2_26) #to prevent retraining of existing model
+tf$random$set_seed(111)
+model_2_26 <- keras_model_sequential(input_shape = ncol(x_train)) %>%
+  layer_dense(26, activation = "sigmoid", name = "HiddenLayer") %>%  # 1st hidden layer (26 nodes)
+  layer_dense(26, activation = "sigmoid", name = "HiddenLayer2") %>%  # 1st hidden layer (26 nodes)
+  layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
+  
+
+#compile the model to be trained            
+model_2_26 %>% compile(
+  optimizer = optimizer_adam(),
+  loss = loss_mean_squared_error(),
+  metric = metric_root_mean_squared_error()
+  )
+
+#train the model and find the lowest rmse
+history <- model_2_26 %>% fit(
+    x = x_train,
+    y = y_train,
+    validation_data = c(x_valid, y_valid),
+    verbose = FALSE
+    )
+```
+
+
+```{r}
+# prediction values of validation set
+y_valid_pred_2_26 <- predict(model_2_26, x_valid)
+
+# scaling back price predictions
+y_valid_pred_2_26 <- valRescale(y_valid_pred_2_26)
+
+# we have to change the class of y_valid_pred
+y_valid_pred_2_26 <- as.numeric(y_valid_pred_2_26)
+
+# copmuting accuracy measures of validation set
+acc_2_26 <- accuracy(object = y_valid_pred_2_26, x = y_valid_real)
+acc_2_26
+```
+
+
+
+
+### NN with Initializer (Layers = 2, Nodes = 26, GlorotNormal)
+
+```{r NN L1 N26 Model}
+#create model
+rm(model_2_26G) #to prevent retraining of existing model
+tf$random$set_seed(111)
+model_2_26G <- keras_model_sequential(input_shape = ncol(x_train)) %>%
+  layer_dense(26, activation = "sigmoid", name = "HiddenLayer", kernel_initializer = "GlorotNormal") %>%  # 1st hidden layer (26 nodes)
+  layer_dense(26, activation = "sigmoid", name = "HiddenLayer2", kernel_initializer = "GlorotNormal") %>%  # 1st hidden layer (26 nodes)
+  layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
+  
+
+#compile the model to be trained            
+model_2_26G %>% compile(
+  optimizer = optimizer_adam(),
+  loss = loss_mean_squared_error(),
+  metric = metric_root_mean_squared_error()
+  )
+
+#train the model and find the lowest rmse
+history <- model_2_26G %>% fit(
+    x = x_train,
+    y = y_train,
+    validation_data = c(x_valid, y_valid),
+    verbose = FALSE
+    )
+```
+
+
+```{r}
+# prediction values of validation set
+y_valid_pred_2_26G <- predict(model_2_26G, x_valid)
+
+# scaling back price predictions
+y_valid_pred_2_26G <- valRescale(y_valid_pred_2_26G)
+
+# we have to change the class of y_valid_pred
+y_valid_pred_2_26G <- as.numeric(y_valid_pred_2_26G)
+
+# copmuting accuracy measures of validation set
+acc_2_26G <- accuracy(object = y_valid_pred_2_26G, x = y_valid_real)
+acc_2_26G
+```
+
+
+
+### NN with Initializer and Learning Rate (Layers = 2, Nodes = 26, GlorotNormal, LR = 0.005)
+
+```{r NN L1 N26 Model}
+#create model
+rm(model_2_26GLR) #to prevent retraining of existing model
+tf$random$set_seed(111)
+model_2_26GLR <- keras_model_sequential(input_shape = ncol(x_train)) %>%
+  layer_dense(26, activation = "sigmoid", name = "HiddenLayer", kernel_initializer = "GlorotNormal") %>%  # 1st hidden layer (26 nodes)
+  layer_dense(26, activation = "sigmoid", name = "HiddenLayer2", kernel_initializer = "GlorotNormal") %>%  # 1st hidden layer (26 nodes)
+  layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
+  
+
+#compile the model to be trained            
+model_2_26GLR %>% compile(
+  optimizer = optimizer_adam(learning_rate = 0.009),
+  loss = loss_mean_squared_error(),
+  metric = metric_root_mean_squared_error()
+  )
+
+#train the model and find the lowest rmse
+history <- model_2_26GLR %>% fit(
+    x = x_train,
+    y = y_train,
+    validation_data = c(x_valid, y_valid),
+    verbose = FALSE
+    )
+```
+
+
+```{r}
+# prediction values of validation set
+y_valid_pred_2_26GLR <- predict(model_2_26GLR, x_valid)
+
+# scaling back price predictions
+y_valid_pred_2_26GLR <- valRescale(y_valid_pred_2_26GLR)
+
+# we have to change the class of y_valid_pred
+y_valid_pred_2_26GLR <- as.numeric(y_valid_pred_2_26GLR)
+
+# copmuting accuracy measures of validation set
+acc_2_26GLR <- accuracy(object = y_valid_pred_2_26GLR, x = y_valid_real)
+acc_2_26GLR
+```
+
+## Create Results Table
+
+```{r}
+NN_res <- data.frame("Model" = c("L1 N1",
+                                 "L1 N26",
+                                 "L1 N13",
+                                 "L2 N26",
+                                 "L2 N26 G",
+                                 "L2 N26 G LR"),
+                     "Me" = "",
+                     "RMSE" = "",
+                     "MAE"= "",
+                     "MPE" = "",
+                     "MAPE" = "")
+
+rownames(NN_res) <- NN_res$Model
+NN_res$Model = NULL
+NN_res[1,] <- acc_1_1
+NN_res[2,] <- acc_1_26
+NN_res[3,] <- acc_1_13
+NN_res[4,] <- acc_2_26
+NN_res[5,] <- acc_2_26G
+NN_res[6,] <- acc_2_26GLR
+
+NN_res
+```
+
+
+
+
+
+
+
+
+
+
 
 
 ## Neural Network with Layers = 1 and Nodes = 2
@@ -551,21 +716,6 @@ dia_train_pred <- neuralnet::compute(diaNeuralNet, train_diamonds_norm)$net.resu
 # Calculate Root Mean Square Error (RMSE) using Metrics package
 rs_actual_1 <- valRescale(train_diamonds_norm$price)
 rs_pred_1 <- valRescale(dia_train_pred)
-
-#calculate RMSE
-RMSE_T_1 <- rmse(rs_actual_1, rs_pred_1)
-
-#calculate for Validation data
-dia_valid_pred <- neuralnet::compute(diaNeuralNet, valid_diamonds_norm)$net.result
-
-rs_actual_V_1 <- valRescale(valid_diamonds_norm$price)
-rs_pred_V_1 <- valRescale(dia_valid_pred)
-
-RMSE_V_1 <- rmse(rs_actual_V_1, rs_pred_V_1)
-
-#display Results
-RMSE_T_1
-RMSE_V_1
 ```
 
 
