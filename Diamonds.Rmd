@@ -199,7 +199,7 @@ ggplot(gather(data = diamonds[, c(1, 5:10)]), aes(value)) +
   theme_classic() # A classic theme, with x and y axis lines and no grid lines
 ```
 
-```{r Correlation,fig.width = 4, fig.height = 4}
+```{r Correlation, fig.width = 4, fig.height = 4}
 # Create heatmap to show variable correlation
 # Round the correlation coefficient to two decimal places
 cormat <- round(cor(diamonds[, c(1, 5:10)]), 2)
@@ -337,9 +337,9 @@ length(RegressTree$frame$var[RegressTree$frame$var == "<leaf>"])
 kable_styling(kable(round(100*RegressTree$variable.importance / sum(RegressTree$variable.importance), 2), col.names = "Importance %"), full_width = FALSE)
 ```
 
-```{r Error Details on Default Tree - Train}
+```{r Error Details on Default Tree - Valid}
 # Predict errors using accuracy() 
-tree_train_error <- forecast::accuracy(predict(RegressTree, Train), Train$price)
+tree_train_error <- forecast::accuracy(predict(RegressTree, Valid), Valid$price)
 
 kable(tree_train_error) %>% kable_classic() 
 ```
@@ -378,9 +378,9 @@ fancyRpartPlot(RegressTree2, caption = NULL, main = "Exclusion Regression Tree",
 kable_styling(kable(round(100*RegressTree2$variable.importance / sum(RegressTree2$variable.importance), 2), col.names = "Importance %"), full_width = FALSE)
 ```
 
-```{r Error Details on RegressTree2}
+```{r Error Details on RegressTree2 - Valid}
 # Predict errors using accuracy() 
-tree_train_error2 <- forecast::accuracy(predict(RegressTree2, Train), Train$price)
+tree_train_error2 <- forecast::accuracy(predict(RegressTree2, Valid), Valid$price)
 
 kable(tree_train_error2) %>% kable_classic() 
 ```
@@ -419,22 +419,15 @@ RegressTree_pruned <- prune(RegressTree2, cp = min.xerror)
 fancyRpartPlot(RegressTree_pruned, caption = NULL, main = "'Pruned' Regression Tree", palettes = "YlGnBu", digits = -3)
 ```
 
-```{r Error Details on Prune_RegressTree2}
+```{r Error Details on Prune_RegressTree2 - Valid}
 # Predict errors using accuracy() 
-tree_train_error3 <- forecast::accuracy(predict(RegressTree_pruned, Train), Train$price)
+tree_train_error3 <- forecast::accuracy(predict(RegressTree_pruned, Valid), Valid$price)
 
 kable(tree_train_error3) %>% kable_classic() 
 ```
 
-```{r R-adjusted on Prune_RegressTree2}
-# Calculate R^2 
-p3 <- predict(RegressTree_pruned, Train)
-R_sq3 <- (cor(Train$price,p3))^2
-R_pct3 <- R_sq3*100
-R_pct3
-```
 
-```{r Boosted Tree 10, fig.width = 5, fig.height = 5}
+```{r Boosted Tree 10}
 # Boosted tree
 set.seed(111)
 tree_boost10 <- gbm(price ~., data = Train, distribution = "gaussian", n.trees = 10, interaction.depth = 6, shrinkage = 0.01)
@@ -446,23 +439,30 @@ tree_boost10 <- gbm(price ~., data = Train, distribution = "gaussian", n.trees =
 
 tree_boost10
 
-summary(tree_boost10, color = "#F9D53E")
+vip::vip(tree_boost10, aesthetics = list(fill = "#F9D53E")) +
+  ggtitle("Boosted Tree Variable Importance") + # Title name
+  xlab("Variable") + # Label names
+  theme_classic() # A classic theme, with x and y axis lines and no grid lines
 ```
 
-```{r Error Details on tree_boost10}
+```{r Error Details on tree_boost10 - Valid}
 # Predict errors using accuracy() 
-tree_boost10_train <- forecast::accuracy(predict(tree_boost10, Train), Train$price)
+tree_boost10_train <- forecast::accuracy(predict(tree_boost10, Valid), Valid$price)
 
 kable(tree_boost10_train) %>% kable_classic() 
 ```
 
-```{r Boosted Tree 30, fig.width = 5, fig.height = 5}
+```{r Boosted Tree 30}
 # Boosted tree
 set.seed(111)
 tree_boost30 <- gbm(price ~., data = Train, distribution = "gaussian", n.trees = 30)
 tree_boost30
 
-summary(tree_boost30)
+
+vip::vip(tree_boost30, aesthetics = list(fill = "#F9D53E")) +
+  ggtitle("Boosted Tree Variable Importance") + # Title name
+  xlab("Variable") + # Label names
+  theme_classic() # A classic theme, with x and y axis lines and no grid lines
 ```
 
 ```{r Error Details on tree_boost30}
@@ -472,7 +472,7 @@ tree_boost30_train <- forecast::accuracy(predict(tree_boost30, Train), Train$pri
 kable(tree_boost30_train) %>% kable_classic() 
 ```
 
-```{r Boosted Tree 100, fig.width = 5, fig.height = 5}
+```{r Boosted Tree 100}
 # Boosted tree
 set.seed(111)
 tree_boost100 <- gbm(price ~., data = Train, distribution = "gaussian", cv.folds = 3)
@@ -481,12 +481,15 @@ tree_boost100 <- gbm(price ~., data = Train, distribution = "gaussian", cv.folds
 
 tree_boost100
 
-summary(tree_boost100)
+vip::vip(tree_boost100, aesthetics = list(fill = "#F9D53E")) +
+  ggtitle("Boosted Tree Variable Importance") + # Title name
+  xlab("Variable") + # Label names
+  theme_classic() # A classic theme, with x and y axis lines and no grid lines
 ```
 
 ```{r Error Details on tree_boost100}
 # Predict errors using accuracy() 
-tree_boost100_train <- forecast::accuracy(predict(tree_boost100, Train), Train$price)
+tree_boost100_train <- forecast::accuracy(predict(tree_boost100, Valid), Valid$price)
 
 kable(tree_boost100_train) %>% kable_classic()
 ```
@@ -518,22 +521,24 @@ pred_imp <- data.frame(overall = pred_imp$Overall,
 pred_imp[order(pred_imp$overall,decreasing = T),]
 ```
 
-```{r Plot IV ,fig.width = 5, fig.height = 5}
+```{r Plot IV, fig.width = 4, fig.height = 3}
 pred_imp <- varImp(tree_bagging)
 
 #sort variable importance descending
-VI_plot <- pred_imp[order(pred_imp$Overall, decreasing=TRUE),]
+VI_plot <- pred_imp[order(pred_imp$Overall, decreasing=FALSE),]
 
 #visualize variable importance with horizontal bar plot
 barplot(sort(pred_imp$Overall, decreasing = FALSE),
         names.arg=rownames(pred_imp),
         horiz=TRUE,
-        col="#F9D53E",
-        xlab='Variable Importance')
+        col="#F9D53E", las = 1)
+
+# Add a main title and bottom and left axis labels
+title("Variable Importance ", xlab="Variables")
 ```
 
 ```{r Errors Bagging}
-tree_bagging_train <- forecast::accuracy(predict(tree_bagging, Train), Train$price)
+tree_bagging_train <- forecast::accuracy(predict(tree_bagging, Valid), Valid$price)
 
 kable(tree_bagging_train) %>% kable_classic()
 ```
@@ -547,7 +552,8 @@ head(pred_bagged,14)
 
 ```{r randomForest}
 options(scipen = 9999)
-rdf_model <- randomForest(price~ ., ntree= 100, data = Train)
+set.seed(111)
+rdf_model <- randomForest(price~ ., ntree= 60, data = Train)
 plot(rdf_model)
 ```
 
@@ -557,7 +563,47 @@ which.min(rdf_model$mse)
 ```
 
 ```{r}
-rdf_model_train <- forecast::accuracy(predict(rdf_model, Train), Train$price)
+df2=df[order(df$depth),]
+df2$name=factor(df2$name,levels=df2$name)
+ggplot(df2,aes(x=factor(name),y=depth)) + geom_bar(stat='identity') + coord_flip() + labs(y='depth',x='species')
+
+df2=df[order(df$depth),]
+df2$name=factor(df2$name,levels=df2$name)
+ggplot(df2,aes(x=factor(name),y=depth)) + geom_bar(stat='identity') + coord_flip() + labs(y='depth',x='species')
+
+var_importance <- data_frame(variable=setdiff(colnames(Train), "price"), importance=as.vector(importance(rdf_model)))
+
+var_importance <- arrange(var_importance, desc(importance))
+
+var_importance$variable <- factor(var_importance$variable, levels=var_importance$variable)
+
+var_importance <- var_importance[order(var_importance$variable),]
+
+p <- ggplot(var_importance, aes(x=variable, weight=importance))
+p <- p + geom_bar(fill='#F9D53E', color='#F9D53E') + ggtitle("Random Forest Variable Importance")
+p <- p + xlab("Variable") + ylab("Importance")
+p <- p + coord_flip()
+p + theme_classic()
+```
+
+```{r Plot Random IV, fig.width = 4, fig.height = 4}
+pred_imp_rdf <- varImp(rdf_model)
+
+#sort variable importance descending
+VI_plot <- pred_imp_rdf[order(pred_imp_rdf$Overall, decreasing=TRUE),]
+
+#visualize variable importance with horizontal bar plot
+barplot(sort(pred_imp_rdf$Overall, decreasing = FALSE),
+        names.arg=rownames(pred_imp_rdf),
+        horiz=TRUE,
+        col="#F9D53E", las = 1)
+
+# Add a main title and bottom and left axis labels
+title("Variable Importance ", xlab="Variables")
+```
+
+```{r}
+rdf_model_train <- forecast::accuracy(predict(rdf_model, Valid), Valid$price)
 
 kable(rdf_model_train) %>% kable_classic()
 ```
