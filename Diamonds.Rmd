@@ -289,8 +289,53 @@ Test <- diamonds[test.index, ]
 ## $k$-NN
 
 ```{r}
+library(FNN)      #for finding k nearest neighbor
+```
+
+
+```{r}
+diamonds_dummies <- diamonds
+diamonds_dummies <- dummy_cols(diamonds_dummies, select_columns = c("cut", "color", "clarity"))
+diamonds_dummies <- diamonds_dummies[,-c(2:4)]
+
+#rename column to avoid issues with Neural net function
+colnames(diamonds_dummies)[10] = "cut_Very_Good"
 
 ```
+
+
+```{r}
+#create data frames to normalize
+knn_train <- diamonds_dummies[train.index,]
+knn_valid <- diamonds_dummies[valid.index,]
+
+knn_train_norm <- knn_train
+knn_valid_norm <- knn_valid
+
+# use preProcess() to normalize non-categorical variables
+norm_values <- preProcess(knn_train[, c(1:7)], method=c("center", "scale"))
+
+knn_train_norm[, c(1:7)] <- predict(norm_values, knn_train[, c(1:7)])
+knn_valid_norm[,c(1:7)] <- predict(norm_values, knn_valid[, c(1:7)])
+
+# Compute k=1 nearest neighbor 
+nn1 <- FNN::knn.reg(train = knn_train_norm[, -1], 
+          test = knn_train_norm[, -1],
+          y= knn_train_norm[, 1],
+          k = 1)
+
+length(knn_train_norm[, -1])
+length(knn_train_norm[, 1])
+
+
+nn1$
+summary(nn1)
+
+#display results
+row.names(knn_train)[attr(nn1, "nn.index")]
+nn1
+```
+
 
 ## Regression Tree
 
