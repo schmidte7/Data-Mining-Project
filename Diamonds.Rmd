@@ -407,6 +407,7 @@ min.xerror <- RegressTree2$cptable[which.min(RegressTree2$cptable[,"xerror"]),"C
 
 min.xerror
 ```
+
 ```{r Plot Cp}
 #Plot the optimal Cp value
 plotcp(RegressTree2)
