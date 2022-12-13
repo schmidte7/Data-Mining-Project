@@ -321,85 +321,80 @@ nn1
 ## NeuralNetworks
 
 ```{r Set Libraries}
-library(neuralnet)      #for constructing neural networks
-library(Metrics)        #for calculating RMSE
+library(forecast)        #for calculating RMSE
 library(caret)          #for dummy variables
 library(fastDummies)
-library(doParallel)     #for parallel computing of neural networks
-library(compiler)
-library(keras)
-library(tensorflow)
-
-path_to_python <- install_python()
-virtualenv_create("r-reticulate", python = path_to_python)
-tf$constant("Hello Tensorflow!")
-
+library(keras)          #front-end library for neural networks
+library(tensorflow)     #backend python library for neural network
+library(magrittr)
 ```
 
 
 ```{r Dummy ariables}
 #create dummy columns 
-diamonds_dummies <- diamonds
-diamonds_dummies <- dummy_cols(diamonds_dummies, select_columns = c("cut", "color", "clarity"))
+diamonds_dummies <- dummy_cols(diamonds, select_columns = c("cut", "color", "clarity"))
 diamonds_dummies <- diamonds_dummies[,-c(2:4)]
 
 #rename column to avoid issues with Neural net function
-colnames(diamonds_dummies_cut)[10] = "cut_Very_Good"
-
-dim(diamonds_dummies)
+colnames(diamonds_dummies)[10] = "cut_Very_Good"
 ```
 
 ```{r Partitioning}
-train_diamonds <- diamonds_dummies_cut[train.index,]
-valid_diamonds <- diamonds_dummies_cut[valid.index,]
+train_diamonds <- diamonds_dummies[train.index,]
+valid_diamonds <- diamonds_dummies[valid.index,]
 ```
 
 
 ```{r Normalize}
-#create data frames to normalize
-train_diamonds_norm <- as.data.frame(train_diamonds)
-valid_diamonds_norm <- as.data.frame(valid_diamonds)
-
 # use preProcess() to normalize non-categorical variables
-norm_values <- preProcess(train_diamonds, method= c("range"))
+norm_values <- preProcess(train_diamonds[1:7], method= c("range"))
 
 train_diamonds_norm <- predict(norm_values, train_diamonds)
 valid_diamonds_norm <- predict(norm_values, valid_diamonds)
-
 ```
 
 
 ```{r Keras}
-detectCores()
-getDoParWorkers()
-cl <- makeCluster(4)
-registerDoParallel(cl)
+#create data sets to train and validate the model
+#train
+x_train <- c(t(train_diamonds_norm[, -c(1)]))
+x_train <- as.array(x_train,
+                    dim(t(train_diamonds_norm[, -c(1)])),
+                    dimnames = list(rownames(x_train), colnames(x_train)))
+x_train <- as_tensor(x_train, shape = dim(train_diamonds_norm[, -c(1)]))
+y_train <- as_tensor(train_diamonds_norm$price)
 
-NNN <- cmpfun(train)
-set.seed(111)
-system.time(model <- keras_model_sequential() %>%
-                layer_dense(units = 1, activation = "relu", input_shape = c(26)) %>%
-                layer_dense(units = 1))
-            
-model  %>% compile(loss = mse,
-                   optimizer = "rmsprop",
-                   metrics = "rmse")           
+#validation
+x_valid <- c(t(valid_diamonds_norm[, -c(1)]))
+x_valid <- as.array(x_valid,
+                    dim(t(valid_diamonds_norm[, -c(1)])),
+                    dimnames = list(rownames(x_valid), colnames(x_valid)))
+x_valid <- as_tensor(x_valid, shape = dim(valid_diamonds_norm[, -c(1)]))
+y_valid <- as_tensor(valid_diamonds_norm$price)
 
-NeuralNetKeras <- model %>%
-                  fit(x= train_diamonds_norm,
-                      y =train_diamonds_norm$price,
-                      epochs = 100,
-                      batch_size = 32,
-                      validation_split = 0.4)
+#create model
+rm(model) #to prevent retraining of existing model
+tf$random$set_seed(111)
+model <- keras_model_sequential(input_shape = ncol(x_train)) %>%
+  layer_dense(26, activation = "sigmoid", name = "HiddenLayer") %>%  # 1st hidden layer (26 nodes)
+  layer_dense(1, activation = "sigmoid", name = "outputLayer")       # output layer (1 node)
 
+#compile the model to be trained            
+model %>% compile(
+  optimizer = optimizer_adam(),
+  loss = loss_mean_squared_error(),
+  metric = metric_root_mean_squared_error()
+  )
 
-# diaNeuralNet_1_1 <- tensorflow::train(price ~ .,
-#                           data = train_diamonds_norm,
-#                          method = "mlpKerasDropout",
-#                          trControl = trainControl(method = "cv", number = 10))
-
-stopCluster(cl)
+#train the model and find the lowest rmse
+history <- model %>% fit(
+    x = x_train,
+    y = y_train,
+    validation_data = c(x_valid, y_valid)
+    )
 ```
+
+
 ```{r}
 predictions <- predict(model, train_diamonds)
 predictions
