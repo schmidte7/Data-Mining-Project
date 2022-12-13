@@ -320,6 +320,8 @@ nn1
 
 ## NeuralNetworks
 
+### Loading Libraries
+
 ```{r Set Libraries}
 library(forecast)        #for calculating RMSE
 library(caret)          #for dummy variables
@@ -330,6 +332,7 @@ library(magrittr)
 tf$constant("Hello Tensorflow!")
 ```
 
+### Data preprocessing
 
 ```{r Dummy ariables}
 #create dummy columns 
@@ -340,11 +343,14 @@ diamonds_dummies <- diamonds_dummies[,-c(2:4)]
 colnames(diamonds_dummies)[10] = "cut_Very_Good"
 ```
 
+### Partitioning
+
 ```{r Partitioning}
 train_diamonds <- diamonds_dummies[train.index,]
 valid_diamonds <- diamonds_dummies[valid.index,]
 ```
 
+### Normalizing Data
 
 ```{r Normalize}
 # use preProcess() to normalize non-categorical variables
@@ -354,7 +360,9 @@ train_diamonds_norm <- predict(norm_values, train_diamonds)
 valid_diamonds_norm <- predict(norm_values, valid_diamonds)
 ```
 
-### NN (Layers = 1, Nodes = 1)
+### Model 1 (Layers = 1, Nodes = 1)
+
+* Creating Model 1
 
 ```{r NN L1 N1 Model}
 #create data sets to train and validate the model
@@ -398,9 +406,11 @@ history <- model_1_1 %>% fit(
     )
 ```
 
-```{r NN L1 N1 Pred}
+* Measuring Error Model 1
+
+```{r L1 N1 Pred}
 # prediction values of validation set
-y_valid_pred <- predict(model, x_valid)
+y_valid_pred <- predict(model_1_1, x_valid)
 
 # fetching a and b from standardization for scaling back price
 a <- norm_values$ranges[1,1]
@@ -423,14 +433,16 @@ class(y_valid_pred)
 y_valid_real <- diamonds[valid.index, price]
 
 # copmuting accuracy measures of validation set
-acc_1_1 <- accuracy(object = y_valid_pred, x = y_valid_real)
-acc_1_1
+acc_1 <- accuracy(object = y_valid_pred, x = y_valid_real)
+acc_1
 
 ```
 
-### NN (Layers = 1, Nodes = 26)
+### Model 2 (Layers = 1, Nodes = 26)
 
-```{r NN L1 N26 Model}
+* Creating Model 2
+
+```{r L1 N26 Model}
 #create model
 rm(model_1_26) #to prevent retraining of existing model
 tf$random$set_seed(111)
@@ -455,8 +467,9 @@ history <- model_1_26 %>% fit(
     )
 ```
 
+* Measuring Error Model 2
 
-```{r}
+```{r L1 N26 Pred}
 # prediction values of validation set
 y_valid_pred_1_26 <- predict(model_1_26, x_valid)
 
@@ -467,13 +480,15 @@ y_valid_pred_1_26 <- valRescale(y_valid_pred_1_26)
 y_valid_pred_1_26 <- as.numeric(y_valid_pred_1_26)
 
 # copmuting accuracy measures of validation set
-acc_1_26 <- accuracy(object = y_valid_pred_1_26, x = y_valid_real)
-acc_1_26
+acc_2 <- accuracy(object = y_valid_pred_1_26, x = y_valid_real)
+acc_2
 ```
 
-### NN (Layers = 1, Nodes = 13)
+### Model 3 (Layers = 1, Nodes = 13)
 
-```{r NN L1 N26 Model}
+* Creating Model 3
+
+```{r L1 N26 Model}
 #create model
 rm(model_1_13) #to prevent retraining of existing model
 tf$random$set_seed(111)
@@ -498,8 +513,9 @@ history <- model_1_13 %>% fit(
     )
 ```
 
+* Measuring Error Model 3
 
-```{r}
+```{r L1 N26 Pred}
 # prediction values of validation set
 y_valid_pred_1_13 <- predict(model_1_13, x_valid)
 
@@ -510,13 +526,15 @@ y_valid_pred_1_13 <- valRescale(y_valid_pred_1_13)
 y_valid_pred_1_13 <- as.numeric(y_valid_pred_1_13)
 
 # copmuting accuracy measures of validation set
-acc_1_13 <- accuracy(object = y_valid_pred_1_13, x = y_valid_real)
-acc_1_13
+acc_3 <- accuracy(object = y_valid_pred_1_13, x = y_valid_real)
+acc_3
 ```
 
-### NN (Layers = 2, Nodes = 26)
+### Model 4 (Layers = 2, Nodes = 26)
 
-```{r NN L1 N26 Model}
+* Creating Model 4
+
+```{r L2 N26 Model}
 #create model
 rm(model_2_26) #to prevent retraining of existing model
 tf$random$set_seed(111)
@@ -542,8 +560,9 @@ history <- model_2_26 %>% fit(
     )
 ```
 
+* Measuring Error Model 4
 
-```{r}
+```{r L2 N26 Pred}
 # prediction values of validation set
 y_valid_pred_2_26 <- predict(model_2_26, x_valid)
 
@@ -554,16 +573,16 @@ y_valid_pred_2_26 <- valRescale(y_valid_pred_2_26)
 y_valid_pred_2_26 <- as.numeric(y_valid_pred_2_26)
 
 # copmuting accuracy measures of validation set
-acc_2_26 <- accuracy(object = y_valid_pred_2_26, x = y_valid_real)
-acc_2_26
+acc_4 <- accuracy(object = y_valid_pred_2_26, x = y_valid_real)
+acc_4
 ```
 
 
+### Model 5 with Initializer (Layers = 2, Nodes = 26, GlorotNormal)
 
+* Creating Model 5
 
-### NN with Initializer (Layers = 2, Nodes = 26, GlorotNormal)
-
-```{r NN L1 N26 Model}
+```{r L2 N26 Glot Model}
 #create model
 rm(model_2_26G) #to prevent retraining of existing model
 tf$random$set_seed(111)
@@ -589,8 +608,9 @@ history <- model_2_26G %>% fit(
     )
 ```
 
+* Measuring Error Model 5
 
-```{r}
+```{r L2 N26 Glot Pred}
 # prediction values of validation set
 y_valid_pred_2_26G <- predict(model_2_26G, x_valid)
 
@@ -601,15 +621,16 @@ y_valid_pred_2_26G <- valRescale(y_valid_pred_2_26G)
 y_valid_pred_2_26G <- as.numeric(y_valid_pred_2_26G)
 
 # copmuting accuracy measures of validation set
-acc_2_26G <- accuracy(object = y_valid_pred_2_26G, x = y_valid_real)
-acc_2_26G
+acc_5 <- accuracy(object = y_valid_pred_2_26G, x = y_valid_real)
+acc_5
 ```
 
 
+### Model 6 with Initializer and Learning Rate (Layers = 2, Nodes = 26, GlorotNormal, LR = 0.005)
 
-### NN with Initializer and Learning Rate (Layers = 2, Nodes = 26, GlorotNormal, LR = 0.005)
+* Creating model 6
 
-```{r NN L1 N26 Model}
+```{r L2 N26 Glot LR Model}
 #create model
 rm(model_2_26GLR) #to prevent retraining of existing model
 tf$random$set_seed(111)
@@ -635,8 +656,9 @@ history <- model_2_26GLR %>% fit(
     )
 ```
 
-
-```{r}
+* Measuring Error Model 6
+ 
+```{r L2 N26 Glot LR Pred}
 # prediction values of validation set
 y_valid_pred_2_26GLR <- predict(model_2_26GLR, x_valid)
 
@@ -647,11 +669,11 @@ y_valid_pred_2_26GLR <- valRescale(y_valid_pred_2_26GLR)
 y_valid_pred_2_26GLR <- as.numeric(y_valid_pred_2_26GLR)
 
 # copmuting accuracy measures of validation set
-acc_2_26GLR <- accuracy(object = y_valid_pred_2_26GLR, x = y_valid_real)
-acc_2_26GLR
+acc_6 <- accuracy(object = y_valid_pred_2_26GLR, x = y_valid_real)
+acc_6
 ```
 
-## Create Results Table
+### Create Neural Net Summary Table
 
 ```{r}
 NN_res <- data.frame("Model" = c("L1 N1",
@@ -668,55 +690,21 @@ NN_res <- data.frame("Model" = c("L1 N1",
 
 rownames(NN_res) <- NN_res$Model
 NN_res$Model = NULL
-NN_res[1,] <- acc_1_1
-NN_res[2,] <- acc_1_26
-NN_res[3,] <- acc_1_13
-NN_res[4,] <- acc_2_26
-NN_res[5,] <- acc_2_26G
-NN_res[6,] <- acc_2_26GLR
 
-NN_res
-```
+str(round(get(paste("acc_", "1", sep ="")),2))
 
-
-
-
-
-
-
-
-
-
-
-
-## Neural Network with Layers = 1 and Nodes = 2
-
-```{r NN Layers 1 Nodes 2}
-# create neural network plot
-plot(diaNeuralNet, rep="best", show.weights = T, col.entry = "#00C1D5", col.hidden = "#387C2C", col.out = "#7F35B2", intercept = F)
-
-# predict value
-
-```
-
-
-## Measuring errors (Layers = 1, Nodes = 2)
-
-```{r RMSE Layers 1 Nodes 2}
-#a function to convert normalized values to original values
-valRescale <- function (x) { 
-  value <- (x * (max(train_diamonds$price)- min(diamonds$price))) + min(diamonds$price) 
-  return(value)
+for (i in 1:6) {
+  NN_res[i,]= round(get(paste("acc_", i, sep ="")),2)
 }
 
-# predict values of Data using Neural net
-dia_train_pred <- neuralnet::compute(diaNeuralNet, train_diamonds_norm)$net.result
+kable_styling(kable(NN_res, full_width = FALSE))
 
+RMSEplotdata <- t(NN_res$RMSE)
+colnames(RMSEplotdata) <- t(rownames(NN_res))
+barplot(RMSEplotdata, col = "yellow")
 
-# Calculate Root Mean Square Error (RMSE) using Metrics package
-rs_actual_1 <- valRescale(train_diamonds_norm$price)
-rs_pred_1 <- valRescale(dia_train_pred)
 ```
+
 
 
 ## Ensembles
