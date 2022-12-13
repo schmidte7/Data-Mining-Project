@@ -288,7 +288,11 @@ Test <- diamonds[test.index, ]
 ## $k$-NN
 
 ```{r}
-library(FNN)      #for finding k nearest neighbor
+library(FNN)          #for finding k nearest neighbor
+library(fastDummies)
+library(class)        #for computing k-NN numerical predictions
+library(caret)
+library(dplyr)        #for scaling
 ```
 
 
@@ -299,7 +303,6 @@ diamonds_dummies <- diamonds_dummies[,-c(2:4)]
 
 #rename column to avoid issues with Neural net function
 colnames(diamonds_dummies)[10] = "cut_Very_Good"
-
 ```
 
 
@@ -316,9 +319,11 @@ norm_values <- preProcess(knn_train[, c(1:7)], method=c("center", "scale"))
 
 knn_train_norm[, c(1:7)] <- predict(norm_values, knn_train[, c(1:7)])
 knn_valid_norm[,c(1:7)] <- predict(norm_values, knn_valid[, c(1:7)])
+```
 
+```{r}
 # Compute k=1 nearest neighbor 
-nn1 <- FNN::knn.reg(train = knn_train_norm[, -1], 
+nn1 <- FNN::knn.reg(train = knn_train_norm[, -1],
           test = knn_train_norm[, -1],
           y= knn_train_norm[, 1],
           k = 1)
@@ -327,14 +332,109 @@ length(knn_train_norm[, -1])
 length(knn_train_norm[, 1])
 
 
-nn1$
+nn1
 summary(nn1)
 
 #display results
 row.names(knn_train)[attr(nn1, "nn.index")]
 nn1
+
 ```
 
+```{r}
+#mean square prediction error
+mean((knn_valid_norm - nn1$pred) ^ 2)
+```
+
+```{r}
+
+#diamonds_dummies$cut <- as.factor(diamonds_dummies$cut) # Factor the cut to five levels 
+
+#diamonds_dummies$color <- as.factor(diamonds_dummies$color) # Factor the color to seven levels 
+
+#diamonds_dummies$clarity <- as.factor(diamonds_dummies$clarity) # Factor the clarity to eight levels 
+
+# Setting up train controls
+#repeats = 3
+#numbers = 10
+#tunel = 10
+
+#set.seed(111)
+#x = trainControl(method = "repeatedcv",
+#                 number = numbers,
+#                 repeats = repeats,
+#                 classProbs = TRUE,
+#                 summaryFunction = twoClassSummary)
+
+#model1 <- train(price~. , data = knn_train_norm, method = "knn",
+#               preProcess = c("center","scale"),
+#               trControl = x,
+#               tuneLength = tunel)
+
+# Summary of model
+#model1
+```
+
+**Resource**:https://rstudio-pubs-static.s3.amazonaws.com/402600_a1efe79095644d389bf8f4c6d6c9ad1c.html
+
+**Resource (code below)**: https://quantdev.ssri.psu.edu/sites/qdev/files/kNN_tutorial.html (REDID BASED ON NEW CODE)
+```{r}
+diamonds_knn <- diamonds
+```
+
+```{r}
+# put outcome in its own object
+price_outcome <- diamonds_knn %>% select(price)
+
+# remove original from the data set
+diamonds_knn <- diamonds_knn %>% select(-price)
+```
+
+```{r}
+str(diamonds_knn)
+```
+
+```{r}
+# Scale continuous variables
+diamonds_knn %>%
+   mutate_at(c(4,9), funs(c(scale(.))))
+```
+
+```{r}
+# Create dummy variables
+cut <- as.data.frame(dummy_cols(diamonds_knn$cut))
+cut <- cut %>% select(-c[1,])
+color <- as.data.frame(dummy_cols(diamonds_knn$color))
+clarity <- as.data.frame(dummy_cols(diamonds_knn$clarity))
+```
+
+```{r}
+# Combine dummies with original data set
+diamonds_knn <- cbind(diamonds_knn, cut, color, clarity)
+```
+
+```{r}
+# Remove original variables that had to be dummy coded
+diamonds_knn <- diamonds_knn[,-c(1:3)]
+
+head(diamonds_knn)
+```
+```{r}
+#create data frames to normalize
+knn_train <- diamonds_knn[train.index,]
+knn_valid <- diamonds_knn[valid.index,]
+```
+
+```{r}
+abs_outcome_train <- price_outcome[train.index, ]
+abs_outcome_valid <- price_outcome[valid.index, ]
+```
+
+```{r}
+reg_results <- knn.reg(knn_train, knn_valid, abs_outcome_train, k = 1)
+print(reg_results)
+```
+**Resource**:https://stackoverflow.com/questions/46638731/error-when-fitting-knn-model
 
 ## Regression Tree
 
@@ -681,390 +781,6 @@ colnames(RMSEplotdata) <- t(rownames(Tree_res))
 
 ## NeuralNetworks
 
-### Loading Libraries
-
-```{r Set Libraries}
-library(forecast)        #for calculating RMSE
-library(caret)          #for dummy variables
-library(fastDummies)
-library(keras)          #front-end library for neural networks
-library(tensorflow)     #backend python library for neural network
-library(magrittr)
-tf$constant("Hello Tensorflow!")
-```
-
-### Data preprocessing
-
-```{r Dummy ariables}
-#create dummy columns 
-diamonds_dummies <- dummy_cols(diamonds, select_columns = c("cut", "color", "clarity"))
-diamonds_dummies <- diamonds_dummies[,-c(2:4)]
-
-#rename column to avoid issues with Neural net function
-colnames(diamonds_dummies)[10] = "cut_Very_Good"
-```
-
-### Partitioning
-
-```{r Partitioning}
-train_diamonds <- diamonds_dummies[train.index,]
-valid_diamonds <- diamonds_dummies[valid.index,]
-```
-
-### Normalizing Data
-
-```{r Normalize}
-# use preProcess() to normalize non-categorical variables
-norm_values <- preProcess(train_diamonds[1:7], method= c("range"))
-
-train_diamonds_norm <- predict(norm_values, train_diamonds)
-valid_diamonds_norm <- predict(norm_values, valid_diamonds)
-```
-
-### Model 1 (Layers = 1, Nodes = 1)
-
-* Creating Model 1
-
-```{r NN L1 N1 Model}
-#create data sets to train and validate the model
-#train
-x_train <- c(t(train_diamonds_norm[, -c(1)]))
-x_train <- as.array(x_train,
-                    dim(t(train_diamonds_norm[, -c(1)])),
-                    dimnames = list(rownames(x_train), colnames(x_train)))
-x_train <- as_tensor(x_train, shape = dim(train_diamonds_norm[, -c(1)]))
-y_train <- as_tensor(train_diamonds_norm$price)
-
-#validation
-x_valid <- c(t(valid_diamonds_norm[, -c(1)]))
-x_valid <- as.array(x_valid,
-                    dim(t(valid_diamonds_norm[, -c(1)])),
-                    dimnames = list(rownames(x_valid), colnames(x_valid)))
-x_valid <- as_tensor(x_valid, shape = dim(valid_diamonds_norm[, -c(1)]))
-y_valid <- as_tensor(valid_diamonds_norm$price)
-
-#create model
-rm(model_1_1) #to prevent retraining of existing model
-tf$random$set_seed(111)
-model_1_1 <- keras_model_sequential(input_shape = ncol(x_train)) %>%
-  layer_dense(1, activation = "sigmoid", name = "HiddenLayer") %>%  # 1st hidden layer (26 nodes)
-  layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
-  
-
-#compile the model to be trained            
-model_1_1 %>% compile(
-  optimizer = optimizer_adam(),
-  loss = loss_mean_squared_error(),
-  metric = metric_root_mean_squared_error()
-  )
-
-#train the model and find the lowest rmse
-history <- model_1_1 %>% fit(
-    x = x_train,
-    y = y_train,
-    validation_data = c(x_valid, y_valid),
-    verbose = FALSE
-    )
-```
-
-* Measuring Error Model 1
-
-```{r L1 N1 Pred}
-# prediction values of validation set
-y_valid_pred <- predict(model_1_1, x_valid)
-
-# fetching a and b from standardization for scaling back price
-a <- norm_values$ranges[1,1]
-b <- norm_values$ranges[2,1]
-
-valRescale <- function (x) { 
-  value <- (x * (b-a) + a)
-  return(value)
-}
-
-# scaling back price predictions
-y_valid_pred <- valRescale(y_valid_pred)
-
-# we have to change the class of y_valid_pred
-class(y_valid_pred)
-y_valid_pred <- as.numeric(y_valid_pred)
-class(y_valid_pred)
-
-# taking real values of validation set from original data (which wasn't standardized!)
-y_valid_real <- diamonds[valid.index, price]
-
-# copmuting accuracy measures of validation set
-acc_1 <- accuracy(object = y_valid_pred, x = y_valid_real)
-acc_1
-
-```
-
-### Model 2 (Layers = 1, Nodes = 26)
-
-* Creating Model 2
-
-```{r L1 N26 Model}
-#create model
-rm(model_1_26) #to prevent retraining of existing model
-tf$random$set_seed(111)
-model_1_26 <- keras_model_sequential(input_shape = ncol(x_train)) %>%
-  layer_dense(26, activation = "sigmoid", name = "HiddenLayer") %>%  # 1st hidden layer (26 nodes)
-  layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
-  
-
-#compile the model to be trained            
-model_1_26 %>% compile(
-  optimizer = optimizer_adam(),
-  loss = loss_mean_squared_error(),
-  metric = metric_root_mean_squared_error()
-  )
-
-#train the model and find the lowest rmse
-history <- model_1_26 %>% fit(
-    x = x_train,
-    y = y_train,
-    validation_data = c(x_valid, y_valid),
-    verbose = FALSE
-    )
-```
-
-* Measuring Error Model 2
-
-```{r L1 N26 Pred}
-# prediction values of validation set
-y_valid_pred_1_26 <- predict(model_1_26, x_valid)
-
-# scaling back price predictions
-y_valid_pred_1_26 <- valRescale(y_valid_pred_1_26)
-
-# we have to change the class of y_valid_pred
-y_valid_pred_1_26 <- as.numeric(y_valid_pred_1_26)
-
-# copmuting accuracy measures of validation set
-acc_2 <- accuracy(object = y_valid_pred_1_26, x = y_valid_real)
-acc_2
-```
-
-### Model 3 (Layers = 1, Nodes = 13)
-
-* Creating Model 3
-
-```{r L1 N26 Model}
-#create model
-rm(model_1_13) #to prevent retraining of existing model
-tf$random$set_seed(111)
-model_1_13 <- keras_model_sequential(input_shape = ncol(x_train)) %>%
-  layer_dense(13, activation = "sigmoid", name = "HiddenLayer") %>%  # 1st hidden layer (26 nodes)
-  layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
-  
-
-#compile the model to be trained            
-model_1_13 %>% compile(
-  optimizer = optimizer_adam(),
-  loss = loss_mean_squared_error(),
-  metric = metric_root_mean_squared_error()
-  )
-
-#train the model and find the lowest rmse
-history <- model_1_13 %>% fit(
-    x = x_train,
-    y = y_train,
-    validation_data = c(x_valid, y_valid),
-    verbose = FALSE
-    )
-```
-
-* Measuring Error Model 3
-
-```{r L1 N26 Pred}
-# prediction values of validation set
-y_valid_pred_1_13 <- predict(model_1_13, x_valid)
-
-# scaling back price predictions
-y_valid_pred_1_13 <- valRescale(y_valid_pred_1_13)
-
-# we have to change the class of y_valid_pred
-y_valid_pred_1_13 <- as.numeric(y_valid_pred_1_13)
-
-# copmuting accuracy measures of validation set
-acc_3 <- accuracy(object = y_valid_pred_1_13, x = y_valid_real)
-acc_3
-```
-
-### Model 4 (Layers = 2, Nodes = 26)
-
-* Creating Model 4
-
-```{r L2 N26 Model}
-#create model
-rm(model_2_26) #to prevent retraining of existing model
-tf$random$set_seed(111)
-model_2_26 <- keras_model_sequential(input_shape = ncol(x_train)) %>%
-  layer_dense(26, activation = "sigmoid", name = "HiddenLayer") %>%  # 1st hidden layer (26 nodes)
-  layer_dense(26, activation = "sigmoid", name = "HiddenLayer2") %>%  # 1st hidden layer (26 nodes)
-  layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
-  
-
-#compile the model to be trained            
-model_2_26 %>% compile(
-  optimizer = optimizer_adam(),
-  loss = loss_mean_squared_error(),
-  metric = metric_root_mean_squared_error()
-  )
-
-#train the model and find the lowest rmse
-history <- model_2_26 %>% fit(
-    x = x_train,
-    y = y_train,
-    validation_data = c(x_valid, y_valid),
-    verbose = FALSE
-    )
-```
-
-* Measuring Error Model 4
-
-```{r L2 N26 Pred}
-# prediction values of validation set
-y_valid_pred_2_26 <- predict(model_2_26, x_valid)
-
-# scaling back price predictions
-y_valid_pred_2_26 <- valRescale(y_valid_pred_2_26)
-
-# we have to change the class of y_valid_pred
-y_valid_pred_2_26 <- as.numeric(y_valid_pred_2_26)
-
-# copmuting accuracy measures of validation set
-acc_4 <- accuracy(object = y_valid_pred_2_26, x = y_valid_real)
-acc_4
-```
-
-
-### Model 5 with Initializer (Layers = 2, Nodes = 26, GlorotNormal)
-
-* Creating Model 5
-
-```{r L2 N26 Glot Model}
-#create model
-rm(model_2_26G) #to prevent retraining of existing model
-tf$random$set_seed(111)
-model_2_26G <- keras_model_sequential(input_shape = ncol(x_train)) %>%
-  layer_dense(26, activation = "sigmoid", name = "HiddenLayer", kernel_initializer = "GlorotNormal") %>%  # 1st hidden layer (26 nodes)
-  layer_dense(26, activation = "sigmoid", name = "HiddenLayer2", kernel_initializer = "GlorotNormal") %>%  # 1st hidden layer (26 nodes)
-  layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
-  
-
-#compile the model to be trained            
-model_2_26G %>% compile(
-  optimizer = optimizer_adam(),
-  loss = loss_mean_squared_error(),
-  metric = metric_root_mean_squared_error()
-  )
-
-#train the model and find the lowest rmse
-history <- model_2_26G %>% fit(
-    x = x_train,
-    y = y_train,
-    validation_data = c(x_valid, y_valid),
-    verbose = FALSE
-    )
-```
-
-* Measuring Error Model 5
-
-```{r L2 N26 Glot Pred}
-# prediction values of validation set
-y_valid_pred_2_26G <- predict(model_2_26G, x_valid)
-
-# scaling back price predictions
-y_valid_pred_2_26G <- valRescale(y_valid_pred_2_26G)
-
-# we have to change the class of y_valid_pred
-y_valid_pred_2_26G <- as.numeric(y_valid_pred_2_26G)
-
-# copmuting accuracy measures of validation set
-acc_5 <- accuracy(object = y_valid_pred_2_26G, x = y_valid_real)
-acc_5
-```
-
-
-### Model 6 with Initializer and Learning Rate (Layers = 2, Nodes = 26, GlorotNormal, LR = 0.005)
-
-* Creating model 6
-
-```{r L2 N26 Glot LR Model}
-#create model
-rm(model_2_26GLR) #to prevent retraining of existing model
-tf$random$set_seed(111)
-model_2_26GLR <- keras_model_sequential(input_shape = ncol(x_train)) %>%
-  layer_dense(26, activation = "sigmoid", name = "HiddenLayer", kernel_initializer = "GlorotNormal") %>%  # 1st hidden layer (26 nodes)
-  layer_dense(26, activation = "sigmoid", name = "HiddenLayer2", kernel_initializer = "GlorotNormal") %>%  # 1st hidden layer (26 nodes)
-  layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
-  
-
-#compile the model to be trained            
-model_2_26GLR %>% compile(
-  optimizer = optimizer_adam(learning_rate = 0.009),
-  loss = loss_mean_squared_error(),
-  metric = metric_root_mean_squared_error()
-  )
-
-#train the model and find the lowest rmse
-history <- model_2_26GLR %>% fit(
-    x = x_train,
-    y = y_train,
-    validation_data = c(x_valid, y_valid),
-    verbose = FALSE
-    )
-```
-
-* Measuring Error Model 6
- 
-```{r L2 N26 Glot LR Pred}
-# prediction values of validation set
-y_valid_pred_2_26GLR <- predict(model_2_26GLR, x_valid)
-
-# scaling back price predictions
-y_valid_pred_2_26GLR <- valRescale(y_valid_pred_2_26GLR)
-
-# we have to change the class of y_valid_pred
-y_valid_pred_2_26GLR <- as.numeric(y_valid_pred_2_26GLR)
-
-# copmuting accuracy measures of validation set
-acc_6 <- accuracy(object = y_valid_pred_2_26GLR, x = y_valid_real)
-acc_6
-```
-
-### Create Neural Net Summary Table
-
-```{r}
-NN_res <- data.frame("Model" = c("L1 N1",
-                                 "L1 N26",
-                                 "L1 N13",
-                                 "L2 N26",
-                                 "L2 N26 G",
-                                 "L2 N26 G LR"),
-                     "ME" = "",
-                     "RMSE" = "",
-                     "MAE"= "",
-                     "MPE" = "",
-                     "MAPE" = "")
-
-rownames(NN_res) <- NN_res$Model
-NN_res$Model = NULL
-
-str(round(get(paste("acc_", "1", sep ="")),2))
-
-for (i in 1:6) {
-  NN_res[i,]= round(get(paste("acc_", i, sep ="")),2)
-}
-
-kable_styling(kable(NN_res, full_width = FALSE))
-
-RMSEplotdata <- t(NN_res$RMSE)
-colnames(RMSEplotdata) <- t(rownames(NN_res))
-barplot(RMSEplotdata, col = "yellow")
-
-```
 
 ## Ensembles
 
