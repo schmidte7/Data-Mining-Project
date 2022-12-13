@@ -60,17 +60,6 @@ library(DataExplorer)   #for graphing missing value percentages
 library(car)            #for statistic functions
 library(ellipse)        #for mapping correlation
 library(naniar)         #for missing values 
-library(RColorBrewer)   #for graph colors
-library(rattle)         #Graphical Data Interface
-
-library(rpart)          #for regression trees
-library(rpart.plot)     #for plot trees
-library(forecast)       #for accuracy
-library(ggplot2)        #for visualizations
-library(caret)          #for variable importance
-library(randomForest)   #for randomForest
-library(gbm)            #for boosting
-library(ipred)          #for bagging
 
 source("VIF.R")
 ```
@@ -178,6 +167,17 @@ diamonds <- diamonds[, c(7, 2:4, 1, 8:10, 5:6)]
 # Create plot that looks at carat and price
 ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Carat and Clarity')
+```
+
+```{r Price Correlation}
+# Correlation between price and quantitative variables
+price_correlation <- with(diamonds_tree,
+     data.frame(cor_length_price = cor(length, price), cor_width_price = cor(width, price), cor_depth_price = cor(depth, price), cor_depth_ratio_price = cor(depth_ratio, price), cor_table_price2 = cor(table, price), cor_carat_price3 = cor(carat, price)))
+
+# Transpose data and put into kable format
+transpose <- t(sort(round(price_correlation,4),decreasing = FALSE))
+kable_corr <- kable(transpose) %>% kable_classic() 
+kable_corr
 ```
 
 ```{r Depth Ratio vs Price}
@@ -339,6 +339,23 @@ nn1
 
 ## Regression Tree
 
+### Loading Libraries
+
+```{r Libraries}
+library(RColorBrewer)   #for graph colors
+library(rattle)         #Graphical Data Interface
+library(rpart)          #for regression trees
+library(rpart.plot)     #for plot trees
+library(forecast)       #for accuracy
+library(ggplot2)        #for visualizations
+library(caret)          #for variable importance
+library(randomForest)   #for randomForest
+library(gbm)            #for boosting
+library(ipred)          #for bagging
+```
+
+### Partitioning
+
 ```{r RT - Train, Valid, Test }
 #Rename data specifically for regression trees
 diamonds_tree <- diamonds
@@ -346,19 +363,9 @@ diamonds_tree <- diamonds
 # Creating data tables Train, Valid and Test using the indexes for the regression tree section
 Train <- diamonds[train.index, ]
 Valid <- diamonds[valid.index, ]
-Test <- diamonds[test.index, ]
 ```
 
-```{r Price Correlation}
-# Correlation between price and quantitative variables
-price_correlation <- with(diamonds_tree,
-     data.frame(cor_length_price = cor(length, price), cor_width_price = cor(width, price), cor_depth_price = cor(depth, price), cor_depth_ratio_price = cor(depth_ratio, price), cor_table_price2 = cor(table, price), cor_carat_price3 = cor(carat, price)))
-
-# Transpose data and put into kable format
-transpose <- t(sort(round(price_correlation,4),decreasing = FALSE))
-kable_corr <- kable(transpose) %>% kable_classic() 
-kable_corr
-```
+### Regression Tree
 
 ```{r Default Regression Tree}
 # Use rpart() to run tree on continuous response 
@@ -389,14 +396,6 @@ tree_train_error <- forecast::accuracy(predict(RegressTree, Valid), Valid$price)
 kable(tree_train_error) %>% kable_classic() 
 ```
 
-```{r R-adjusted on Default Tree - Train}
-# Calculate R^2 
-p <- predict(RegressTree, Train)
-R_sq <- (cor(Train$price,p))^2
-R_pct <- R_sq*100
-R_pct
-```
-
 ```{r Default Tree Predictions}
 # Predict the diamond price with validation
 pred_Diamond_test <- predict(RegressTree, newdata = Valid)
@@ -404,6 +403,8 @@ pred_Diamond_test <- predict(RegressTree, newdata = Valid)
 # Display first 14 observations
 head(pred_Diamond_test,14)
 ```
+
+### 'Exlcusion' Regression Tree 
 
 ```{r Default Regression Tree Minus Variables}
 RegressTree2 <- rpart(price ~ length+width+depth+carat+cut+color+clarity, 
@@ -430,14 +431,6 @@ tree_train_error2 <- forecast::accuracy(predict(RegressTree2, Valid), Valid$pric
 kable(tree_train_error2) %>% kable_classic() 
 ```
 
-```{r R-adjusted on RegressTree2}
-# Calculate R^2 
-p2 <- predict(RegressTree2, Train)
-R_sq2 <- (cor(Train$price,p2))^2
-R_pct2 <- R_sq2*100
-R_pct2
-```
-
 ```{r Default Tree Predictions2}
 # Predict the diamond price with validation
 pred_Diamond_test2 <- predict(RegressTree2, newdata = Valid)
@@ -458,6 +451,8 @@ min.xerror
 plotcp(RegressTree2)
 ```
 
+### Pruned Regression Tree
+
 ```{r Pruned Regression Tree Minus Variables}
 RegressTree_pruned <- prune(RegressTree2, cp = min.xerror) 
 
@@ -472,6 +467,7 @@ tree_train_error3 <- forecast::accuracy(predict(RegressTree_pruned, Valid), Vali
 kable(tree_train_error3) %>% kable_classic() 
 ```
 
+### Boosted Tree
 
 ```{r Boosted Tree 10}
 # Boosted tree
@@ -551,6 +547,8 @@ ntree_opt_oob
 pred_boost <- predict.gbm(tree_boost100, newdata = Valid)
 ```
 
+### Bagging Tree
+
 ```{r Bagged Tree}
 # Bagged tree
 set.seed(111)
@@ -595,6 +593,7 @@ pred_bagged <- predict(tree_bagging, newdata = Valid)
 head(pred_bagged,14)
 ```
 
+### RandomForest
 
 ```{r randomForest}
 options(scipen = 9999)
@@ -1018,7 +1017,7 @@ NN_res <- data.frame("Model" = c("L1 N1",
                                  "L2 N26",
                                  "L2 N26 G",
                                  "L2 N26 G LR"),
-                     "Me" = "",
+                     "ME" = "",
                      "RMSE" = "",
                      "MAE"= "",
                      "MPE" = "",
