@@ -1175,8 +1175,8 @@ ensemble_summ[,"NeuralNets"] = y_valid_pred_2_26GLR
 ensemble_summ$AveragePred <- rowMeans(ensemble_summ[,1:4])
 ensemble_summ$RealPrices <- real_prices
 
-ens_RMSE = RMSE(ensemble_summ$AveragePred, ensemble_summ$RealPrices)
-ens_RMSE
+ens_error = accuracy(ensemble_summ$AveragePred, ensemble_summ$RealPrices)
+ens_error
 
 ```
 
