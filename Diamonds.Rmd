@@ -437,6 +437,7 @@ library(gbm)            #for boosting
 library(ipred)          #for bagging
 library(xgboost)        #for fitting GBMs
 library(vip)            #for variable importance
+library(ggRandomForests)#for additional RF information
 ```
 
 ### Partitioning
@@ -518,7 +519,7 @@ kable(tree_aa2) %>% kable_classic()
 
 ```{r Default Tree Predictions2}
 # Predict the diamond price with validation
-pred_Diamond_test2 <- predict(RegressTree2, newdata = Valid)
+pred_Diamond_test <- predict(RegressTree, newdata = Valid)
 
 # Display first 14 observations
 head(pred_Diamond_test2,14)
@@ -648,15 +649,11 @@ tree_aa6 <- forecast::accuracy(predict(tree_boost100, Valid), Valid$price)
 kable(tree_aa6) %>% kable_classic()
 ```
 
-```{r Boosted Tree 100 with oob}
-ntree_opt_oob <- gbm.perf(tree_boost100, method = "OOB")
-ntree_opt_oob
-
-# Indicate the method used to estimate the optimal number of boosting iterations. method = "OOB" computes the out-of-bag estimate and method = "test" uses the test (or validation) dataset to compute an out-of-sample estimate. method = "cv" extracts the optimal number of iterations using cross-validation if gbm was called with cv.folds > 1.
-```
 
 ```{r Predict Boosting}
 pred_boost <- predict.gbm(tree_boost100, newdata = Valid)
+
+head(pred_boost, 14)
 ```
 
 ### Bagging Tree
@@ -668,20 +665,18 @@ tree_bagging <- bagging(price ~., data = Train, coob = TRUE)
 tree_bagging
 ```
 
-```{r Plot IV}
-pred_imp <- varImp(tree_bagging)
+```{r Plot IV Bagging}
+ss<-varImp(tree_bagging)
 
-#sort variable importance descending
-VI_plot <- pred_imp[order(pred_imp$Overall, decreasing=FALSE),]
+data<-data.table(name=row.names(ss),value=ss$Overall)
 
-#visualize variable importance with horizontal bar plot
-barplot(sort(pred_imp$Overall, decreasing = FALSE),
-        names.arg=rownames(pred_imp),
-        horiz=TRUE,
-        col="#F9D53E", las = 1)
-
-# Add a main title and bottom and left axis labels
-title("Variable Importance ", xlab="Importance")
+data[,ggplot(.SD, aes(x=reorder(name, ss$Overall), y=ss$Overall)) + 
+  geom_bar(stat = "identity", fill = "#F9D53E")+
+  xlab("Variable") + # Label names + 
+  ylab("Importance") + # Label names + 
+  ggtitle("Bagged Tree Variable Importance") + # Title name
+  theme_classic() + # A classic theme, with x and y axis lines and no grid lines
+  coord_flip(),]
 ```
 
 ```{r Errors Bagging}
@@ -704,6 +699,7 @@ options(scipen = 9999)
 # Create randomForest
 set.seed(111)
 rdf_model <- randomForest(price~ ., ntree= 60, data = Train)
+rdf_model
 plot(rdf_model)
 ```
 
@@ -729,6 +725,11 @@ tree_aa8 <- forecast::accuracy(predict(rdf_model, Valid), Valid$price)
 kable(tree_aa8) %>% kable_classic()
 ```
 
+```{r Predict RandomForest}
+pred_random <- predict(rdf_model, newdata = Valid)
+
+head(pred_random,14)
+```
 ### Create Regression Tree Summary Table
 
 ```{r RegTree Summary}
@@ -1167,7 +1168,7 @@ ensemble_summ[length(valid.index),] <- 0
 
 #Add values per columns
 ensemble_summ[,"MLR"] = 2000 ######Add the correct Values
-ensemble_summ[,"RegTrees"] = 2000 ######Add the correct Values
+ensemble_summ[,"RegTrees"] = pred_random
 ensemble_summ[,"kNN"] = opt_knn_rescaled_prices
 ensemble_summ[,"NeuralNets"] = y_valid_pred_2_26GLR
 
