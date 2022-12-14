@@ -263,14 +263,18 @@ Test <- diamonds[test.index, ]
 
 ```{r}
 library(FNN)      #for finding k nearest neighbor
-
+library(fastDummies)
+library(caret)
+library(forecast)
+library(gridExtra)
 ```
 
 
 ```{r}
 diamonds_dummies <- diamonds
-diamonds_dummies <- dummy_cols(diamonds_dummies, select_columns = c("cut", "color", "clarity"))
-diamonds_dummies <- diamonds_dummies[,-c(2:4)]
+diamonds_dummies <- dummy_cols(diamonds_dummies, 
+                               select_columns = c("cut", "color", "clarity"), 
+                               remove_selected_columns = TRUE)
 
 #rename column to avoid issues with Neural net function
 colnames(diamonds_dummies)[10] = "cut_Very_Good"
@@ -291,24 +295,104 @@ norm_values <- preProcess(knn_train[, c(1:7)], method=c("center", "scale"))
 
 knn_train_norm[, c(1:7)] <- predict(norm_values, knn_train[, c(1:7)])
 knn_valid_norm[,c(1:7)] <- predict(norm_values, knn_valid[, c(1:7)])
+ 
 
-# Compute k=1 nearest neighbor 
-nn1 <- FNN::knn.reg(train = knn_train_norm[, -1], 
-          test = knn_train_norm[, -1],
-          y= knn_train_norm[, 1],
-          k = 1)
+# computing kNN with knnreg from caret package
+kNN = knnreg(x = knn_train_norm[, -c(1)] , y = knn_train_norm$price, k = 1)
 
-length(knn_train_norm[, -1])
-length(knn_train_norm[, 1])
+# predicting prices of validation set on the validation data
+knn_pred_y = predict(object = kNN, newdata = knn_valid_norm[, -c(1)])
 
+# we have to scale back the price, to do so we fetch the mean and std value from norm.values
+# dsplaying all means and stds
+norm_values$mean
+norm_values$std
 
-nn1$
-summary(nn1)
+# fetching for price
+mean_price = norm_values$mean[1]
+std_price = norm_values$std[1]
+
+# scaling back (Y*mu + sigma)
+knn_rescaled_prices = std_price * knn_pred_y + mean_price
+
+# taking real prices of validation data from diamonds (which has not been touched -> original scale)
+real_prices = diamonds[valid.index, price]
+
+# computing accuracy measures
+accuracy(object = knn_rescaled_prices, x = real_prices)
+```
+
+```{r Compute best K, }
+
+#create a data frame to store accuracy results
+accuracy_df <- data.frame(k = seq(1, 20, 1), accuracy = rep(0, 20))
+
+# use validation data set to compute various values of Knn
+for(i in 1:20) {
+temp_knn_pred <- knnreg(x = knn_train_norm[, -c(1)] , y = knn_train_norm$price, k = i)
+
+temp_knn_pred_y = predict(object = temp_knn_pred, newdata = knn_valid_norm[, -c(1)])
+temp_knn_rescaled_prices = std_price * temp_knn_pred_y + mean_price
+
+#update the accuracy table with results of confusion matrix accuracy from the loop
+accuracy_df[i, 2] <- accuracy(object = temp_knn_rescaled_prices, x = real_prices)[2]
+}
 
 #display results
-row.names(knn_train)[attr(nn1, "nn.index")]
-nn1
+row_spec(kable_minimal(kbl(accuracy_df)), 4, bold = T, color = "white", background = "#78BE20") 
+
+#plot results
+ggplot (data = accuracy_df, aes(x = k, y = accuracy)) +
+  geom_line (size = 1.2, color = "#0099F8") +
+  geom_point(data= accuracy_df[4,], aes(x = k, y = accuracy), color = "#78BE20", size = 3) +
+  labs(x = "Amount of Neighbors", y = "RMSE per Model", title = "Behavior of RMSE per amount of kNN")+
+  theme_classic() 
 ```
+
+
+```{r}
+
+# computing kNN with knnreg from caret package
+opt_kNN = knnreg(x = knn_train_norm[, -c(1)] , y = knn_train_norm$price, k = 4)
+
+# predicting prices of validation set on the validation data
+opt_knn_pred_y = predict(object = opt_kNN, newdata = knn_valid_norm[, -c(1)])
+
+# scaling back (Y*mu + sigma)
+opt_knn_rescaled_prices = std_price * opt_knn_pred_y + mean_price
+
+# computing accuracy measures
+opt_accuracy <- accuracy(object = opt_knn_rescaled_prices, x = real_prices)
+opt_accuracy
+```
+
+```{r Plot KNN results, fig.height= 3, fig.width = 4}
+plot1 <- data.frame("Real" = real_prices, 
+                    "Predicted" = knn_rescaled_prices, 
+                    "Color" = diamonds[valid.index, 3],
+                    "Cut" = diamonds[valid.index, 2])
+plot2 <- data.frame("Real" = real_prices, 
+                    "Predicted" = opt_knn_rescaled_prices, 
+                    "Color" = diamonds[valid.index, 3])
+
+
+basic_knn_plot <- ggplot(data = plot1, 
+                         aes(x= Real, y = Predicted, color = "Cut"), 
+                         width = 5, height = 5)+
+  geom_point()+
+  labs(x= "Real Diamond Prices", y = 'Predicted Values')
+basic_knn_plot
+
+optimal_knn_plot <- ggplot(width = 5, height = 5)+
+  geom_point(data = plot2, aes(x = Real, y = Predicted), fill = plot2$Color)+
+  labs(x= "Real Diamond Prices", y = 'Predicted Values')
+optimal_knn_plot
+
+grid.arrange(basic_knn_plot, optimal_knn_plot, ncol = 2)
+
+```
+
+
 
 
 ## Regression Tree
