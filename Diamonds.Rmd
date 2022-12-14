@@ -749,8 +749,6 @@ Tree_res <- data.frame("Model_Tree" = c("Regression Tree",
 rownames(Tree_res) <- Tree_res$Model_Tree
 Tree_res$Model_Tree = NULL
 
-str(round(get(paste("tree_aa", "1", sep ="")),2))
-
 for (i in 1:8) {
   Tree_res[i,]= round(get(paste("tree_aa", i, sep ="")),2)
 }
@@ -767,7 +765,7 @@ colnames(RMSEplotdata) <- t(rownames(Tree_res))
 
 ### Loading Libraries
 
-```{r Set Libraries}
+```{r NN Set Libraries}
 library(forecast)        #for calculating RMSE
 library(caret)          #for dummy variables
 library(fastDummies)
@@ -779,7 +777,7 @@ tf$constant("Hello Tensorflow!")
 
 ### Data preprocessing
 
-```{r Dummy ariables}
+```{r NN Dummy ariables}
 #create dummy columns 
 diamonds_dummies <- dummy_cols(diamonds, select_columns = c("cut", "color", "clarity"))
 diamonds_dummies <- diamonds_dummies[,-c(2:4)]
@@ -790,14 +788,14 @@ colnames(diamonds_dummies)[10] = "cut_Very_Good"
 
 ### Partitioning
 
-```{r Partitioning}
+```{r NN Partitioning}
 train_diamonds <- diamonds_dummies[train.index,]
 valid_diamonds <- diamonds_dummies[valid.index,]
 ```
 
 ### Normalizing Data
 
-```{r Normalize}
+```{r NN Normalize}
 # use preProcess() to normalize non-categorical variables
 norm_values <- preProcess(train_diamonds[1:7], method= c("range"))
 
@@ -1120,7 +1118,7 @@ acc_6
 
 ### Create Neural Net Summary Table
 
-```{r}
+```{r NN Summary}
 NN_res <- data.frame("Model" = c("L1 N1",
                                  "L1 N26",
                                  "L1 N13",
@@ -1136,8 +1134,6 @@ NN_res <- data.frame("Model" = c("L1 N1",
 rownames(NN_res) <- NN_res$Model
 NN_res$Model = NULL
 
-str(round(get(paste("acc_", "1", sep ="")),2))
-
 for (i in 1:6) {
   NN_res[i,]= round(get(paste("acc_", i, sep ="")),2)
 }
@@ -1150,9 +1146,37 @@ barplot(RMSEplotdata, col = "yellow")
 
 ```
 
+
+```{r NN best model results}
+
+ 
+
+```
+
+
 ## Ensembles
 
 ```{r}
+#create Table with 0 values
+ensemble_summ <- data.frame("MLR" = 0,
+                             "RegTrees" = 0,
+                             "kNN" = 0,
+                             "NeuralNets" = 0)
+#create empty rows
+ensemble_summ[length(valid.index),] <- 0
+
+#Add values per columns
+ensemble_summ[,"MLR"] = 2000 ######Add the correct Values
+ensemble_summ[,"RegTrees"] = 2000 ######Add the correct Values
+ensemble_summ[,"kNN"] = opt_knn_rescaled_prices
+ensemble_summ[,"NeuralNets"] = y_valid_pred_2_26GLR
+
+#Calculate Average
+ensemble_summ$AveragePred <- rowMeans(ensemble_summ[,1:4])
+ensemble_summ$RealPrices <- real_prices
+
+ens_RMSE = RMSE(ensemble_summ$AveragePred, ensemble_summ$RealPrices)
+ens_RMSE
 
 ```
 
