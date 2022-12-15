@@ -109,22 +109,42 @@ gg_miss_var(diamonds) + ggtitle("Missing values")
 
 
 ```{r Variables check}
-# carat no problems
+############### carat no problems#################
+
+############### Cut###############################
 unique(diamonds$cut) # Review unique values for cut
-diamonds$cut <- as.factor(diamonds$cut) # Factor the cut to five levels 
-diamonds$cut <- ordered(diamonds$cut, levels = c("Fair", "Good", "Very Good", "Premium", "Ideal")) # Ordered from worst to best
+# Factor the cut to five level
+diamonds$cut <- as.factor(diamonds$cut) 
 
-unique(diamonds$color) # Review unique values for color
-diamonds$color <- as.factor(diamonds$color) # Factor the color to seven levels 
-diamonds$color <- ordered(diamonds$color, levels = c("J", "I", "H", "G", "F", "E", "D")) # Ordered from worst to best
+# Ordered from worst to best
+diamonds$cut <- ordered(diamonds$cut, levels = c("Fair", "Good", "Very Good", "Premium", "Ideal")) 
 
-unique(diamonds$clarity) # Review unique values for clarity
-diamonds$clarity <- as.factor(diamonds$clarity) # Factor the clarity to eight levels 
-diamonds$clarity <- ordered(diamonds$clarity, levels = c("I1", "SI2", "SI1", "VS2", "VS1", "VVS2", "VVS1", "IF")) # Ordered from worst to best
+############### Color ############################
+# Review unique values for color
+unique(diamonds$color) 
 
-# table is ok
+# Factor the color to seven levels 
+diamonds$color <- as.factor(diamonds$color) 
 
-# price is ok
+# Ordered from worst to best
+diamonds$color <- ordered(diamonds$color, levels = c("J", "I", "H", "G", "F", "E", "D")) 
+
+
+############### Clarity ##########################
+# Review unique values for clarity
+unique(diamonds$clarity)
+
+# Factor the clarity to eight levels 
+diamonds$clarity <- as.factor(diamonds$clarity)
+
+# Ordered from worst to best
+diamonds$clarity <- ordered(diamonds$clarity, levels = c("I1", "SI2", "SI1", "VS2", "VS1", "VVS2", "VVS1", "IF")) 
+
+############### Table no problems#################
+
+############### Price no problems#################
+
+############### Other Checks #####################
 
 # Remove values of 0 for for dimensions which includes zeros in length and width
 nrow(diamonds[depth %in% 0,]) # Remove 20 rows due to depth = 0.0
@@ -135,6 +155,7 @@ diamonds[, subtraction := abs(length - width)]
 nrow(diamonds[subtraction>10,]) # Remove 2 rows due their extreme subtraction value (~59 and ~26)
 diamonds <- diamonds[subtraction <= 10, ] # Include only values with subtraction less than ten
 
+# Check if the Depth_Ratio value corresponds to formula indicated in the description
 diamonds[, depth_check := round(100*(2*depth)/((length + width)), 1)]
 diamonds[, diff := abs(depth_check-depth_ratio)]
 # treshold at 0.3? anastasia
@@ -155,13 +176,15 @@ diamonds[, diff := NULL]
 diamonds <- diamonds[, c(7, 2:4, 1, 8:10, 5:6)]
 ```
 
+
 ```{r ggpairs, fig.width = 6, fig.height = 4}
-# Used ggpairs to create a scatterplot matrix
-# ggpairs(diamonds[, c(1, 5:10)], title = "Scatterplot Matrix",
-#          proportions = "auto",
-#          columnLabels = c("Price", "Carat", "Length", "Width", "Depth","Depth Ratio","Table"),
-#          upper = list(continuous = wrap('cor',size = 3)),) + theme_light()
+#Used ggpairs to create a scatterplot matrix
+ggpairs(diamonds[, c(1, 5:10)], title = "Scatterplot Matrix",
+         proportions = "auto",
+         columnLabels = c("Price", "Carat", "Length", "Width", "Depth","Depth Ratio","Table"),
+         upper = list(continuous = wrap('cor',size = 3)),) + theme_light()
 ```
+
 
 ```{r Price by Carat and Clarity}
 # Create plot that looks at carat and price
@@ -181,6 +204,7 @@ kable_corr
 ```
 
 ```{r Depth Ratio vs Price}
+#plot Proce per Depth Ratio to see if there is a trend
 plot(diamonds$depth_ratio,diamonds$price, col = "#F9D53E")
 ```
 
@@ -240,6 +264,7 @@ rm(cormat, reorder_cormat)
 ```
 
 ```{r Correlation Plot,fig.width = 5, fig.height = 5}
+#plot Correlation ellipses
 plotcorr(cor(diamonds[, -c(2:4)]), col = "#F9D53E",
          main = "Pearson correlation ellipses for numerical variables")
 ```
@@ -250,33 +275,18 @@ set.seed(111)
 
 # generating training set index
 train.index <- sample(c(1:nrow(diamonds)), 0.5*nrow(diamonds))
+
 # generating validation set index taken from the complementary of training set
 valid.index <- sample(setdiff(c(1:nrow(diamonds)), train.index), 0.3*nrow(diamonds))
+
 # defining test set index as complementary of (train.index + valid.index)
 test.index <- as.numeric(setdiff(row.names(diamonds), union(train.index, valid.index)))
+
 # creating data tables Train, Valid and Test using the indexes
 Train <- diamonds[train.index, ]
 Valid <- diamonds[valid.index, ]
 Test <- diamonds[test.index, ]
 ```
-
-# Dimension Reduction Analysis
-
-```{r VIF}
-#diamonds_lm <- lm(price ~ carat + length + width + depth + depth_ratio + table, data = diamonds)
-#diamonds_lm2 <- lm(price ~ carat + depth_ratio + table, data = diamonds)
-#diamonds_lm3 <- lm(price ~ carat + depth + depth_ratio + table, data = diamonds)
-
-#diamonds_vif <- vif(diamonds_lm)
-#VIF(diamonds[, c(5:8)])
-#diamonds_vif2 <- vif(diamonds_lm2)
-
-#diamonds_vif3 <- vif(diamonds_lm3)
-
-
-#summary(diamonds_vif)
-```
-
 
 # Variable Prediction and Model Performance Evaluation
 
