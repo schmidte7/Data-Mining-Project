@@ -57,7 +57,8 @@ library(ellipse)        #for mapping correlation
 library(e1071)          #for skewness
 library(caret)          #for preProcess() and accuracy()
 library(fastDummies)    #for creating dummies
-# library(kableExtra)     #for more elaborate tables
+library(forecast)       # for accuracy() measures
+library(kableExtra)     #for more elaborate tables
 # library(GGally)         #for making graphs
 # library(dplyr)          #for data manipulation
 # library(DataExplorer)   #for graphing missing value percentages
@@ -202,7 +203,7 @@ plotcorr(cor(diamonds[, -c(2:4)]), col = "#F9D53E",
          main = "Pearson correlation ellipses for numerical variables")
 ```
 
-```{r train-valid-test}
+```{r train-valid-test-indexes}
 # set seed for reproducing the partition
 set.seed(111)
 
@@ -239,6 +240,10 @@ Train$price <- log(Train$price)
 Train$carat <- log(Train$carat)
 Train$table <- log(Train$table)
 sapply(Train[, c(1, 5:10)], skewness)
+
+Valid$price <- log(Valid$price)
+Valid$carat <- log(Valid$carat)
+Valid$table <- log(Valid$table)
 ```
 
 ```{r hist-unskewed}
@@ -261,10 +266,28 @@ Valid[, c(1, 5:10)] <- predict(norm.values, Valid[, c(1, 5:10)])
  Test[, c(1, 5:10)] <- predict(norm.values,  Test[, c(1, 5:10)])
 ```
 
+
 ```{r LM-complete}
 LM_complete = lm(price ~. , data = Train)
 summary(LM_complete)
 ```
+
+```{r iterative-search-complete}
+LM_forward_complete = step(LM_complete, direction = "forward")
+summary(LM_forward_complete)    # no selection
+LM_backward_complete = step(LM_complete, direction = "backward")
+summary(LM_backward_complete)   # like LM_CpAIC_complete
+LM_stepwise_complete = step(LM_complete, direction = "both")
+summary(LM_stepwise_complete)   # like LM_CpAIC_complete
+```
+
+```{r LM_CpAIC_complete}
+GlobalCrit(LM_complete)
+
+LM_CpAIC_complete = lm(price ~ . , data = Train[, c(1:6, 8, 9)])
+summary(LM_CpAIC_complete)
+```
+
 
 
 ```{r LM-minus-corr}
@@ -272,17 +295,6 @@ Train_minus_corr <- Train[, -c(6:8)]
 LM_minus_corr = lm(price ~ ., data = Train_minus_corr)
 summary(LM_minus_corr)
 ```
-
-
-```{r iterative-search-complete}
-LM_backward = step(LM_complete, direction = "backward")
-summary(LM_backward)   # like LM_CpAIC_complete
-LM_forward = step(LM_complete, direction = "forward")
-summary(LM_forward)    # no selection
-LM_stepwise = step(LM_complete, direction = "both")
-summary(LM_stepwise)   # like LM_CpAIC_complete
-```
-
 
 ```{r iterative-search-minus-corr}
 LM_backward_minus_corr = step(LM_minus_corr, direction = "backward")
@@ -293,37 +305,99 @@ LM_stepwise_minus_corr = step(LM_minus_corr, direction = "both")
 summary(LM_stepwise_minus_corr)   # like LM_CpAIC_minus_corr
 ```
 
-
-```{r global-methods}
-GlobalCrit(LM_complete)
+```{r LM_CpAIC_minus_corr}
 GlobalCrit(LM_minus_corr)
 
-LM_CpAIC_complete = lm(price ~ . , data = Train[, c(1:6, 8, 9)])
-summary(LM_CpAIC_complete)
 LM_CpAIC_minus_corr = lm(price ~ . , data = Train[, c(1:5, 9)])
 summary(LM_CpAIC_minus_corr)
 ```
 
+```{r}
+library(knitr)
+library(kableExtra)
+kable_styling(
+  kable(
+  data.table(Model = c("LM_complete", "LM_forward_complete", "LM_backward_complete",
+                       "LM_stepwise_complete", "LM_CpAIC_complete",
+                       "LM_minus_corr", "LM_forward_minus_corr", "LM_backward_minus_corr",
+                       "LM_stepwise_minus_corr", "LM_CpAIC_minus_corr"),
+             Cut           = c("X","X","X","X","X","X","X","X","X","X"),
+             Color         = c("X","X","X","X","X","X","X","X","X","X"),
+             Clarity       = c("X","X","X","X","X","X","X","X","X","X"),
+             Carat         = c("X","X","X","X","X","X","X","X","X","X"),
+             Length        = c("X","X","X","X","X"," "," "," "," "," "),
+             Width         = c("X","X"," "," "," "," "," "," "," "," "),
+             Depth         = c("X","X","X","X","X"," "," "," "," "," "),
+             `Depth Ratio` = c("X","X","X","X","X","X","X","X","X","X"),
+             Table         = c("X","X"," "," "," ","X","X"," "," "," ")
+             ),
+  align = 'lccccccccc'),
+  full_width = FALSE)
+```
 
-with all variables:
-  cut              
-  color            
-  clarity          
-  carat            
-  length           
-  depth            
-  depth_ratio
-  
-taking out the correlated ones:
-  cut              
-  color            
-  clarity          
-  carat            
-  depth_ratio  
+In both cases, the forward selection doesn't discard any variables, whereas backward, stepwise and global selections all choose the same model with less variables than initially.
+
+Thus, we have four different models emerging. We will keep `LM_complete`, `LM_CpAIC_complete`, `LM_minus_corr` and `LM_CpAIC_minus_corr` and remove the other models which are duplicates.
+
+```{r}
+rm(LM_forward_complete, LM_backward_complete, LM_stepwise_complete, LM_forward_minus_corr, LM_backward_minus_corr, LM_stepwise_minus_corr)
+```
+
+
+```{r}
+# predicting prices of validation set on the validation data
+
+LM_Predictions =
+  data.table(
+    LM_complete_pred = predict(object = LM_complete, newdata = Valid),
+    LM_CpAIC_complete_pred = predict(object = LM_CpAIC_complete, newdata = Valid),
+    LM_minus_corr_pred = predict(object = LM_minus_corr, newdata = Valid),
+    LM_CpAIC_minus_corr_pred = predict(object = LM_CpAIC_minus_corr, newdata = Valid)
+    )
+
+# we have to scale back the price, to do so we fetch the mean and std value from norm.values
+# dsplaying all means and stds
+norm.values$mean
+norm.values$std
+
+# fetching for price
+mean_price = norm.values$mean[1]
+std_price = norm.values$std[1]
+
+# scaling back (Y*mu + sigma), then exp() (we had transformed price with a log for skewness)
+LM_Predictions = LM_Predictions*std_price + mean_price
+LM_Predictions = exp(LM_Predictions)
+
+
+# taking real prices of validation data from diamonds (which has not been touched -> original scale)
+LM_Predictions[, real_prices := diamonds[valid.index, price]]
+
+Acc1 = accuracy(object = LM_Predictions$LM_complete_pred, x = LM_Predictions$real_prices)
+Acc1 = as.data.table(Acc1)
+Acc2 = accuracy(object = LM_Predictions$LM_CpAIC_complete_pred, x = LM_Predictions$real_prices)
+Acc2 = as.data.table(Acc2)
+Acc3 = accuracy(object = LM_Predictions$LM_minus_corr_pred, x = LM_Predictions$real_prices)
+Acc3 = as.data.table(Acc3)
+Acc4 = accuracy(object = LM_Predictions$LM_CpAIC_minus_corr_pred, x = LM_Predictions$real_prices)
+Acc4 = as.data.table(Acc4)
+Accs = list(Acc1, Acc2, Acc3, Acc4)
+Accs = rbindlist(Accs)
+rm(Acc1, Acc2, Acc3, Acc4)
+Accs[, Model := c("LM_complete", "LM_CpAIC_complete", "LM_minus_corr", "LM_CpAIC_minus_corr")]
+Accs <- Accs[, c(6, 1:5)]
+kable_styling(kable(Accs), full_width = FALSE)
+```
 
 
 
-```{r dummies-and-dummies-minus-corr}
+
+
+
+
+
+
+
+```{r dummies-and-dummies-minus-corr, eval=FALSE, include=FALSE}
 TrainD = dummy_cols(Train,
                     select_columns = c("cut", "color", "clarity"),
                     remove_first_dummy = TRUE,
@@ -339,7 +413,7 @@ summary(LM_dummies_minus_corr)
 ```
 
 
-```{r iterative-search-dummies}
+```{r iterative-search-dummies, eval=FALSE, include=FALSE}
 LM_backward_dummies = step(LM_dummies, direction = "backward")
 summary(LM_backward_dummies)   # missing width and table
 LM_forward_dummies = step(LM_dummies, direction = "forward")
@@ -349,7 +423,7 @@ summary(LM_stepwise_dummies)   # missing width and table
 ```
 
 
-```{r iterative-search-dummies-minus-corr}
+```{r iterative-search-dummies-minus-corr, eval=FALSE, include=FALSE}
 LM_backward_dummies_minus_corr = step(LM_dummies_minus_corr, direction = "backward")
 summary(LM_backward_dummies_minus_corr)   # missing table
 LM_forward_dummies_minus_corr = step(LM_dummies_minus_corr, direction = "forward")
@@ -359,12 +433,17 @@ summary(LM_stepwise_dummies_minus_corr)   # missing table
 ```
 
 
-```{r}
-# GlobalCrit(LM_backward_dummies)
-# GlobalCrit(LM_backward_dummies_minus_corr)
+```{r eval=FALSE, include=FALSE}
+# # GlobalCrit(LM_backward_dummies)
+# # GlobalCrit(LM_backward_dummies_minus_corr)
+# library(olsrr)
+# 
+# ols_step_best_subset(LM_backward_dummies)
+# A = regsubsets(price ~. , data = TrainD, method = "exhaustive")
+# A
+# B = summary(A)
+# B$which
 ```
 
-```{r}
 
-```
 
