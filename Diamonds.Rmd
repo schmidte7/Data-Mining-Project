@@ -323,7 +323,7 @@ Test <- diamonds[test.index, ]
 
 ## Linear Regression
 
-```{r train-valid-test}
+```{r LR data partition}
 Train_lr <- diamonds[train.index, ]
 Valid_lr <- diamonds[valid.index, ]
 Test_lr  <- diamonds[ test.index, ]
@@ -1106,7 +1106,7 @@ acc_2
 
 * Creating Model 3
 
-```{r L1 N26 Model}
+```{r L1 N13 Model}
 #create model
 rm(model_1_13) #to prevent retraining of existing model
 tf$random$set_seed(111)
@@ -1133,7 +1133,7 @@ history <- model_1_13 %>% fit(
 
 * Measuring Error Model 3
 
-```{r L1 N26 Pred}
+```{r L1 N13 Pred}
 # prediction values of validation set
 y_valid_pred_1_13 <- predict(model_1_13, x_valid)
 
@@ -1322,36 +1322,6 @@ barplot(NNRMSEplotdata, col = "yellow")
 
 ```
 
-```{r Plot KNN results, fig.height= 2.5, fig.width = 5}
-plot3 <- data.frame("Real" = real_prices, 
-                    "Predicted" = y_valid_pred, 
-                    "Color" = diamonds[valid.index, 3],
-                    "Cut" = diamonds[valid.index, 2],
-                    "Clarity" = diamonds[valid.index, 4])
-plot4 <- data.frame("Real" = real_prices, 
-                    "Predicted" = y_valid_pred_2_26GLR, 
-                    "Color" = diamonds[valid.index, 3],
-                    "Cut" = diamonds[valid.index, 2],
-                    "Clarity" = diamonds[valid.index, 4])
-
-
-L1_N1_plot <- ggplot(data = plot3, aes(x= Real, y = Predicted, color = clarity))+
-  geom_point(show.title = FALSE)+
-  scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
-  labs(x= "NN (L1 N1)", y = "Predicted Values")+
-  theme(legend.key.size = unit(0.5, 'cm'))
-L1_N1_plot
-
-L2_N26_plot <- ggplot(data = plot4, aes(x= Real, y = Predicted, color = clarity))+
-  geom_point()+
-  scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
-  labs(x= "NN (L2 N26", y = "")
-L2_N26_plot
-
-full_plot2 <- ggarrange(L1_N1_plot, L2_N26_plot, ncol=2, nrow=1, common.legend = TRUE, legend="right")
-full_plot2
-
-```
 
 ## Ensembles
 
@@ -1401,7 +1371,7 @@ kable_classic(kbl(ens_rmse_summ))
 # Model Performance Summary
 
 
-```{r Plot KNN results, fig.height= 4, fig.width = 3.5}
+```{r Ensemble Summary Plot, fig.height= 4, fig.width = 3.5}
 predtable_lr <- data.frame("Real" = real_prices, 
                     "Predicted" = ensemble_summ[, 1],
                     "Color" = diamonds[valid.index, 3],
