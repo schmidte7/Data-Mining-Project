@@ -323,13 +323,11 @@ Test <- diamonds[test.index, ]
 
 ## Linear Regression
 
-
 ```{r train-valid-test}
 Train <- diamonds[train.index, ]
 Valid <- diamonds[valid.index, ]
 Test  <- diamonds[ test.index, ]
 ```
-
 
 ```{r vif}
 VIF(y = diamonds$price, matx = diamonds[, -c(1)])
@@ -494,11 +492,6 @@ kable_styling(kable(Accs), full_width = FALSE)
 
 ## $k$-NN
 
-```{r knn Load Libraries}
-
-```
-
-
 ```{r knn Create Dummies}
 diamonds_dummies <- diamonds
 diamonds_dummies <- dummy_cols(diamonds_dummies, 
@@ -623,12 +616,6 @@ grid.arrange(basic_knn_plot, optimal_knn_plot, ncol = 2)
 ```
 
 ## Regression Tree
-
-### Loading Libraries
-
-```{r Libraries}
-
-```
 
 ### Partitioning
 
@@ -920,6 +907,7 @@ pred_random <- predict(rdf_model, newdata = Valid)
 
 head(pred_random,14)
 ```
+
 ### Create Regression Tree Summary Table
 
 ```{r RegTree Summary}
@@ -953,12 +941,6 @@ colnames(RMSEplotdata) <- t(rownames(Tree_res))
 ```
 
 ## NeuralNetworks
-
-### Loading Libraries
-
-```{r NN Set Libraries}
-
-```
 
 ### Data preprocessing
 
@@ -1328,13 +1310,6 @@ kable_styling(kable(NN_res, full_width = FALSE))
 RMSEplotdata <- t(NN_res$RMSE)
 colnames(RMSEplotdata) <- t(rownames(NN_res))
 barplot(RMSEplotdata, col = "yellow")
-
-```
-
-
-```{r NN best model results}
-
- 
 
 ```
 
