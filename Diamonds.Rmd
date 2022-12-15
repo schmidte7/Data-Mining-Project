@@ -617,11 +617,8 @@ optimal_knn_plot <- ggplot(data = plot2, aes(x= Real, y = Predicted, color = cla
   labs(x= "Optimal Model (k=4)", y = "")
 optimal_knn_plot
 
-
-full_plot <- ggarrange(graph_title, NULL, basic_knn_plot, optimal_knn_plot, ncol=2, nrow=2, common.legend = TRUE, legend="right")
+full_plot <- ggarrange(basic_knn_plot, optimal_knn_plot, ncol=2, nrow=2, common.legend = TRUE, legend="right")
 full_plot
-
-
 
 ```
 
@@ -1323,6 +1320,36 @@ barplot(RMSEplotdata, col = "yellow")
 
 ```
 
+```{r Plot KNN results, fig.height= 2.5, fig.width = 5}
+plot3 <- data.frame("Real" = real_prices, 
+                    "Predicted" = y_valid_pred, 
+                    "Color" = diamonds[valid.index, 3],
+                    "Cut" = diamonds[valid.index, 2],
+                    "Clarity" = diamonds[valid.index, 4])
+plot4 <- data.frame("Real" = real_prices, 
+                    "Predicted" = y_valid_pred_2_26GLR, 
+                    "Color" = diamonds[valid.index, 3],
+                    "Cut" = diamonds[valid.index, 2],
+                    "Clarity" = diamonds[valid.index, 4])
+
+
+L1_N1_plot <- ggplot(data = plot3, aes(x= Real, y = Predicted, color = clarity))+
+  geom_point(show.title = FALSE)+
+  scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
+  labs(x= "NN (L1 N1)", y = "Predicted Values")+
+  theme(legend.key.size = unit(0.5, 'cm'))
+L1_N1_plot
+
+L2_N26_plot <- ggplot(data = plot4, aes(x= Real, y = Predicted, color = clarity))+
+  geom_point()+
+  scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
+  labs(x= "NN (L2 N26", y = "")
+L2_N26_plot
+
+full_plot2 <- ggarrange(L1_N1_plot, L2_N26_plot, ncol=2, nrow=1, common.legend = TRUE, legend="right")
+full_plot2
+
+```
 
 ## Ensembles
 
@@ -1350,7 +1377,68 @@ ens_error
 
 ```
 
+```{r}
+
+```
+
+
+
 # Model Performance Summary
 
+
+```{r Plot KNN results, fig.height= 4.5, fig.width = 3.5}
+predtable_lr <- data.frame("Real" = real_prices, 
+                    "Predicted" = ensemble_summ[, 1],
+                    "Color" = diamonds[valid.index, 3],
+                    "Cut" = diamonds[valid.index, 2],
+                    "Clarity" = diamonds[valid.index, 4])
+predtable_rg <- data.frame("Real" = real_prices, 
+                    "Predicted" = ensemble_summ[, 2], 
+                    "Color" = diamonds[valid.index, 3],
+                    "Cut" = diamonds[valid.index, 2],
+                    "Clarity" = diamonds[valid.index, 4])
+predtable_knn <- data.frame("Real" = real_prices, 
+                    "Predicted" = ensemble_summ[, 3], 
+                    "Color" = diamonds[valid.index, 3],
+                    "Cut" = diamonds[valid.index, 2],
+                    "Clarity" = diamonds[valid.index, 4])
+predtable_nn <- data.frame("Real" = real_prices, 
+                    "Predicted" = ensemble_summ[, 4], 
+                    "Color" = diamonds[valid.index, 3],
+                    "Cut" = diamonds[valid.index, 2],
+                    "Clarity" = diamonds[valid.index, 4])
+
+
+pred_plot_lr <- ggplot(data = predtable_lr, aes(x= Real, y = Predicted, color = clarity))+
+  geom_point(show.title = FALSE)+
+  scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
+  labs(x= "Multiple Linear Regression", y = "Predicted Values")+
+  theme(legend.key.size = unit(0.5, 'cm'))
+pred_plot_lr
+
+pred_plot_rg <- ggplot(data = predtable_rg, aes(x= Real, y = Predicted, color = clarity))+
+  geom_point()+
+  scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
+  labs(x= "NN (Regression Trees", y = "")
+pred_plot_rg
+
+pred_plot_knn <- ggplot(data = predtable_knn, aes(x= Real, y = Predicted, color = clarity))+
+  geom_point()+
+  scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
+  labs(x= "k Neares Neighbor", y = "")
+pred_plot_knn
+
+pred_plot_nn <- ggplot(data = predtable_nn, aes(x= Real, y = Predicted, color = clarity))+
+  geom_point()+
+  scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
+  labs(x= "Neural Networks", y = "")
+pred_plot_nn
+
+
+pred_plot_full <- ggarrange(pred_plot_lr, pred_plot_rg, pred_plot_knn, pred_plot_nn,
+                            ncol=2, nrow=2, common.legend = TRUE, legend="right")
+pred_plot_full
+
+```
 # Conclusions
 
