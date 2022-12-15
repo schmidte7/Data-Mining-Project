@@ -706,7 +706,7 @@ kable(tree_aa2) %>% kable_classic()
 pred_Diamond_test <- predict(RegressTree, newdata = Valid_rg)
 
 # Display first 14 observations
-head(pred_Diamond_test2,14)
+head(pred_Diamond_test,14)
 ```
 
 ```{r CP Value}
@@ -1378,7 +1378,18 @@ ens_error
 ```
 
 ```{r}
+ens_rmse_summ <- NN_res[0,] #NeuralNet Error
+ens_rmse_summ[1, ] <- round(Acc4, 2)
+ens_rmse_summ[2, ] <- Tree_res[8,]
+ens_rmse_summ[3, ] <- round(opt_accuracy, 2)
+ens_rmse_summ[4, ] <- NN_res[6,]
+ens_rmse_summ[5, ] <- round(ens_error, 2)
 
+row.names(ens_rmse_summ) <- c("Multiple Linear Regression",
+                              "Regression Tree",
+                              "k-Nearest Neighbor",
+                              "Neural Network",
+                              "Ensemble")
 ```
 
 
@@ -1386,7 +1397,7 @@ ens_error
 # Model Performance Summary
 
 
-```{r Plot KNN results, fig.height= 4.5, fig.width = 3.5}
+```{r Plot KNN results, fig.height= 4, fig.width = 3.5}
 predtable_lr <- data.frame("Real" = real_prices, 
                     "Predicted" = ensemble_summ[, 1],
                     "Color" = diamonds[valid.index, 3],
@@ -1404,6 +1415,11 @@ predtable_knn <- data.frame("Real" = real_prices,
                     "Clarity" = diamonds[valid.index, 4])
 predtable_nn <- data.frame("Real" = real_prices, 
                     "Predicted" = ensemble_summ[, 4], 
+                    "Color" = diamonds[valid.index, 3],
+                    "Cut" = diamonds[valid.index, 2],
+                    "Clarity" = diamonds[valid.index, 4])
+predtable_ens <- data.frame("Real" = real_prices, 
+                    "Predicted" = ensemble_summ[, 5], 
                     "Color" = diamonds[valid.index, 3],
                     "Cut" = diamonds[valid.index, 2],
                     "Clarity" = diamonds[valid.index, 4])
@@ -1434,9 +1450,15 @@ pred_plot_nn <- ggplot(data = predtable_nn, aes(x= Real, y = Predicted, color = 
   labs(x= "Neural Networks", y = "")
 pred_plot_nn
 
+pred_plot_ens <- ggplot(data = predtable_ens, aes(x= Real, y = Predicted, color = clarity))+
+  geom_point()+
+  scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
+  labs(x= "Ensemble", y = "")
+pred_plot_ens
 
-pred_plot_full <- ggarrange(pred_plot_lr, pred_plot_rg, pred_plot_knn, pred_plot_nn,
-                            ncol=2, nrow=2, common.legend = TRUE, legend="right")
+
+pred_plot_full <- ggarrange(pred_plot_lr, pred_plot_rg, pred_plot_knn, pred_plot_nn,pred_plot_ens,
+                            ncol=2, nrow=3, common.legend = TRUE, legend="right")
 pred_plot_full
 
 ```
