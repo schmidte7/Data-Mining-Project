@@ -50,18 +50,49 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE, fig.align = "center")
 ```
 
 ```{r Libraries}
-library(data.table)     #for reading data.tables
-library(kableExtra)     #for more elaborate tables
-library(ggplot2)        #for making graphs
-library(GGally)         #for making graphs
-library(dplyr)          #for data manipulation
-library(tidyr)          #for changing the shape and hierarchy of a data set
-library(DataExplorer)   #for graphing missing value percentages
+################ General Use ######################
 library(car)            #for statistic functions
+library(DataExplorer)   #for graphing missing value percentages
+library(data.table)     #for reading data.tables
+library(dplyr)          #for data manipulation
+library(fastDummies)    #for creating dummies
+library(e1071)          #for skewness
 library(ellipse)        #for mapping correlation
-library(naniar)         #for missing values 
+library(GGally)         #for making graphs
+library(ggplot2)        #for making graphs
+library(gridExtra)      #for plot alignment
+library(kableExtra)     #for more elaborate tables
+library(knitr)
+library(tidyr)          #for changing the shape and hierarchy of a data set
+library(naniar)         #for missing values
+library(RColorBrewer)   #for graph colors
+library(rattle)         #Graphical Data Interface
 
-source("VIF.R")
+
+################ For Predictions ######################
+library(caret)          #for preProcess() and accuracy()
+library(forecast)       # for accuracy() measures
+library(FNN)            #for finding k nearest neighbor
+library(gbm)            #for boosting
+library(ggRandomForests)#for additional RF information
+library(ipred)          #for bagging
+library(keras)          #front-end library for neural networks
+library(magrittr)
+library(randomForest)   #for randomForest
+library(rpart)          #for regression trees
+library(rpart.plot)     #for plot trees
+library(tensorflow)     #backend python library for neural network
+library(vip)            #for variable importance
+library(xgboost)        #for fitting GBMs
+
+################ Personalized Functions ######################
+source("VIF.R")         #for calculating VIF
+source("ProcStep.R")    #for variable selection (forw, backw, setpw)
+source("GlobalCrit.R")  #for variable selection (exhaustive search)
+
+################ Additonal Actions ######################
+options(scipen = 999)                 #for removing scientific notation
+tf$constant("Hello Tensorflow!")      #for initializing tensoflow environment
 ```
 
 # Data Exploration 
@@ -387,8 +418,7 @@ summary(LM_CpAIC_minus_corr)
 ```
 
 ```{r}
-library(knitr)
-library(kableExtra)
+
 kable_styling(
   kable(
   data.table(Model = c("LM_complete", "LM_forward_complete", "LM_backward_complete",
@@ -465,11 +495,7 @@ kable_styling(kable(Accs), full_width = FALSE)
 ## $k$-NN
 
 ```{r knn Load Libraries}
-library(FNN)      #for finding k nearest neighbor
-library(fastDummies)
-library(caret)
-library(forecast)
-library(gridExtra)
+
 ```
 
 
@@ -601,19 +627,7 @@ grid.arrange(basic_knn_plot, optimal_knn_plot, ncol = 2)
 ### Loading Libraries
 
 ```{r Libraries}
-library(RColorBrewer)   #for graph colors
-library(rattle)         #Graphical Data Interface
-library(rpart)          #for regression trees
-library(rpart.plot)     #for plot trees
-library(forecast)       #for accuracy
-library(ggplot2)        #for visualizations
-library(caret)          #for variable importance
-library(randomForest)   #for randomForest
-library(gbm)            #for boosting
-library(ipred)          #for bagging
-library(xgboost)        #for fitting GBMs
-library(vip)            #for variable importance
-library(ggRandomForests)#for additional RF information
+
 ```
 
 ### Partitioning
@@ -943,13 +957,7 @@ colnames(RMSEplotdata) <- t(rownames(Tree_res))
 ### Loading Libraries
 
 ```{r NN Set Libraries}
-library(forecast)        #for calculating RMSE
-library(caret)          #for dummy variables
-library(fastDummies)
-library(keras)          #front-end library for neural networks
-library(tensorflow)     #backend python library for neural network
-library(magrittr)
-tf$constant("Hello Tensorflow!")
+
 ```
 
 ### Data preprocessing
