@@ -324,9 +324,9 @@ Test <- diamonds[test.index, ]
 ## Linear Regression
 
 ```{r train-valid-test}
-Train <- diamonds[train.index, ]
-Valid <- diamonds[valid.index, ]
-Test  <- diamonds[ test.index, ]
+Train_lr <- diamonds[train.index, ]
+Valid_lr <- diamonds[valid.index, ]
+Test_lr  <- diamonds[ test.index, ]
 ```
 
 ```{r vif}
@@ -338,19 +338,19 @@ plotcorr(cor(diamonds[, -c(2:4, 6:8)]), col = "#F9D53E",
 ```
 
 ```{r skewness}
-sapply(Train[, c(1, 5:10)], skewness)
-Train$price <- log(Train$price)
-Train$carat <- log(Train$carat)
-Train$table <- log(Train$table)
-sapply(Train[, c(1, 5:10)], skewness)
+sapply(Train_lr[, c(1, 5:10)], skewness)
+Train_lr$price <- log(Train_lr$price)
+Train_lr$carat <- log(Train_lr$carat)
+Train_lr$table <- log(Train_lr$table)
+sapply(Train_lr[, c(1, 5:10)], skewness)
 
-Valid$price <- log(Valid$price)
-Valid$carat <- log(Valid$carat)
-Valid$table <- log(Valid$table)
+Valid_lr$price <- log(Valid_lr$price)
+Valid_lr$carat <- log(Valid_lr$carat)
+Valid_lr$table <- log(Valid_lr$table)
 ```
 
 ```{r hist-unskewed}
-ggplot(gather(data = Train[, c(1, 5:10)]), aes(value)) +
+ggplot(gather(data = Train_lr[, c(1, 5:10)]), aes(value)) +
   geom_histogram(aes(y = after_stat(density)),
                  color = "white",
                  fill = "#F9D53E") +             # Creates bin sizing with colors
@@ -362,16 +362,16 @@ ggplot(gather(data = Train[, c(1, 5:10)]), aes(value)) +
 ```
 
 ```{r normalizing}
-norm.values <- preProcess(Train[, c(1, 5:10)], method=c("center", "scale"))
+norm.values <- preProcess(Train_lr[, c(1, 5:10)], method=c("center", "scale"))
 
-Train[, c(1, 5:10)] <- predict(norm.values, Train[, c(1, 5:10)])
-Valid[, c(1, 5:10)] <- predict(norm.values, Valid[, c(1, 5:10)])
- Test[, c(1, 5:10)] <- predict(norm.values,  Test[, c(1, 5:10)])
+Train_lr[, c(1, 5:10)] <- predict(norm.values, Train_lr[, c(1, 5:10)])
+Valid_lr[, c(1, 5:10)] <- predict(norm.values, Valid_lr[, c(1, 5:10)])
+ Test_lr[, c(1, 5:10)] <- predict(norm.values,  Test_lr[, c(1, 5:10)])
 ```
 
 
 ```{r LM-complete}
-LM_complete = lm(price ~. , data = Train)
+LM_complete = lm(price ~. , data = Train_lr)
 summary(LM_complete)
 ```
 
@@ -387,14 +387,14 @@ summary(LM_stepwise_complete)   # like LM_CpAIC_complete
 ```{r LM_CpAIC_complete}
 GlobalCrit(LM_complete)
 
-LM_CpAIC_complete = lm(price ~ . , data = Train[, c(1:6, 8, 9)])
+LM_CpAIC_complete = lm(price ~ . , data = Train_lr[, c(1:6, 8, 9)])
 summary(LM_CpAIC_complete)
 ```
 
 
 
 ```{r LM-minus-corr}
-Train_minus_corr <- Train[, -c(6:8)]
+Train_minus_corr <- Train_lr[, -c(6:8)]
 LM_minus_corr = lm(price ~ ., data = Train_minus_corr)
 summary(LM_minus_corr)
 ```
@@ -411,11 +411,11 @@ summary(LM_stepwise_minus_corr)   # like LM_CpAIC_minus_corr
 ```{r LM_CpAIC_minus_corr}
 GlobalCrit(LM_minus_corr)
 
-LM_CpAIC_minus_corr = lm(price ~ . , data = Train[, c(1:5, 9)])
+LM_CpAIC_minus_corr = lm(price ~ . , data = Train_lr[, c(1:5, 9)])
 summary(LM_CpAIC_minus_corr)
 ```
 
-```{r}
+```{r Variable Selection Summary}
 
 kable_styling(
   kable(
@@ -441,20 +441,20 @@ In both cases, the forward selection doesn't discard any variables, whereas back
 
 Thus, we have four different models emerging. We will keep `LM_complete`, `LM_CpAIC_complete`, `LM_minus_corr` and `LM_CpAIC_minus_corr` and remove the other models which are duplicates.
 
-```{r}
+```{r remove models}
 rm(LM_forward_complete, LM_backward_complete, LM_stepwise_complete, LM_forward_minus_corr, LM_backward_minus_corr, LM_stepwise_minus_corr)
 ```
 
 
-```{r}
+```{r create accuracy table}
 # predicting prices of validation set on the validation data
 
 LM_Predictions =
   data.table(
-    LM_complete_pred = predict(object = LM_complete, newdata = Valid),
-    LM_CpAIC_complete_pred = predict(object = LM_CpAIC_complete, newdata = Valid),
-    LM_minus_corr_pred = predict(object = LM_minus_corr, newdata = Valid),
-    LM_CpAIC_minus_corr_pred = predict(object = LM_CpAIC_minus_corr, newdata = Valid)
+    LM_complete_pred = predict(object = LM_complete, newdata = Valid_lr),
+    LM_CpAIC_complete_pred = predict(object = LM_CpAIC_complete, newdata = Valid_lr),
+    LM_minus_corr_pred = predict(object = LM_minus_corr, newdata = Valid_lr),
+    LM_CpAIC_minus_corr_pred = predict(object = LM_CpAIC_minus_corr, newdata = Valid_lr)
     )
 
 # we have to scale back the price, to do so we fetch the mean and std value from norm.values
@@ -528,7 +528,7 @@ kNN = knnreg(x = knn_train_norm[, -c(1)] , y = knn_train_norm$price, k = 1)
 knn_pred_y = predict(object = kNN, newdata = knn_valid_norm[, -c(1)])
 
 # we have to scale back the price, to do so we fetch the mean and std value from norm.values
-# dsplaying all means and stds
+# displaying all means and standard deviations
 norm_values$mean
 norm_values$std
 
@@ -606,12 +606,12 @@ basic_knn_plot <- ggplot(data = plot1, aes(x= Real, y = Predicted, ), width = 5,
   labs(x= "Real Diamond Prices", y = 'Predicted Values')
 basic_knn_plot
 
-optimal_knn_plot <- ggplot(width = 5, height = 5)+
-  geom_point(data = plot2, aes(x = Real, y = Predicted), fill = plot2$Color)+
-  labs(x= "Real Diamond Prices", y = 'Predicted Values')
-optimal_knn_plot
+#optimal_knn_plot <- ggplot(width = 5, height = 5)+
+#  geom_point(data = plot2, aes(x = Real, y = Predicted), fill = plot2$Color)+
+#  labs(x= "Real Diamond Prices", y = 'Predicted Values')
+#optimal_knn_plot
 
-grid.arrange(basic_knn_plot, optimal_knn_plot, ncol = 2)
+#grid.arrange(basic_knn_plot, optimal_knn_plot, ncol = 2)
 
 ```
 
@@ -624,8 +624,8 @@ grid.arrange(basic_knn_plot, optimal_knn_plot, ncol = 2)
 diamonds_tree <- diamonds
 
 # Creating data tables Train, Valid and Test using the indexes for the regression tree section
-Train <- diamonds[train.index, ]
-Valid <- diamonds[valid.index, ]
+Train_rg <- diamonds[train.index, ]
+Valid_rg <- diamonds[valid.index, ]
 ```
 
 ### Regression Tree
@@ -633,7 +633,7 @@ Valid <- diamonds[valid.index, ]
 ```{r Default Regression Tree}
 # Use rpart() to run tree on continuous response 
 RegressTree <- rpart(price ~ ., 
-              data = Train, 
+              data = Train_rg, 
               method = "anova") 
 
 # Generates a cost complexity parameter table that provides the complexity parameter value
@@ -654,14 +654,14 @@ kable_styling(kable(round(100*RegressTree$variable.importance / sum(RegressTree$
 
 ```{r Error Details on Default Tree - Valid}
 # Predict errors using accuracy() 
-tree_aa1 <- forecast::accuracy(predict(RegressTree, Valid), Valid$price)
+tree_aa1 <- forecast::accuracy(predict(RegressTree, Valid_rg), Valid_rg$price)
 
 kable(tree_aa1) %>% kable_classic() 
 ```
 
 ```{r Default Tree Predictions}
 # Predict the diamond price with validation
-pred_Diamond_test <- predict(RegressTree, newdata = Valid)
+pred_Diamond_test <- predict(RegressTree, newdata = Valid_rg)
 
 # Display first 14 observations
 head(pred_Diamond_test,14)
@@ -671,7 +671,7 @@ head(pred_Diamond_test,14)
 
 ```{r Default Regression Tree Minus Variables}
 RegressTree2 <- rpart(price ~ length+width+depth+carat+cut+color+clarity, 
-              data = Train, 
+              data = Train_rg, 
               method = "anova") 
 
 # Generates a cost complexity parameter table that provides the complexity parameter value
@@ -689,14 +689,14 @@ kable_styling(kable(round(100*RegressTree2$variable.importance / sum(RegressTree
 
 ```{r Error Details on RegressTree2 - Valid}
 # Predict errors using accuracy() 
-tree_aa2 <- forecast::accuracy(predict(RegressTree2, Valid), Valid$price)
+tree_aa2 <- forecast::accuracy(predict(RegressTree2, Valid_rg), Valid_rg$price)
 
 kable(tree_aa2) %>% kable_classic() 
 ```
 
 ```{r Default Tree Predictions2}
 # Predict the diamond price with validation
-pred_Diamond_test <- predict(RegressTree, newdata = Valid)
+pred_Diamond_test <- predict(RegressTree, newdata = Valid_rg)
 
 # Display first 14 observations
 head(pred_Diamond_test2,14)
@@ -725,7 +725,7 @@ fancyRpartPlot(RegressTree_pruned, caption = NULL, main = "'Pruned' Regression T
 
 ```{r Error Details on Prune_RegressTree2 - Valid}
 # Predict errors using accuracy() 
-tree_aa3 <- forecast::accuracy(predict(RegressTree_pruned, Valid), Valid$price)
+tree_aa3 <- forecast::accuracy(predict(RegressTree_pruned, Valid_rg), Valid_rg$price)
 
 kable(tree_aa3) %>% kable_classic() 
 ```
@@ -735,8 +735,8 @@ kable(tree_aa3) %>% kable_classic()
 ```{r Boosted tree 1}
 set.seed(111)
 bst <- xgboost(
-data = data.matrix(subset(Train, select = -price)),
-label = Train$price,
+data = data.matrix(subset(Train_rg, select = -price)),
+label = Train_rg$price,
 objective = "reg:squarederror",
 nrounds = 100,
 max_depth = 5,
@@ -762,7 +762,7 @@ min(bst$test.error.mean)
 ```{r Boosted Tree 10}
 # Boosted tree
 set.seed(111)
-tree_boost10 <- gbm(price ~., data = Train, distribution = "gaussian", n.trees = 10, interaction.depth = 6, shrinkage = 0.01)
+tree_boost10 <- gbm(price ~., data = Train_rg, distribution = "gaussian", n.trees = 10, interaction.depth = 6, shrinkage = 0.01)
 
 # Interaction Depth specifies the maximum depth of each tree( i.e. highest level of variable interactions allowed while training the model). Default is 1.
 # Shrinkage is considered as the learning rate. It is used for reducing, or shrinking, the impact of each additional fitted base-learner (tree).  It reduces the size of incremental steps and thus penalizes the importance of each consecutive iteration. Default is 0.1
@@ -779,7 +779,7 @@ vip::vip(tree_boost10, aesthetics = list(fill = "#F9D53E")) +
 
 ```{r Error Details on tree_boost10 - Valid}
 # Predict errors using accuracy() 
-tree_aa4 <- forecast::accuracy(predict(tree_boost10, Valid), Valid$price)
+tree_aa4 <- forecast::accuracy(predict(tree_boost10, Valid_rg), Valid_rg$price)
 
 kable(tree_aa4) %>% kable_classic() 
 ```
@@ -787,7 +787,7 @@ kable(tree_aa4) %>% kable_classic()
 ```{r Boosted Tree 30}
 # Boosted tree
 set.seed(111)
-tree_boost30 <- gbm(price ~., data = Train, distribution = "gaussian", n.trees = 30)
+tree_boost30 <- gbm(price ~., data = Train_rg, distribution = "gaussian", n.trees = 30)
 
 vip::vip(tree_boost30, aesthetics = list(fill = "#F9D53E")) +
   ggtitle("Boosted Tree Variable Importance") + # Title name
@@ -799,7 +799,7 @@ tree_boost30
 
 ```{r Error Details on tree_boost30}
 # Predict errors using accuracy() 
-tree_aa5 <- forecast::accuracy(predict(tree_boost30, Train), Train$price)
+tree_aa5 <- forecast::accuracy(predict(tree_boost30, Train_rg), Train_rg$price)
 
 kable(tree_aa5) %>% kable_classic() 
 ```
@@ -807,7 +807,7 @@ kable(tree_aa5) %>% kable_classic()
 ```{r Boosted Tree 100}
 # Boosted tree
 set.seed(111)
-tree_boost100 <- gbm(price ~., data = Train, distribution = "gaussian", cv.folds = 3)
+tree_boost100 <- gbm(price ~., data = Train_rg, distribution = "gaussian", cv.folds = 3)
 
 # cv.folds: Number of cross-validation folds to perform. If cv.folds>1 then gbm, in addition to the usual fit, will perform a cross-validation, calculate an estimate of generalization error returned in cv.error.
 
@@ -821,14 +821,14 @@ tree_boost100
 
 ```{r Error Details on tree_boost100}
 # Predict errors using accuracy() 
-tree_aa6 <- forecast::accuracy(predict(tree_boost100, Valid), Valid$price)
+tree_aa6 <- forecast::accuracy(predict(tree_boost100, Valid_rg), Valid_rg$price)
 
 kable(tree_aa6) %>% kable_classic()
 ```
 
 
 ```{r Predict Boosting}
-pred_boost <- predict.gbm(tree_boost100, newdata = Valid)
+pred_boost <- predict.gbm(tree_boost100, newdata = Valid_rg)
 
 head(pred_boost, 14)
 ```
@@ -838,7 +838,7 @@ head(pred_boost, 14)
 ```{r Bagged Tree}
 # Bagged tree
 set.seed(111)
-tree_bagging <- bagging(price ~., data = Train, coob = TRUE)
+tree_bagging <- bagging(price ~., data = Train_rg, coob = TRUE)
 tree_bagging
 ```
 
@@ -857,13 +857,13 @@ data[,ggplot(.SD, aes(x=reorder(name, ss$Overall), y=ss$Overall)) +
 ```
 
 ```{r Errors Bagging}
-tree_aa7 <- forecast::accuracy(predict(tree_bagging, Valid), Valid$price)
+tree_aa7 <- forecast::accuracy(predict(tree_bagging, Valid_rg), Valid_rg$price)
 
 kable(tree_aa7) %>% kable_classic()
 ```
 
 ```{r Predict Bagging}
-pred_bagged <- predict(tree_bagging, newdata = Valid)
+pred_bagged <- predict(tree_bagging, newdata = Valid_rg)
 
 head(pred_bagged,14)
 ```
@@ -875,7 +875,7 @@ options(scipen = 9999)
 
 # Create randomForest
 set.seed(111)
-rdf_model <- randomForest(price~ ., ntree= 60, data = Train)
+rdf_model <- randomForest(price~ ., ntree= 60, data = Train_rg)
 rdf_model
 plot(rdf_model)
 ```
@@ -897,13 +897,13 @@ vip::vip(rdf_model, aesthetics = list(fill = "#F9D53E")) +
 ```
 
 ```{r RF Display Results}
-tree_aa8 <- forecast::accuracy(predict(rdf_model, Valid), Valid$price)
+tree_aa8 <- forecast::accuracy(predict(rdf_model, Valid_rg), Valid_rg$price)
 
 kable(tree_aa8) %>% kable_classic()
 ```
 
 ```{r Predict RandomForest}
-pred_random <- predict(rdf_model, newdata = Valid)
+pred_random <- predict(rdf_model, newdata = Valid_rg)
 
 head(pred_random,14)
 ```
@@ -956,18 +956,18 @@ colnames(diamonds_dummies)[10] = "cut_Very_Good"
 ### Partitioning
 
 ```{r NN Partitioning}
-train_diamonds <- diamonds_dummies[train.index,]
-valid_diamonds <- diamonds_dummies[valid.index,]
+Train_nn <- diamonds_dummies[train.index,]
+Valid_nn <- diamonds_dummies[valid.index,]
 ```
 
 ### Normalizing Data
 
 ```{r NN Normalize}
 # use preProcess() to normalize non-categorical variables
-norm_values <- preProcess(train_diamonds[1:7], method= c("range"))
+norm_values <- preProcess(Train_nn[1:7], method= c("range"))
 
-train_diamonds_norm <- predict(norm_values, train_diamonds)
-valid_diamonds_norm <- predict(norm_values, valid_diamonds)
+Train_nn_norm <- predict(norm_values, Train_nn)
+Valid_nn_norm <- predict(norm_values, Valid_nn)
 ```
 
 ### Model 1 (Layers = 1, Nodes = 1)
@@ -977,20 +977,20 @@ valid_diamonds_norm <- predict(norm_values, valid_diamonds)
 ```{r NN L1 N1 Model}
 #create data sets to train and validate the model
 #train
-x_train <- c(t(train_diamonds_norm[, -c(1)]))
+x_train <- c(t(Train_nn_norm[, -c(1)]))
 x_train <- as.array(x_train,
-                    dim(t(train_diamonds_norm[, -c(1)])),
+                    dim(t(Train_nn_norm[, -c(1)])),
                     dimnames = list(rownames(x_train), colnames(x_train)))
-x_train <- as_tensor(x_train, shape = dim(train_diamonds_norm[, -c(1)]))
-y_train <- as_tensor(train_diamonds_norm$price)
+x_train <- as_tensor(x_train, shape = dim(Train_nn_norm[, -c(1)]))
+y_train <- as_tensor(Train_nn_norm$price)
 
 #validation
-x_valid <- c(t(valid_diamonds_norm[, -c(1)]))
+x_valid <- c(t(Valid_nn_norm[, -c(1)]))
 x_valid <- as.array(x_valid,
-                    dim(t(valid_diamonds_norm[, -c(1)])),
+                    dim(t(Valid_nn_norm[, -c(1)])),
                     dimnames = list(rownames(x_valid), colnames(x_valid)))
-x_valid <- as_tensor(x_valid, shape = dim(valid_diamonds_norm[, -c(1)]))
-y_valid <- as_tensor(valid_diamonds_norm$price)
+x_valid <- as_tensor(x_valid, shape = dim(Valid_nn_norm[, -c(1)]))
+y_valid <- as_tensor(Valid_nn_norm$price)
 
 #create model
 rm(model_1_1) #to prevent retraining of existing model
@@ -1150,7 +1150,7 @@ rm(model_2_26) #to prevent retraining of existing model
 tf$random$set_seed(111)
 model_2_26 <- keras_model_sequential(input_shape = ncol(x_train)) %>%
   layer_dense(26, activation = "sigmoid", name = "HiddenLayer") %>%  # 1st hidden layer (26 nodes)
-  layer_dense(26, activation = "sigmoid", name = "HiddenLayer2") %>%  # 1st hidden layer (26 nodes)
+  layer_dense(26, activation = "sigmoid", name = "HiddenLayer2") %>%  # 2nd hidden layer (26 nodes)
   layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
   
 
@@ -1198,7 +1198,7 @@ rm(model_2_26G) #to prevent retraining of existing model
 tf$random$set_seed(111)
 model_2_26G <- keras_model_sequential(input_shape = ncol(x_train)) %>%
   layer_dense(26, activation = "sigmoid", name = "HiddenLayer", kernel_initializer = "GlorotNormal") %>%  # 1st hidden layer (26 nodes)
-  layer_dense(26, activation = "sigmoid", name = "HiddenLayer2", kernel_initializer = "GlorotNormal") %>%  # 1st hidden layer (26 nodes)
+  layer_dense(26, activation = "sigmoid", name = "HiddenLayer2", kernel_initializer = "GlorotNormal") %>%  # 2nd hidden layer (26 nodes)
   layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
   
 
@@ -1246,7 +1246,7 @@ rm(model_2_26GLR) #to prevent retraining of existing model
 tf$random$set_seed(111)
 model_2_26GLR <- keras_model_sequential(input_shape = ncol(x_train)) %>%
   layer_dense(26, activation = "sigmoid", name = "HiddenLayer", kernel_initializer = "GlorotNormal") %>%  # 1st hidden layer (26 nodes)
-  layer_dense(26, activation = "sigmoid", name = "HiddenLayer2", kernel_initializer = "GlorotNormal") %>%  # 1st hidden layer (26 nodes)
+  layer_dense(26, activation = "sigmoid", name = "HiddenLayer2", kernel_initializer = "GlorotNormal") %>%  # 2nd hidden layer (26 nodes)
   layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
   
 
