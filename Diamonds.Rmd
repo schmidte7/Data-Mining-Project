@@ -485,7 +485,7 @@ Acc4 = accuracy(object = LM_Predictions$LM_CpAIC_minus_corr_pred, x = LM_Predict
 Acc4 = as.data.table(Acc4)
 Accs = list(Acc1, Acc2, Acc3, Acc4)
 Accs = rbindlist(Accs)
-rm(Acc1, Acc2, Acc3, Acc4)
+#rm(Acc1, Acc2, Acc3, Acc4)
 Accs[, Model := c("LM_complete", "LM_CpAIC_complete", "LM_minus_corr", "LM_CpAIC_minus_corr")]
 Accs <- Accs[, c(6, 1:5)]
 kable_styling(kable(Accs), full_width = FALSE)
@@ -564,7 +564,7 @@ accuracy_df[i, 2] <- accuracy(object = temp_knn_rescaled_prices, x = real_prices
 }
 
 #display results
-row_spec(kable_minimal(kbl(accuracy_df)), 4, bold = T, color = "white", background = "#78BE20") 
+row_spec(kable_classic(kbl(accuracy_df)), 4, bold = T, color = "white", background = "#78BE20") 
 
 #plot results
 ggplot (data = accuracy_df, aes(x = k, y = accuracy)) +
@@ -941,9 +941,10 @@ for (i in 1:8) {
 
 kable_styling(kable(Tree_res, full_width = FALSE))
 
-barplot(RMSEplotdata, col = "#F9D53E")
-RMSEplotdata <- t(Tree_res$RMSE)
-colnames(RMSEplotdata) <- t(rownames(Tree_res))
+
+RGRMSEplotdata <- t(Tree_res$RMSE)
+colnames(RGRMSEplotdata) <- t(rownames(Tree_res))
+barplot(RGRMSEplotdata, col = "#F9D53E")
 
 ```
 
@@ -1290,6 +1291,7 @@ acc_6 <- accuracy(object = y_valid_pred_2_26GLR, x = y_valid_real)
 acc_6
 ```
 
+
 ### Create Neural Net Summary Table
 
 ```{r NN Summary}
@@ -1314,9 +1316,9 @@ for (i in 1:6) {
 
 kable_styling(kable(NN_res, full_width = FALSE))
 
-RMSEplotdata <- t(NN_res$RMSE)
-colnames(RMSEplotdata) <- t(rownames(NN_res))
-barplot(RMSEplotdata, col = "yellow")
+NNRMSEplotdata <- t(NN_res$RMSE)
+colnames(NNRMSEplotdata) <- t(rownames(NN_res))
+barplot(NNRMSEplotdata, col = "yellow")
 
 ```
 
@@ -1390,6 +1392,8 @@ row.names(ens_rmse_summ) <- c("Multiple Linear Regression",
                               "k-Nearest Neighbor",
                               "Neural Network",
                               "Ensemble")
+#display results
+kable_classic(kbl(ens_rmse_summ))
 ```
 
 
