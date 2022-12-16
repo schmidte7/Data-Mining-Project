@@ -86,9 +86,9 @@ library(vip)            #for variable importance
 library(xgboost)        #for fitting GBMs
 
 ################ Personalized Functions ######################
-source("VIF.R")         #for calculating VIF
-source("ProcStep.R")    #for variable selection (forw, backw, setpw)
-source("GlobalCrit.R")  #for variable selection (exhaustive search)
+#source("VIF.R")         #for calculating VIF
+#source("ProcStep.R")    #for variable selection (forw, backw, setpw)
+#source("GlobalCrit.R")  #for variable selection (exhaustive search)
 
 ################ Additonal Actions ######################
 options(scipen = 999)                 #for removing scientific notation
@@ -979,7 +979,7 @@ There is no standard or ideal way of setting up the amount of layers in a networ
 
 * To see if there is an improvement, de do another model with just 13 nodes in a single hidden layer. 
 
-Of these single layer models, the best is the one with 26 nodes. We measure this by looking at the RMSE 
+Of these single layer models, the best is the one with 26 nodes. We measure this by looking at the error in prediction, also called the accuracy. There are many ways of measuring this, but as mentioned before, the two we looked at are the Mean Error, as a measure of accuracy, and Root Mean Squared Error, as a measure of precision. For the 26 node model, the RMSE is 
 
 
 ### Partitioning
@@ -1274,8 +1274,8 @@ acc_5
 rm(model_2_26GLR) #to prevent retraining of existing model
 tf$random$set_seed(111)
 model_2_26GLR <- keras_model_sequential(input_shape = ncol(x_train)) %>%
-  layer_dense(26, activation = "sigmoid", name = "HiddenLayer", kernel_initializer = "GlorotNormal") %>%  # 1st hidden layer (26 nodes)
-  layer_dense(26, activation = "sigmoid", name = "HiddenLayer2", kernel_initializer = "GlorotNormal") %>%  # 2nd hidden layer (26 nodes)
+  layer_dense(13, activation = "sigmoid", name = "HiddenLayer", kernel_initializer = "GlorotNormal") %>%  # 1st hidden layer (26 nodes)
+  layer_dense(13, activation = "sigmoid", name = "HiddenLayer2", kernel_initializer = "GlorotNormal") %>%  # 2nd hidden layer (26 nodes)
   layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
   
 
