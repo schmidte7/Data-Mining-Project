@@ -979,7 +979,7 @@ There is no standard or ideal way of setting up the amount of layers in a networ
 
 * To see if there is an improvement, de do another model with just 13 nodes in a single hidden layer. 
 
-Of these single layer models, the best is the one with 26 nodes. We measure this by looking at the 
+Of these single layer models, the best is the one with 26 nodes. We measure this by looking at the RMSE 
 
 
 ### Partitioning
