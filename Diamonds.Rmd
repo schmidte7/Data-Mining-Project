@@ -62,6 +62,7 @@ library(ellipse)        #for mapping correlation
 library(GGally)         #for making graphs
 library(ggplot2)        #for making graphs
 library(ggpubr)         #for plot alignment
+library(gridExtra)
 library(kableExtra)     #for more elaborate tables
 library(knitr)
 library(tidyr)          #for changing the shape and hierarchy of a data set
@@ -1374,10 +1375,13 @@ barplot(NNRMSEplotdata, col = "#D8B365")
 
 ```
 
+### Neural network graphic description
+
+![Visual description of Neural Network](NN_rep.jpeg)
 
 ## Ensembles
 
-```{r}
+```{r ensemble table}
 #create Table with 0 values
 ensemble_summ <- data.frame("MLR" = 0,
                              "RegTrees" = 0,
@@ -1402,7 +1406,8 @@ kable_styling(kable(ens_error)%>% kable_classic(), full_width = FALSE)
 
 ```
 
-```{r}
+
+```{rensemble error table}
 ens_rmse_summ <- NN_res[0,] #NeuralNet Error
 ens_rmse_summ[1, ] <- round(Acc4, 2)
 ens_rmse_summ[2, ] <- Tree_res[8,]
@@ -1424,7 +1429,7 @@ kable_styling(kable(ens_rmse_summ)%>% kable_classic(), full_width = FALSE)
 # Model Performance Summary
 
 
-```{r Ensemble Summary Plot, fig.height= 4, fig.width = 3.5}
+```{r Ensemble Summary Plot, fig.height= 5, fig.width = 5}
 predtable_lr <- data.frame("Real" = real_prices, 
                     "Predicted" = ensemble_summ[, 1],
                     "Color" = diamonds[valid.index, 3],
@@ -1453,33 +1458,38 @@ predtable_ens <- data.frame("Real" = real_prices,
 
 
 pred_plot_lr <- ggplot(data = predtable_lr, aes(x= Real, y = Predicted, color = clarity))+
-  geom_point(show.title = FALSE)+
+  geom_point(show.title = FALSE, size = 0.5)+
   scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
   labs(x= "Multiple Linear Regression", y = "Predicted Values")+
-  theme(legend.key.size = unit(0.5, 'cm'))
+  theme(legend.key.size = unit(0.5, 'cm'))+
+  theme_classic()
 
 pred_plot_rg <- ggplot(data = predtable_rg, aes(x= Real, y = Predicted, color = clarity))+
-  geom_point()+
+  geom_point(size = 0.5)+
   scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
-  labs(x= "NN (Regression Trees", y = "")
+  labs(x= "NN (Regression Trees", y = "")+
+  theme_classic()
 
 pred_plot_knn <- ggplot(data = predtable_knn, aes(x= Real, y = Predicted, color = clarity))+
-  geom_point()+
+  geom_point(size = 0.5)+
   scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
-  labs(x= "k Neares Neighbor", y = "")
+  labs(x= "k Neares Neighbor", y = "")+
+  theme_classic()
 
 pred_plot_nn <- ggplot(data = predtable_nn, aes(x= Real, y = Predicted, color = clarity))+
-  geom_point()+
+  geom_point(size = 0.5)+
   scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
-  labs(x= "Neural Networks", y = "")
+  labs(x= "Neural Networks", y = "")+
+  theme_classic()
+
 
 pred_plot_ens <- ggplot(data = predtable_ens, aes(x= Real, y = Predicted, color = clarity))+
-  geom_point()+
+  geom_point(size = 0.5)+
   scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
-  labs(x= "Ensemble", y = "")
+  labs(x= "Ensemble", y = "")+
+  theme_classic()
 
-pred_plot_full <- ggarrange(pred_plot_lr, pred_plot_rg, pred_plot_knn, pred_plot_nn,pred_plot_ens,
-                            ncol=2, nrow=3, common.legend = TRUE, legend="right")
-pred_plot_full
+#pred_plot_full <- grid.arrange(ggplotGrob("Hello"),ggarrange(pred_plot_lr, pred_plot_rg, pred_plot_knn, #pred_plot_nn,pred_plot_ens, ncol=2, nrow=3, common.legend = TRUE, legend="right"), nrow = 2)
+#pred_plot_full
 ```
 # Conclusions
