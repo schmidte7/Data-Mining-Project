@@ -948,9 +948,17 @@ barplot(RGRMSEplotdata, col = "#F9D53E")
 
 ```
 
-## NeuralNetworks
+## Neural Networks
+
+### Basic Concept
+
+Artificial neural networks are a method of machine learning that receives the name due to a comparison made with actual neurons in the human brain. They consist various nodes that communicate with each other to predict an outcome based on the relationships that were determined in the process. Neural nets have proven to be very good at predicting values, through regression or classification and have been the center of much research in the past years. Though this method was once considered un useful, with the improvement of computational power, it has acquired new popularity for prediction of images, speech recognition and non-explicit trends. (Hardesty, 2017)
+
+The basic parts of a neural networks are: the structure, composed of layers and nodes, the weights, and the activation function. The first consists of the different components used to train a neural network, ie the explanatory variables and their connection. These independent variables are considered the *input nodes* and the outcome variable the *output node*. The layers in between these to are called the *hidden layers* as these are used to calculate the output but have no easily association of there value with regards to the outcome. This is why neural networks are considered by some like a **black box**, where the exact method for predicting is not easily explained to those who are not well informed. The weights are used to pass a certain amount of a value to the next node which after passing through the activation function will pass on to the next, and so on. This weighting can be assigned randomly or by specific methods, depending on the problem at hand and analyst discretion. Similarly, the activation function calculates the position in a curve, ie the expected value of the prediction. This as well changes per prediction problem and analyst discretion. While some are considered better for certain tasks there is no limiting factor in the way a neural net is structured. 
 
 ### Data preprocessing
+
+Due to the fact that in every node we calculate the position of the prediction in a curve, the scale of the values used affects the output of every node. Moreover, since we use all types of variables for prediction in neural networks (continuous and categorical) the difference in amplitude is very important. This is why it is standard procedure to normalize the data so they are all in the same scale. 
 
 ```{r NN Dummy ariables}
 #create dummy columns 
@@ -960,6 +968,19 @@ diamonds_dummies <- diamonds_dummies[,-c(2:4)]
 #rename column to avoid issues with Neural net function
 colnames(diamonds_dummies)[10] = "cut_Very_Good"
 ```
+
+### Model Structures
+
+There is no standard or ideal way of setting up the amount of layers in a network, but common rule of thumb is to start with the same amount of input variables and then reduce to see if this improves. (Shmueli, et al. 2018: 286) In this case, it was decided to follow the following structures:
+ 
+* The first model is composed of all the variables (26 explanatory) and a single hidden layer of one node. All models have only one output node as the desired outcome is a single prediction of price. This model is considered to be the most basic and should in theory have the least predictive performance. 
+
+* The second model includes a hidden layer of 26 nodes, so it equals the input nodes. 
+
+* To see if there is an improvement, de do another model with just 13 nodes in a single hidden layer. 
+
+Of these single layer models, the best is the one with 26 nodes. We measure this by looking at the 
+
 
 ### Partitioning
 
@@ -1436,5 +1457,12 @@ pred_plot_full <- ggarrange(pred_plot_lr, pred_plot_rg, pred_plot_knn, pred_plot
 pred_plot_full
 
 ```
+
+
+
 # Conclusions
 
+
+# References
+
+Hardesty, Larry. 2017. [Explained: Neural Networks] MIT News. (https://news.mit.edu/2017/explained-neural-networks-deep-learning-0414)
