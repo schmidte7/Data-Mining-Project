@@ -47,20 +47,52 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE, fig.align = "center")
 #Yellow =       "#F9D53E"
 #Light Gray =   "#F2F2F2"
 #Light Aqua =   "#96EAE3"
+#Gold = "#D8B365" 
 ```
 
 ```{r Libraries}
-library(data.table)     #for reading data.tables
-library(kableExtra)     #for more elaborate tables
-library(ggplot2)        #for making graphs
-library(GGally)         #for making graphs
-library(dplyr)          #for data manipulation
-library(tidyr)          #for changing the shape and hierarchy of a data set
-library(DataExplorer)   #for graphing missing value percentages
+################ General Use ######################
 library(car)            #for statistic functions
+library(DataExplorer)   #for graphing missing value percentages
+library(data.table)     #for reading data.tables
+library(dplyr)          #for data manipulation
+library(fastDummies)    #for creating dummies
+library(e1071)          #for skewness
 library(ellipse)        #for mapping correlation
-library(naniar)         #for missing values 
+library(GGally)         #for making graphs
+library(ggplot2)        #for making graphs
+library(ggpubr)         #for plot alignment
+library(kableExtra)     #for more elaborate tables
+library(knitr)
+library(tidyr)          #for changing the shape and hierarchy of a data set
+library(naniar)         #for missing values
+library(RColorBrewer)   #for graph colors
+library(rattle)         #Graphical Data Interface
 
+
+################ For Predictions ######################
+library(caret)          #for preProcess() and accuracy()
+library(forecast)       # for accuracy() measures
+library(FNN)            #for finding k nearest neighbor
+library(gbm)            #for boosting
+library(ggRandomForests)#for additional RF information
+library(ipred)          #for bagging
+library(keras)          #front-end library for neural networks
+library(magrittr)
+library(randomForest)   #for randomForest
+library(rpart)          #for regression trees
+library(rpart.plot)     #for plot trees
+library(tensorflow)     #backend python library for neural network
+library(vip)            #for variable importance
+
+################ Personalized Functions ######################
+source("VIF.R")         #for calculating VIF (KEEP/DELETE???????????????)
+source("ProcStep.R")    #for variable selection (forw, backw, setpw)
+source("GlobalCrit.R")  #for variable selection (exhaustive search)
+
+################ Additonal Actions ######################
+options(scipen = 999)                 #for removing scientific notation
+tf$constant("Hello Tensorflow!")      #for initializing tensoflow environment
 ```
 
 # Data Exploration 
@@ -75,15 +107,6 @@ colnames(diamonds)[5] <- "depth_ratio" # depth to depth_ratio
 colnames(diamonds)[8] <- "length" # x to length
 colnames(diamonds)[9] <- "width"  # y to width
 colnames(diamonds)[10] <- "depth" # z to depth
-
-# Set data to frame to rename 'cut' item ("Very Good")
-#diamonds = as.data.frame(diamonds)
-
-# Rename variable cut to fix spacing
-#diamonds["cut"][diamonds["cut"] == 'Very Good'] <- 'Very_Good'
-
-# Reset dataframe back to datatable for analysis
-#diamonds = as.data.table(diamonds)
 ```
 
 ## Dimension Summary 
@@ -102,28 +125,45 @@ sapply(diamonds, function(x) length(unique(x)))
 ```{r Missing Values}
 # Missing values analysis
 gg_miss_var(diamonds) + ggtitle("Missing values")
-
-# pairs(diamonds[, c(1, 5:10)])
 ```
 
 
 ```{r Variables check}
-# carat no problems
+############### carat no problems #################
+
+############### cut ###############################
 unique(diamonds$cut) # Review unique values for cut
-diamonds$cut <- as.factor(diamonds$cut) # Factor the cut to five levels 
-diamonds$cut <- ordered(diamonds$cut, levels = c("Fair", "Good", "Very Good", "Premium", "Ideal")) # Ordered from worst to best
+# Factor the cut to five level
+diamonds$cut <- as.factor(diamonds$cut) 
 
-unique(diamonds$color) # Review unique values for color
-diamonds$color <- as.factor(diamonds$color) # Factor the color to seven levels 
-diamonds$color <- ordered(diamonds$color, levels = c("J", "I", "H", "G", "F", "E", "D")) # Ordered from worst to best
+# Ordered from worst to best
+diamonds$cut <- ordered(diamonds$cut, levels = c("Fair", "Good", "Very Good", "Premium", "Ideal")) 
 
-unique(diamonds$clarity) # Review unique values for clarity
-diamonds$clarity <- as.factor(diamonds$clarity) # Factor the clarity to eight levels 
-diamonds$clarity <- ordered(diamonds$clarity, levels = c("I1", "SI2", "SI1", "VS2", "VS1", "VVS2", "VVS1", "IF")) # Ordered from worst to best
+############### color ############################
+# Review unique values for color
+unique(diamonds$color) 
 
-# table is ok
+# Factor the color to seven levels 
+diamonds$color <- as.factor(diamonds$color) 
 
-# price is ok
+# Ordered from worst to best
+diamonds$color <- ordered(diamonds$color, levels = c("J", "I", "H", "G", "F", "E", "D")) 
+
+############### clarity ##########################
+# Review unique values for clarity
+unique(diamonds$clarity)
+
+# Factor the clarity to eight levels 
+diamonds$clarity <- as.factor(diamonds$clarity)
+
+# Ordered from worst to best
+diamonds$clarity <- ordered(diamonds$clarity, levels = c("I1", "SI2", "SI1", "VS2", "VS1", "VVS2", "VVS1", "IF")) 
+
+############### table no problems#################
+
+############### price no problems#################
+
+############### Other Checks #####################
 
 # Remove values of 0 for for dimensions which includes zeros in length and width
 nrow(diamonds[depth %in% 0,]) # Remove 20 rows due to depth = 0.0
@@ -134,12 +174,17 @@ diamonds[, subtraction := abs(length - width)]
 nrow(diamonds[subtraction>10,]) # Remove 2 rows due their extreme subtraction value (~59 and ~26)
 diamonds <- diamonds[subtraction <= 10, ] # Include only values with subtraction less than ten
 
+# Check if the Depth_Ratio value corresponds to formula indicated in the description
 diamonds[, depth_check := round(100*(2*depth)/((length + width)), 1)]
 diamonds[, diff := abs(depth_check-depth_ratio)]
-# treshold at 0.3? anastasia
-nrow(diamonds[diff > 0.3,]) # we remove 268 rows
+
+# Create histogram to look at the differences between how much price is off between a calculated value and what the data provided
+hist(diamonds[diff >= 0.2 & diff < 1, diff], breaks =50, col = "#D8B365", border = "#D8B365", main = "Threshold Differences", xlab = "Predicted vs. Actual Difference")
+
+# Threshold set to 0.3 due to ... (report)
+nrow(diamonds[diff > 0.3,]) # We remove 268 rows
 diamonds <- diamonds[diff <= 0.3,]
-# hist(diamonds[diff >= 0.4 & diff < 1, diff], breaks = 50)
+
 
 # Removed created columns needed to clean the data
 diamonds[, subtraction := NULL]
@@ -149,24 +194,104 @@ diamonds[, diff := NULL]
 ```
 
 
-```{r ordering cols}
+```{r ordering columns}
 # Reorder data table to group like variable types 
 diamonds <- diamonds[, c(7, 2:4, 1, 8:10, 5:6)]
 ```
 
+
 ```{r ggpairs, fig.width = 6, fig.height = 4}
-# Used ggpairs to create a scatterplot matrix
-# ggpairs(diamonds[, c(1, 5:10)], title = "Scatterplot Matrix",
-#          proportions = "auto",
-#          columnLabels = c("Price", "Carat", "Length", "Width", "Depth","Depth Ratio","Table"),
-#          upper = list(continuous = wrap('cor',size = 3)),) + theme_light()
+#Used ggpairs to create a scatterplot matrix between quantitative variables 
+ggpairs(diamonds[, c(1, 5:10)], title = "Scatterplot Matrix",
+         proportions = "auto",
+         columnLabels = c("Price", "Carat", "Length", "Width", "Depth","Depth Ratio","Table"),
+         upper = list(continuous = wrap('cor',size = 3)),) + theme_light()
 ```
 
-```{r Price by Carat and Clarity}
+
+```{r Price by X and Clarity}
 # Create plot that looks at carat and price
-ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
-  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Carat and Clarity')
+PCl1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Carat and Clarity') + theme_classic()
+
+# Create plot that looks at length and price
+PCl2 <- ggplot(aes(x = length, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Length and Clarity') + theme_classic()
+
+# Create plot that looks at width and price
+PCl3 <- ggplot(aes(x = width, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Width and Clarity') + theme_classic()
+
+# Create plot that looks at depth and price
+PCl4 <- ggplot(aes(x = depth, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Depth and Clarity') + theme_classic()
+
+# Create plot that looks at depth_ratio and price
+PCl5 <- ggplot(aes(x = depth_ratio, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2))) + ggtitle('Price by Depth Ratio and Clarity')  + theme_classic() + geom_vline(xintercept=mean(diamonds$depth_ratio), size = 1, color = "black") + geom_vline(xintercept=59, size = 1, color = "red") + geom_vline(xintercept=62.3, size = 1, color = "red")
+
+# Create plot that looks at table and price
+PCl6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2))) + ggtitle('Price by Table and Clarity')+ theme_classic() + geom_vline(xintercept=mean(diamonds$table), size = 1, color = "black")
+
+# Arrange ggplots into one frame
+ggarrange(PCl1, PCl2, PCl3,PCl4, PCl5, PCl6,
+                    ncol = 2, nrow = 3)
 ```
+```{r Price by X and Color}
+# Create plot that looks at carat and price
+PCo1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color)) +
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Carat and Color') + theme_classic()
+
+# Create plot that looks at length and price
+PCo2 <- ggplot(aes(x = length, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color)) +
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Length and Color') + theme_classic()
+
+# Create plot that looks at width and price
+PCo3 <- ggplot(aes(x = width, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color)) +
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Width and Color') + theme_classic()
+
+# Create plot that looks at depth and price
+PCo4 <- ggplot(aes(x = depth, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color)) +
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Depth and Color') + theme_classic()
+
+# Create plot that looks at depth_ratio and price
+PCo5 <- ggplot(aes(x = depth_ratio, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2))) + ggtitle('Price by Depth Ratio and Color')  + theme_classic() + geom_vline(xintercept=mean(diamonds$depth_ratio), size = 1, color = "black")  + geom_vline(xintercept=59, size = 1, color = "red") + geom_vline(xintercept=62.3, size = 1, color = "red")
+
+# Create plot that looks at table and price
+PCo6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2))) + ggtitle('Price by Table and Color')+ theme_classic() + geom_vline(xintercept=mean(diamonds$table), size = 1, color = "black")
+
+# Arrange ggplots into one frame
+ggarrange(PCo1, PCo2, PCo3,PCo4, PCo5, PCo6,
+                    ncol = 2, nrow = 3)
+```
+
+```{r Price by X and Cut}
+# Create plot that looks at carat and price
+PCu1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut)) +
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Carat and Cut') + theme_classic()
+
+# Create plot that looks at length and price
+PCu2 <- ggplot(aes(x = length, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut)) +
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Length and Cut') + theme_classic()
+
+# Create plot that looks at width and price
+PCu3 <- ggplot(aes(x = width, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut)) +
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Width and Cut') + theme_classic()
+
+# Create plot that looks at depth and price
+PCu4 <- ggplot(aes(x = depth, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut)) +
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Depth and Cut') + theme_classic()
+
+# Create plot that looks at depth_ratio and price
+PCu5 <- ggplot(aes(x = depth_ratio, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + ggtitle('Price by Depth Ratio and Cut')  + theme_classic() + geom_vline(xintercept=mean(diamonds$depth_ratio), size = 1, color = "black") + geom_vline(xintercept=59, size = 1, color = "red") + geom_vline(xintercept=62.3, size = 1, color = "red")
+
+# Create plot that looks at table and price
+PCu6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + ggtitle('Price by Table and Cut')+ theme_classic() + geom_vline(xintercept=mean(diamonds$table), size = 1, color = "black")
+
+# Arrange ggplots into one frame
+ggarrange(PCu1, PCu2, PCu3,PCu4, PCu5, PCu6,
+                    ncol = 2, nrow = 3)
+```
+
 
 ```{r Price Correlation}
 # Correlation between price and quantitative variables
@@ -180,7 +305,8 @@ kable_corr
 ```
 
 ```{r Depth Ratio vs Price}
-plot(diamonds$depth_ratio,diamonds$price, col = "#F9D53E")
+#plot Proce per Depth Ratio to see if there is a trend
+plot(diamonds$depth_ratio,diamonds$price, col = "#D8B365", main = "Distribution of Depth Ratio on Price", xlab = "Depth Ratio", ylab= "Price")
 ```
 
 ## Variable Visualisation
@@ -190,8 +316,8 @@ ggplot(gather(data = diamonds[, c(1, 5:10)]), aes(value)) +
   geom_histogram(aes(y = after_stat(density)),
                  bins = 10,
                  color = "white",
-                 fill = "#F9D53E") + # Creates bin sizing and sets the lines as white
-  geom_density(alpha = .2, fill = "#F9D53E") +
+                 fill = "#D8B365") + # Creates bin sizing and sets the lines as white
+  geom_density(alpha = .2, fill = "#D8B365") +
   facet_wrap(~ key, scales = "free") + # Converting the graphs into panels
   ggtitle("Quantitative Variable Analysis") + # Title name
   ylab("Count") + xlab("Value") + # Label names
@@ -227,7 +353,7 @@ cormat <- reshape2::melt(cormat, na.rm = TRUE)
 # Create a ggheatmap with multiple characteristics 
 ggplot(cormat, aes(Var2, Var1, fill = value)) +
   geom_tile(color = "white") +
-  scale_fill_gradient2(low = "#15DDD8", high = "#F9D53E", mid = "white",
+  scale_fill_gradient2(low = "#D8B365", high = "#15DDD8", mid = "white",
                        midpoint = 0, limit = c(-1,1), space = "Lab", name="Pearson\nCorrelation") +
   ggtitle("Correlation Heatmap") + # Title name
   theme_minimal() + # Minimal theme, keeps in the lines
@@ -239,7 +365,8 @@ rm(cormat, reorder_cormat)
 ```
 
 ```{r Correlation Plot,fig.width = 5, fig.height = 5}
-plotcorr(cor(diamonds[, -c(2:4)]), col = "#F9D53E",
+#plot Correlation ellipses
+plotcorr(cor(diamonds[, -c(2:4)]), col = "#D8B365",
          main = "Pearson correlation ellipses for numerical variables")
 ```
 
@@ -249,64 +376,206 @@ set.seed(111)
 
 # generating training set index
 train.index <- sample(c(1:nrow(diamonds)), 0.5*nrow(diamonds))
+
 # generating validation set index taken from the complementary of training set
 valid.index <- sample(setdiff(c(1:nrow(diamonds)), train.index), 0.3*nrow(diamonds))
+
 # defining test set index as complementary of (train.index + valid.index)
 test.index <- as.numeric(setdiff(row.names(diamonds), union(train.index, valid.index)))
+
 # creating data tables Train, Valid and Test using the indexes
 Train <- diamonds[train.index, ]
 Valid <- diamonds[valid.index, ]
 Test <- diamonds[test.index, ]
 ```
 
-# Dimension Reduction Analysis
-
-```{r VIF}
-#diamonds_lm <- lm(price ~ carat + length + width + depth + depth_ratio + table, data = diamonds)
-#diamonds_lm2 <- lm(price ~ carat + depth_ratio + table, data = diamonds)
-#diamonds_lm3 <- lm(price ~ carat + depth + depth_ratio + table, data = diamonds)
-
-#diamonds_vif <- vif(diamonds_lm)
-#VIF(diamonds[, c(5:8)])
-#diamonds_vif2 <- vif(diamonds_lm2)
-
-#diamonds_vif3 <- vif(diamonds_lm3)
-
-
-#summary(diamonds_vif)
-```
-
-
 # Variable Prediction and Model Performance Evaluation
 
 ## Linear Regression
 
-```{r}
+```{r LR data partition}
+Train_lr <- diamonds[train.index, ]
+Valid_lr <- diamonds[valid.index, ]
+Test_lr  <- diamonds[ test.index, ]
+```
 
+```{r vif}
+VIF(y = diamonds$price, matx = diamonds[, -c(1)])
+VIF(y = diamonds$price, matx = diamonds[, -c(1, 6, 7, 8)])
+
+plotcorr(cor(diamonds[, -c(2:4, 6:8)]), col = "#F9D53E",
+         main = "Pearson correlation ellipses for numerical variables")
+```
+
+```{r skewness}
+sapply(Train_lr[, c(1, 5:10)], skewness)
+Train_lr$price <- log(Train_lr$price)
+Train_lr$carat <- log(Train_lr$carat)
+Train_lr$table <- log(Train_lr$table)
+sapply(Train_lr[, c(1, 5:10)], skewness)
+
+Valid_lr$price <- log(Valid_lr$price)
+Valid_lr$carat <- log(Valid_lr$carat)
+Valid_lr$table <- log(Valid_lr$table)
+```
+
+```{r hist-unskewed}
+ggplot(gather(data = Train_lr[, c(1, 5:10)]), aes(value)) +
+  geom_histogram(aes(y = after_stat(density)),
+                 color = "white",
+                 fill = "#F9D53E") +             # Creates bin sizing with colors
+  geom_density(alpha = .2, fill = "#F9D53E") +
+  facet_wrap(~ key, scales = "free") +           # Converting the graphs into panels
+  ggtitle("Histograms of numerical variables") + # Title name
+  ylab("Count") + xlab("Value") +                # Label names
+  theme_classic()                                # Theme with x and y axis lines and no grid lines
+```
+
+```{r normalizing}
+norm.values <- preProcess(Train_lr[, c(1, 5:10)], method=c("center", "scale"))
+
+Train_lr[, c(1, 5:10)] <- predict(norm.values, Train_lr[, c(1, 5:10)])
+Valid_lr[, c(1, 5:10)] <- predict(norm.values, Valid_lr[, c(1, 5:10)])
+ Test_lr[, c(1, 5:10)] <- predict(norm.values,  Test_lr[, c(1, 5:10)])
+```
+
+
+```{r LM-complete}
+LM_complete = lm(price ~. , data = Train_lr)
+summary(LM_complete)
+```
+
+```{r iterative-search-complete}
+LM_forward_complete = step(LM_complete, direction = "forward")
+summary(LM_forward_complete)    # no selection
+LM_backward_complete = step(LM_complete, direction = "backward")
+summary(LM_backward_complete)   # like LM_CpAIC_complete
+LM_stepwise_complete = step(LM_complete, direction = "both")
+summary(LM_stepwise_complete)   # like LM_CpAIC_complete
+```
+
+```{r LM_CpAIC_complete}
+options(scipen = 999)
+GlobalCrit(LM_complete)
+
+LM_CpAIC_complete = lm(price ~ . , data = Train_lr[, c(1:6, 8, 9)])
+summary(LM_CpAIC_complete)
+```
+
+
+
+```{r LM-minus-corr}
+Train_minus_corr <- Train_lr[, -c(6:8)]
+LM_minus_corr = lm(price ~ ., data = Train_minus_corr)
+summary(LM_minus_corr)
+```
+
+```{r iterative-search-minus-corr}
+LM_backward_minus_corr = step(LM_minus_corr, direction = "backward")
+summary(LM_backward_minus_corr)   # like LM_CpAIC_minus_corr
+LM_forward_minus_corr = step(LM_minus_corr, direction = "forward")
+summary(LM_forward_minus_corr)    # no selection
+LM_stepwise_minus_corr = step(LM_minus_corr, direction = "both")
+summary(LM_stepwise_minus_corr)   # like LM_CpAIC_minus_corr
+```
+
+```{r LM_CpAIC_minus_corr}
+GlobalCrit(LM_minus_corr)
+
+LM_CpAIC_minus_corr = lm(price ~ . , data = Train_lr[, c(1:5, 9)])
+summary(LM_CpAIC_minus_corr)
+```
+
+```{r Variable Selection Summary}
+
+kable_styling(
+  kable(
+  data.table(Model = c("LM_complete", "LM_forward_complete", "LM_backward_complete",
+                       "LM_stepwise_complete", "LM_CpAIC_complete",
+                       "LM_minus_corr", "LM_forward_minus_corr", "LM_backward_minus_corr",
+                       "LM_stepwise_minus_corr", "LM_CpAIC_minus_corr"),
+             Cut           = c("X","X","X","X","X","X","X","X","X","X"),
+             Color         = c("X","X","X","X","X","X","X","X","X","X"),
+             Clarity       = c("X","X","X","X","X","X","X","X","X","X"),
+             Carat         = c("X","X","X","X","X","X","X","X","X","X"),
+             Length        = c("X","X","X","X","X"," "," "," "," "," "),
+             Width         = c("X","X"," "," "," "," "," "," "," "," "),
+             Depth         = c("X","X","X","X","X"," "," "," "," "," "),
+             `Depth Ratio` = c("X","X","X","X","X","X","X","X","X","X"),
+             Table         = c("X","X"," "," "," ","X","X"," "," "," ")
+             ),
+  align = 'lccccccccc'),
+  full_width = FALSE)
+```
+
+In both cases, the forward selection doesn't discard any variables, whereas backward, stepwise and global selections all choose the same model with less variables than initially.
+
+Thus, we have four different models emerging. We will keep `LM_complete`, `LM_CpAIC_complete`, `LM_minus_corr` and `LM_CpAIC_minus_corr` and remove the other models which are duplicates.
+
+```{r remove models}
+rm(LM_forward_complete, LM_backward_complete, LM_stepwise_complete, LM_forward_minus_corr, LM_backward_minus_corr, LM_stepwise_minus_corr)
+```
+
+
+```{r create accuracy table}
+# predicting prices of validation set on the validation data
+
+LM_Predictions =
+  data.table(
+    LM_complete_pred = predict(object = LM_complete, newdata = Valid_lr),
+    LM_CpAIC_complete_pred = predict(object = LM_CpAIC_complete, newdata = Valid_lr),
+    LM_minus_corr_pred = predict(object = LM_minus_corr, newdata = Valid_lr),
+    LM_CpAIC_minus_corr_pred = predict(object = LM_CpAIC_minus_corr, newdata = Valid_lr)
+    )
+
+# we have to scale back the price, to do so we fetch the mean and std value from norm.values
+# dsplaying all means and stds
+norm.values$mean
+norm.values$std
+
+# fetching for price
+mean_price = norm.values$mean[1]
+std_price = norm.values$std[1]
+
+# scaling back (Y*mu + sigma), then exp() (we had transformed price with a log for skewness)
+LM_Predictions = LM_Predictions*std_price + mean_price
+LM_Predictions = exp(LM_Predictions)
+
+
+# taking real prices of validation data from diamonds (which has not been touched -> original scale)
+LM_Predictions[, real_prices := diamonds[valid.index, price]]
+
+Acc1 = accuracy(object = LM_Predictions$LM_complete_pred, x = LM_Predictions$real_prices)
+Acc1 = as.data.table(Acc1)
+Acc2 = accuracy(object = LM_Predictions$LM_CpAIC_complete_pred, x = LM_Predictions$real_prices)
+Acc2 = as.data.table(Acc2)
+Acc3 = accuracy(object = LM_Predictions$LM_minus_corr_pred, x = LM_Predictions$real_prices)
+Acc3 = as.data.table(Acc3)
+Acc4 = accuracy(object = LM_Predictions$LM_CpAIC_minus_corr_pred, x = LM_Predictions$real_prices)
+Acc4 = as.data.table(Acc4)
+Accs = list(Acc1, Acc2, Acc3, Acc4)
+Accs = rbindlist(Accs)
+#rm(Acc1, Acc2, Acc3, Acc4)
+Accs[, Model := c("LM_complete", "LM_CpAIC_complete", "LM_minus_corr", "LM_CpAIC_minus_corr")]
+Accs <- Accs[, c(6, 1:5)]
+kable_styling(kable(Accs), full_width = FALSE)
 ```
 
 ## $k$-NN
 
-```{r}
-library(FNN)          #for finding k nearest neighbor
-library(fastDummies)
-library(class)        #for computing k-NN numerical predictions
-library(caret)
-library(dplyr)        #for scaling
-```
-
-
-```{r}
+```{r knn Create Dummies}
 diamonds_dummies <- diamonds
-diamonds_dummies <- dummy_cols(diamonds_dummies, select_columns = c("cut", "color", "clarity"))
-diamonds_dummies <- diamonds_dummies[,-c(2:4)]
+diamonds_dummies <- dummy_cols(diamonds_dummies, 
+                               select_columns = c("cut", "color", "clarity"), 
+                               remove_selected_columns = TRUE)
 
 #rename column to avoid issues with Neural net function
 colnames(diamonds_dummies)[10] = "cut_Very_Good"
+
 ```
 
 
-```{r}
+```{r knn Normalize values}
 #create data frames to normalize
 knn_train <- diamonds_dummies[train.index,]
 knn_valid <- diamonds_dummies[valid.index,]
@@ -319,141 +588,111 @@ norm_values <- preProcess(knn_train[, c(1:7)], method=c("center", "scale"))
 
 knn_train_norm[, c(1:7)] <- predict(norm_values, knn_train[, c(1:7)])
 knn_valid_norm[,c(1:7)] <- predict(norm_values, knn_valid[, c(1:7)])
+``` 
+
+
+```{r knn Calculate k1}
+# computing kNN with knnreg from caret package
+kNN = knnreg(x = knn_train_norm[, -c(1)] , y = knn_train_norm$price, k = 1)
+
+# predicting prices of validation set on the validation data
+knn_pred_y = predict(object = kNN, newdata = knn_valid_norm[, -c(1)])
+
+# we have to scale back the price, to do so we fetch the mean and std value from norm.values
+# displaying all means and standard deviations
+norm_values$mean
+norm_values$std
+
+# fetching for price
+mean_price = norm_values$mean[1]
+std_price = norm_values$std[1]
+
+# scaling back (Y*mu + sigma)
+knn_rescaled_prices = std_price * knn_pred_y + mean_price
+
+# taking real prices of validation data from diamonds (which has not been touched -> original scale)
+real_prices = diamonds[valid.index, price]
+
+# computing accuracy measures
+accuracy(object = knn_rescaled_prices, x = real_prices)
 ```
 
-```{r}
-# Compute k=1 nearest neighbor 
-nn1 <- FNN::knn.reg(train = knn_train_norm[, -1],
-          test = knn_train_norm[, -1],
-          y= knn_train_norm[, 1],
-          k = 1)
+```{r Compute best K }
 
-length(knn_train_norm[, -1])
-length(knn_train_norm[, 1])
+#create a data frame to store accuracy results
+accuracy_df <- data.frame(k = seq(1, 20, 1), accuracy = rep(0, 20))
 
+# use validation data set to compute various values of Knn
+for(i in 1:20) {
+temp_knn_pred <- knnreg(x = knn_train_norm[, -c(1)] , y = knn_train_norm$price, k = i)
 
-nn1
-summary(nn1)
+temp_knn_pred_y = predict(object = temp_knn_pred, newdata = knn_valid_norm[, -c(1)])
+temp_knn_rescaled_prices = std_price * temp_knn_pred_y + mean_price
+
+#update the accuracy table with results of confusion matrix accuracy from the loop
+accuracy_df[i, 2] <- accuracy(object = temp_knn_rescaled_prices, x = real_prices)[2]
+}
 
 #display results
-row.names(knn_train)[attr(nn1, "nn.index")]
-nn1
+row_spec(kable_classic(kbl(accuracy_df)), 4, bold = T, color = "white", background = "#78BE20") 
 
+#plot results
+ggplot (data = accuracy_df, aes(x = k, y = accuracy)) +
+  geom_line (size = 1.2, color = "#0099F8") +
+  geom_point(data= accuracy_df[4,], aes(x = k, y = accuracy), color = "#78BE20", size = 3) +
+  labs(x = "Amount of Neighbors", y = "RMSE per Model", title = "Behavior of RMSE per amount of kNN")+
+  theme_classic() 
 ```
 
-```{r}
-#mean square prediction error
-mean((knn_valid_norm - nn1$pred) ^ 2)
+
+```{r knn Calculate k4}
+
+# computing kNN with knnreg from caret package
+opt_kNN = knnreg(x = knn_train_norm[, -c(1)] , y = knn_train_norm$price, k = 4)
+
+# predicting prices of validation set on the validation data
+opt_knn_pred_y = predict(object = opt_kNN, newdata = knn_valid_norm[, -c(1)])
+
+# scaling back (Y*mu + sigma)
+opt_knn_rescaled_prices = std_price * opt_knn_pred_y + mean_price
+
+# computing accuracy measures
+opt_accuracy <- accuracy(object = opt_knn_rescaled_prices, x = real_prices)
+opt_accuracy
 ```
 
-```{r}
+```{r Plot KNN results, fig.height= 2.5, fig.width = 5}
+plot1 <- data.frame("Real" = real_prices, 
+                    "Predicted" = knn_rescaled_prices, 
+                    "Color" = diamonds[valid.index, 3],
+                    "Cut" = diamonds[valid.index, 2],
+                    "Clarity" = diamonds[valid.index, 4])
+plot2 <- data.frame("Real" = real_prices, 
+                    "Predicted" = opt_knn_rescaled_prices, 
+                    "Color" = diamonds[valid.index, 3],
+                    "Cut" = diamonds[valid.index, 2],
+                    "Clarity" = diamonds[valid.index, 4])
 
-#diamonds_dummies$cut <- as.factor(diamonds_dummies$cut) # Factor the cut to five levels 
 
-#diamonds_dummies$color <- as.factor(diamonds_dummies$color) # Factor the color to seven levels 
+basic_knn_plot <- ggplot(data = plot1, aes(x= Real, y = Predicted, color = clarity))+
+  geom_point(show.title = FALSE)+
+  scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
+  labs(x= "Original Model (k=1)", y = "Predicted Values")+
+  theme(legend.key.size = unit(0.5, 'cm'))
+basic_knn_plot
 
-#diamonds_dummies$clarity <- as.factor(diamonds_dummies$clarity) # Factor the clarity to eight levels 
+optimal_knn_plot <- ggplot(data = plot2, aes(x= Real, y = Predicted, color = clarity))+
+  geom_point()+
+  scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
+  labs(x= "Optimal Model (k=4)", y = "")
+optimal_knn_plot
 
-# Setting up train controls
-#repeats = 3
-#numbers = 10
-#tunel = 10
+full_plot <- ggarrange(basic_knn_plot, optimal_knn_plot, ncol=2, nrow=2, common.legend = TRUE, legend="right")
+full_plot
 
-#set.seed(111)
-#x = trainControl(method = "repeatedcv",
-#                 number = numbers,
-#                 repeats = repeats,
-#                 classProbs = TRUE,
-#                 summaryFunction = twoClassSummary)
-
-#model1 <- train(price~. , data = knn_train_norm, method = "knn",
-#               preProcess = c("center","scale"),
-#               trControl = x,
-#               tuneLength = tunel)
-
-# Summary of model
-#model1
 ```
-
-**Resource**:https://rstudio-pubs-static.s3.amazonaws.com/402600_a1efe79095644d389bf8f4c6d6c9ad1c.html
-
-**Resource (code below)**: https://quantdev.ssri.psu.edu/sites/qdev/files/kNN_tutorial.html (REDID BASED ON NEW CODE)
-```{r}
-diamonds_knn <- diamonds
-```
-
-```{r}
-# put outcome in its own object
-price_outcome <- diamonds_knn %>% select(price)
-
-# remove original from the data set
-diamonds_knn <- diamonds_knn %>% select(-price)
-```
-
-```{r}
-str(diamonds_knn)
-```
-
-```{r}
-# Scale continuous variables
-diamonds_knn %>%
-   mutate_at(c(4,9), funs(c(scale(.))))
-```
-
-```{r}
-# Create dummy variables
-cut <- as.data.frame(dummy_cols(diamonds_knn$cut))
-cut <- cut %>% select(-c[1,])
-color <- as.data.frame(dummy_cols(diamonds_knn$color))
-clarity <- as.data.frame(dummy_cols(diamonds_knn$clarity))
-```
-
-```{r}
-# Combine dummies with original data set
-diamonds_knn <- cbind(diamonds_knn, cut, color, clarity)
-```
-
-```{r}
-# Remove original variables that had to be dummy coded
-diamonds_knn <- diamonds_knn[,-c(1:3)]
-
-head(diamonds_knn)
-```
-```{r}
-#create data frames to normalize
-knn_train <- diamonds_knn[train.index,]
-knn_valid <- diamonds_knn[valid.index,]
-```
-
-```{r}
-abs_outcome_train <- price_outcome[train.index, ]
-abs_outcome_valid <- price_outcome[valid.index, ]
-```
-
-```{r}
-reg_results <- knn.reg(knn_train, knn_valid, abs_outcome_train, k = 1)
-print(reg_results)
-```
-**Resource**:https://stackoverflow.com/questions/46638731/error-when-fitting-knn-model
 
 ## Regression Tree
-
-### Loading Libraries
-
-```{r Libraries}
-library(RColorBrewer)   #for graph colors
-library(rattle)         #Graphical Data Interface
-library(rpart)          #for regression trees
-library(rpart.plot)     #for plot trees
-library(forecast)       #for accuracy
-library(ggplot2)        #for visualizations
-library(caret)          #for variable importance
-library(randomForest)   #for randomForest
-library(gbm)            #for boosting
-library(ipred)          #for bagging
-library(xgboost)        #for fitting GBMs
-library(vip)            #for variable importance
-```
 
 ### Partitioning
 
@@ -462,8 +701,8 @@ library(vip)            #for variable importance
 diamonds_tree <- diamonds
 
 # Creating data tables Train, Valid and Test using the indexes for the regression tree section
-Train <- diamonds[train.index, ]
-Valid <- diamonds[valid.index, ]
+Train_rg <- diamonds[train.index, ]
+Valid_rg <- diamonds[valid.index, ]
 ```
 
 ### Regression Tree
@@ -471,7 +710,7 @@ Valid <- diamonds[valid.index, ]
 ```{r Default Regression Tree}
 # Use rpart() to run tree on continuous response 
 RegressTree <- rpart(price ~ ., 
-              data = Train, 
+              data = Train_rg, 
               method = "anova") 
 
 # Generates a cost complexity parameter table that provides the complexity parameter value
@@ -492,14 +731,14 @@ kable_styling(kable(round(100*RegressTree$variable.importance / sum(RegressTree$
 
 ```{r Error Details on Default Tree - Valid}
 # Predict errors using accuracy() 
-tree_aa1 <- forecast::accuracy(predict(RegressTree, Valid), Valid$price)
+tree_aa1 <- forecast::accuracy(predict(RegressTree, Valid_rg), Valid_rg$price)
 
 kable(tree_aa1) %>% kable_classic() 
 ```
 
 ```{r Default Tree Predictions}
 # Predict the diamond price with validation
-pred_Diamond_test <- predict(RegressTree, newdata = Valid)
+pred_Diamond_test <- predict(RegressTree, newdata = Valid_rg)
 
 # Display first 14 observations
 head(pred_Diamond_test,14)
@@ -509,7 +748,7 @@ head(pred_Diamond_test,14)
 
 ```{r Default Regression Tree Minus Variables}
 RegressTree2 <- rpart(price ~ length+width+depth+carat+cut+color+clarity, 
-              data = Train, 
+              data = Train_rg, 
               method = "anova") 
 
 # Generates a cost complexity parameter table that provides the complexity parameter value
@@ -527,17 +766,17 @@ kable_styling(kable(round(100*RegressTree2$variable.importance / sum(RegressTree
 
 ```{r Error Details on RegressTree2 - Valid}
 # Predict errors using accuracy() 
-tree_aa2 <- forecast::accuracy(predict(RegressTree2, Valid), Valid$price)
+tree_aa2 <- forecast::accuracy(predict(RegressTree2, Valid_rg), Valid_rg$price)
 
 kable(tree_aa2) %>% kable_classic() 
 ```
 
 ```{r Default Tree Predictions2}
 # Predict the diamond price with validation
-pred_Diamond_test2 <- predict(RegressTree2, newdata = Valid)
+pred_Diamond_test <- predict(RegressTree, newdata = Valid_rg)
 
 # Display first 14 observations
-head(pred_Diamond_test2,14)
+head(pred_Diamond_test,14)
 ```
 
 ```{r CP Value}
@@ -563,18 +802,18 @@ fancyRpartPlot(RegressTree_pruned, caption = NULL, main = "'Pruned' Regression T
 
 ```{r Error Details on Prune_RegressTree2 - Valid}
 # Predict errors using accuracy() 
-tree_aa3 <- forecast::accuracy(predict(RegressTree_pruned, Valid), Valid$price)
+tree_aa3 <- forecast::accuracy(predict(RegressTree_pruned, Valid_rg), Valid_rg$price)
 
 kable(tree_aa3) %>% kable_classic() 
 ```
 
 ### Boosted Tree
 
-```{r}
+```{r Boosted tree 1}
 set.seed(111)
 bst <- xgboost(
-data = data.matrix(subset(Train, select = -price)),
-label = Train$price,
+data = data.matrix(subset(Train_rg, select = -price)),
+label = Train_rg$price,
 objective = "reg:squarederror",
 nrounds = 100,
 max_depth = 5,
@@ -593,14 +832,14 @@ bst
 
 **Source**: https://cran.r-project.org/web/packages/vip/vignettes/vip-introduction.pdf
 
-```{r}
+```{r Min Error Boost Tree}
 min(bst$test.error.mean)
 ```
 
 ```{r Boosted Tree 10}
 # Boosted tree
 set.seed(111)
-tree_boost10 <- gbm(price ~., data = Train, distribution = "gaussian", n.trees = 10, interaction.depth = 6, shrinkage = 0.01)
+tree_boost10 <- gbm(price ~., data = Train_rg, distribution = "gaussian", n.trees = 10, interaction.depth = 6, shrinkage = 0.01)
 
 # Interaction Depth specifies the maximum depth of each tree( i.e. highest level of variable interactions allowed while training the model). Default is 1.
 # Shrinkage is considered as the learning rate. It is used for reducing, or shrinking, the impact of each additional fitted base-learner (tree).  It reduces the size of incremental steps and thus penalizes the importance of each consecutive iteration. Default is 0.1
@@ -617,7 +856,7 @@ vip::vip(tree_boost10, aesthetics = list(fill = "#F9D53E")) +
 
 ```{r Error Details on tree_boost10 - Valid}
 # Predict errors using accuracy() 
-tree_aa4 <- forecast::accuracy(predict(tree_boost10, Valid), Valid$price)
+tree_aa4 <- forecast::accuracy(predict(tree_boost10, Valid_rg), Valid_rg$price)
 
 kable(tree_aa4) %>% kable_classic() 
 ```
@@ -625,7 +864,7 @@ kable(tree_aa4) %>% kable_classic()
 ```{r Boosted Tree 30}
 # Boosted tree
 set.seed(111)
-tree_boost30 <- gbm(price ~., data = Train, distribution = "gaussian", n.trees = 30)
+tree_boost30 <- gbm(price ~., data = Train_rg, distribution = "gaussian", n.trees = 30)
 
 vip::vip(tree_boost30, aesthetics = list(fill = "#F9D53E")) +
   ggtitle("Boosted Tree Variable Importance") + # Title name
@@ -637,7 +876,7 @@ tree_boost30
 
 ```{r Error Details on tree_boost30}
 # Predict errors using accuracy() 
-tree_aa5 <- forecast::accuracy(predict(tree_boost30, Train), Train$price)
+tree_aa5 <- forecast::accuracy(predict(tree_boost30, Train_rg), Train_rg$price)
 
 kable(tree_aa5) %>% kable_classic() 
 ```
@@ -645,7 +884,7 @@ kable(tree_aa5) %>% kable_classic()
 ```{r Boosted Tree 100}
 # Boosted tree
 set.seed(111)
-tree_boost100 <- gbm(price ~., data = Train, distribution = "gaussian", cv.folds = 3)
+tree_boost100 <- gbm(price ~., data = Train_rg, distribution = "gaussian", cv.folds = 3)
 
 # cv.folds: Number of cross-validation folds to perform. If cv.folds>1 then gbm, in addition to the usual fit, will perform a cross-validation, calculate an estimate of generalization error returned in cv.error.
 
@@ -659,20 +898,16 @@ tree_boost100
 
 ```{r Error Details on tree_boost100}
 # Predict errors using accuracy() 
-tree_aa6 <- forecast::accuracy(predict(tree_boost100, Valid), Valid$price)
+tree_aa6 <- forecast::accuracy(predict(tree_boost100, Valid_rg), Valid_rg$price)
 
 kable(tree_aa6) %>% kable_classic()
 ```
 
-```{r Boosted Tree 100 with oob}
-ntree_opt_oob <- gbm.perf(tree_boost100, method = "OOB")
-ntree_opt_oob
-
-# Indicate the method used to estimate the optimal number of boosting iterations. method = "OOB" computes the out-of-bag estimate and method = "test" uses the test (or validation) dataset to compute an out-of-sample estimate. method = "cv" extracts the optimal number of iterations using cross-validation if gbm was called with cv.folds > 1.
-```
 
 ```{r Predict Boosting}
-pred_boost <- predict.gbm(tree_boost100, newdata = Valid)
+pred_boost <- predict.gbm(tree_boost100, newdata = Valid_rg)
+
+head(pred_boost, 14)
 ```
 
 ### Bagging Tree
@@ -680,34 +915,32 @@ pred_boost <- predict.gbm(tree_boost100, newdata = Valid)
 ```{r Bagged Tree}
 # Bagged tree
 set.seed(111)
-tree_bagging <- bagging(price ~., data = Train, coob = TRUE)
+tree_bagging <- bagging(price ~., data = Train_rg, coob = TRUE)
 tree_bagging
 ```
 
-```{r Plot IV}
-pred_imp <- varImp(tree_bagging)
+```{r Plot IV Bagging}
+ss<-varImp(tree_bagging)
 
-#sort variable importance descending
-VI_plot <- pred_imp[order(pred_imp$Overall, decreasing=FALSE),]
+data<-data.table(name=row.names(ss),value=ss$Overall)
 
-#visualize variable importance with horizontal bar plot
-barplot(sort(pred_imp$Overall, decreasing = FALSE),
-        names.arg=rownames(pred_imp),
-        horiz=TRUE,
-        col="#F9D53E", las = 1)
-
-# Add a main title and bottom and left axis labels
-title("Variable Importance ", xlab="Importance")
+data[,ggplot(.SD, aes(x=reorder(name, ss$Overall), y=ss$Overall)) + 
+  geom_bar(stat = "identity", fill = "#F9D53E")+
+  xlab("Variable") + # Label names + 
+  ylab("Importance") + # Label names + 
+  ggtitle("Bagged Tree Variable Importance") + # Title name
+  theme_classic() + # A classic theme, with x and y axis lines and no grid lines
+  coord_flip(),]
 ```
 
 ```{r Errors Bagging}
-tree_aa7 <- forecast::accuracy(predict(tree_bagging, Valid), Valid$price)
+tree_aa7 <- forecast::accuracy(predict(tree_bagging, Valid_rg), Valid_rg$price)
 
 kable(tree_aa7) %>% kable_classic()
 ```
 
-```{r}
-pred_bagged <- predict(tree_bagging, newdata = Valid)
+```{r Predict Bagging}
+pred_bagged <- predict(tree_bagging, newdata = Valid_rg)
 
 head(pred_bagged,14)
 ```
@@ -719,7 +952,8 @@ options(scipen = 9999)
 
 # Create randomForest
 set.seed(111)
-rdf_model <- randomForest(price~ ., ntree= 60, data = Train)
+rdf_model <- randomForest(price~ ., ntree= 60, data = Train_rg)
+rdf_model
 plot(rdf_model)
 ```
 
@@ -729,7 +963,7 @@ plot(rdf_model)
 which.min(rdf_model$mse)
 ```
 
-```{r}
+```{r  RF Variable Importance}
 options(scipen = 9999)
 
 # Create variable importance chart
@@ -739,15 +973,21 @@ vip::vip(rdf_model, aesthetics = list(fill = "#F9D53E")) +
   theme_classic() # A classic theme, with x and y axis lines and no grid lines
 ```
 
-```{r}
-tree_aa8 <- forecast::accuracy(predict(rdf_model, Valid), Valid$price)
+```{r RF Display Results}
+tree_aa8 <- forecast::accuracy(predict(rdf_model, Valid_rg), Valid_rg$price)
 
 kable(tree_aa8) %>% kable_classic()
 ```
 
+```{r Predict RandomForest}
+pred_random <- predict(rdf_model, newdata = Valid_rg)
+
+head(pred_random,14)
+```
+
 ### Create Regression Tree Summary Table
 
-```{r}
+```{r RegTree Summary}
 Tree_res <- data.frame("Model_Tree" = c("Regression Tree",
                                  "Exclusion RT",
                                  "Pruned RT",
@@ -765,30 +1005,506 @@ Tree_res <- data.frame("Model_Tree" = c("Regression Tree",
 rownames(Tree_res) <- Tree_res$Model_Tree
 Tree_res$Model_Tree = NULL
 
-str(round(get(paste("tree_aa", "1", sep ="")),2))
-
 for (i in 1:8) {
   Tree_res[i,]= round(get(paste("tree_aa", i, sep ="")),2)
 }
 
 kable_styling(kable(Tree_res, full_width = FALSE))
 
-barplot(RMSEplotdata, col = "#F9D53E")
-RMSEplotdata <- t(Tree_res$RMSE)
-colnames(RMSEplotdata) <- t(rownames(Tree_res))
+
+RGRMSEplotdata <- t(Tree_res$RMSE)
+colnames(RGRMSEplotdata) <- t(rownames(Tree_res))
+barplot(RGRMSEplotdata, col = "#F9D53E")
 
 ```
 
 ## NeuralNetworks
 
+### Data preprocessing
+
+```{r NN Dummy ariables}
+#create dummy columns 
+diamonds_dummies <- dummy_cols(diamonds, select_columns = c("cut", "color", "clarity"))
+diamonds_dummies <- diamonds_dummies[,-c(2:4)]
+
+#rename column to avoid issues with Neural net function
+colnames(diamonds_dummies)[10] = "cut_Very_Good"
+```
+
+### Partitioning
+
+```{r NN Partitioning}
+Train_nn <- diamonds_dummies[train.index,]
+Valid_nn <- diamonds_dummies[valid.index,]
+```
+
+### Normalizing Data
+
+```{r NN Normalize}
+# use preProcess() to normalize non-categorical variables
+norm_values <- preProcess(Train_nn[1:7], method= c("range"))
+
+Train_nn_norm <- predict(norm_values, Train_nn)
+Valid_nn_norm <- predict(norm_values, Valid_nn)
+```
+
+### Model 1 (Layers = 1, Nodes = 1)
+
+* Creating Model 1
+
+```{r NN L1 N1 Model}
+#create data sets to train and validate the model
+#train
+x_train <- c(t(Train_nn_norm[, -c(1)]))
+x_train <- as.array(x_train,
+                    dim(t(Train_nn_norm[, -c(1)])),
+                    dimnames = list(rownames(x_train), colnames(x_train)))
+x_train <- as_tensor(x_train, shape = dim(Train_nn_norm[, -c(1)]))
+y_train <- as_tensor(Train_nn_norm$price)
+
+#validation
+x_valid <- c(t(Valid_nn_norm[, -c(1)]))
+x_valid <- as.array(x_valid,
+                    dim(t(Valid_nn_norm[, -c(1)])),
+                    dimnames = list(rownames(x_valid), colnames(x_valid)))
+x_valid <- as_tensor(x_valid, shape = dim(Valid_nn_norm[, -c(1)]))
+y_valid <- as_tensor(Valid_nn_norm$price)
+
+#create model
+rm(model_1_1) #to prevent retraining of existing model
+tf$random$set_seed(111)
+model_1_1 <- keras_model_sequential(input_shape = ncol(x_train)) %>%
+  layer_dense(1, activation = "sigmoid", name = "HiddenLayer") %>%  # 1st hidden layer (26 nodes)
+  layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
+  
+
+#compile the model to be trained            
+model_1_1 %>% compile(
+  optimizer = optimizer_adam(),
+  loss = loss_mean_squared_error(),
+  metric = metric_root_mean_squared_error()
+  )
+
+#train the model and find the lowest rmse
+history <- model_1_1 %>% fit(
+    x = x_train,
+    y = y_train,
+    validation_data = c(x_valid, y_valid),
+    verbose = FALSE
+    )
+```
+
+* Measuring Error Model 1
+
+```{r L1 N1 Pred}
+# prediction values of validation set
+y_valid_pred <- predict(model_1_1, x_valid)
+
+# fetching a and b from standardization for scaling back price
+a <- norm_values$ranges[1,1]
+b <- norm_values$ranges[2,1]
+
+valRescale <- function (x) { 
+  value <- (x * (b-a) + a)
+  return(value)
+}
+
+# scaling back price predictions
+y_valid_pred <- valRescale(y_valid_pred)
+
+# we have to change the class of y_valid_pred
+class(y_valid_pred)
+y_valid_pred <- as.numeric(y_valid_pred)
+class(y_valid_pred)
+
+# taking real values of validation set from original data (which wasn't standardized!)
+y_valid_real <- diamonds[valid.index, price]
+
+# copmuting accuracy measures of validation set
+acc_1 <- accuracy(object = y_valid_pred, x = y_valid_real)
+acc_1
+
+```
+
+### Model 2 (Layers = 1, Nodes = 26)
+
+* Creating Model 2
+
+```{r L1 N26 Model}
+#create model
+rm(model_1_26) #to prevent retraining of existing model
+tf$random$set_seed(111)
+model_1_26 <- keras_model_sequential(input_shape = ncol(x_train)) %>%
+  layer_dense(26, activation = "sigmoid", name = "HiddenLayer") %>%  # 1st hidden layer (26 nodes)
+  layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
+  
+
+#compile the model to be trained            
+model_1_26 %>% compile(
+  optimizer = optimizer_adam(),
+  loss = loss_mean_squared_error(),
+  metric = metric_root_mean_squared_error()
+  )
+
+#train the model and find the lowest rmse
+history <- model_1_26 %>% fit(
+    x = x_train,
+    y = y_train,
+    validation_data = c(x_valid, y_valid),
+    verbose = FALSE
+    )
+```
+
+* Measuring Error Model 2
+
+```{r L1 N26 Pred}
+# prediction values of validation set
+y_valid_pred_1_26 <- predict(model_1_26, x_valid)
+
+# scaling back price predictions
+y_valid_pred_1_26 <- valRescale(y_valid_pred_1_26)
+
+# we have to change the class of y_valid_pred
+y_valid_pred_1_26 <- as.numeric(y_valid_pred_1_26)
+
+# copmuting accuracy measures of validation set
+acc_2 <- accuracy(object = y_valid_pred_1_26, x = y_valid_real)
+acc_2
+```
+
+### Model 3 (Layers = 1, Nodes = 13)
+
+* Creating Model 3
+
+```{r L1 N13 Model}
+#create model
+rm(model_1_13) #to prevent retraining of existing model
+tf$random$set_seed(111)
+model_1_13 <- keras_model_sequential(input_shape = ncol(x_train)) %>%
+  layer_dense(13, activation = "sigmoid", name = "HiddenLayer") %>%  # 1st hidden layer (26 nodes)
+  layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
+  
+
+#compile the model to be trained            
+model_1_13 %>% compile(
+  optimizer = optimizer_adam(),
+  loss = loss_mean_squared_error(),
+  metric = metric_root_mean_squared_error()
+  )
+
+#train the model and find the lowest rmse
+history <- model_1_13 %>% fit(
+    x = x_train,
+    y = y_train,
+    validation_data = c(x_valid, y_valid),
+    verbose = FALSE
+    )
+```
+
+* Measuring Error Model 3
+
+```{r L1 N13 Pred}
+# prediction values of validation set
+y_valid_pred_1_13 <- predict(model_1_13, x_valid)
+
+# scaling back price predictions
+y_valid_pred_1_13 <- valRescale(y_valid_pred_1_13)
+
+# we have to change the class of y_valid_pred
+y_valid_pred_1_13 <- as.numeric(y_valid_pred_1_13)
+
+# copmuting accuracy measures of validation set
+acc_3 <- accuracy(object = y_valid_pred_1_13, x = y_valid_real)
+acc_3
+```
+
+### Model 4 (Layers = 2, Nodes = 26)
+
+* Creating Model 4
+
+```{r L2 N26 Model}
+#create model
+rm(model_2_26) #to prevent retraining of existing model
+tf$random$set_seed(111)
+model_2_26 <- keras_model_sequential(input_shape = ncol(x_train)) %>%
+  layer_dense(26, activation = "sigmoid", name = "HiddenLayer") %>%  # 1st hidden layer (26 nodes)
+  layer_dense(26, activation = "sigmoid", name = "HiddenLayer2") %>%  # 2nd hidden layer (26 nodes)
+  layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
+  
+
+#compile the model to be trained            
+model_2_26 %>% compile(
+  optimizer = optimizer_adam(),
+  loss = loss_mean_squared_error(),
+  metric = metric_root_mean_squared_error()
+  )
+
+#train the model and find the lowest rmse
+history <- model_2_26 %>% fit(
+    x = x_train,
+    y = y_train,
+    validation_data = c(x_valid, y_valid),
+    verbose = FALSE
+    )
+```
+
+* Measuring Error Model 4
+
+```{r L2 N26 Pred}
+# prediction values of validation set
+y_valid_pred_2_26 <- predict(model_2_26, x_valid)
+
+# scaling back price predictions
+y_valid_pred_2_26 <- valRescale(y_valid_pred_2_26)
+
+# we have to change the class of y_valid_pred
+y_valid_pred_2_26 <- as.numeric(y_valid_pred_2_26)
+
+# copmuting accuracy measures of validation set
+acc_4 <- accuracy(object = y_valid_pred_2_26, x = y_valid_real)
+acc_4
+```
+
+
+### Model 5 with Initializer (Layers = 2, Nodes = 26, GlorotNormal)
+
+* Creating Model 5
+
+```{r L2 N26 Glot Model}
+#create model
+rm(model_2_26G) #to prevent retraining of existing model
+tf$random$set_seed(111)
+model_2_26G <- keras_model_sequential(input_shape = ncol(x_train)) %>%
+  layer_dense(26, activation = "sigmoid", name = "HiddenLayer", kernel_initializer = "GlorotNormal") %>%  # 1st hidden layer (26 nodes)
+  layer_dense(26, activation = "sigmoid", name = "HiddenLayer2", kernel_initializer = "GlorotNormal") %>%  # 2nd hidden layer (26 nodes)
+  layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
+  
+
+#compile the model to be trained            
+model_2_26G %>% compile(
+  optimizer = optimizer_adam(),
+  loss = loss_mean_squared_error(),
+  metric = metric_root_mean_squared_error()
+  )
+
+#train the model and find the lowest rmse
+history <- model_2_26G %>% fit(
+    x = x_train,
+    y = y_train,
+    validation_data = c(x_valid, y_valid),
+    verbose = FALSE
+    )
+```
+
+* Measuring Error Model 5
+
+```{r L2 N26 Glot Pred}
+# prediction values of validation set
+y_valid_pred_2_26G <- predict(model_2_26G, x_valid)
+
+# scaling back price predictions
+y_valid_pred_2_26G <- valRescale(y_valid_pred_2_26G)
+
+# we have to change the class of y_valid_pred
+y_valid_pred_2_26G <- as.numeric(y_valid_pred_2_26G)
+
+# copmuting accuracy measures of validation set
+acc_5 <- accuracy(object = y_valid_pred_2_26G, x = y_valid_real)
+acc_5
+```
+
+
+### Model 6 with Initializer and Learning Rate (Layers = 2, Nodes = 26, GlorotNormal, LR = 0.005)
+
+* Creating model 6
+
+```{r L2 N26 Glot LR Model}
+#create model
+rm(model_2_26GLR) #to prevent retraining of existing model
+tf$random$set_seed(111)
+model_2_26GLR <- keras_model_sequential(input_shape = ncol(x_train)) %>%
+  layer_dense(26, activation = "sigmoid", name = "HiddenLayer", kernel_initializer = "GlorotNormal") %>%  # 1st hidden layer (26 nodes)
+  layer_dense(26, activation = "sigmoid", name = "HiddenLayer2", kernel_initializer = "GlorotNormal") %>%  # 2nd hidden layer (26 nodes)
+  layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
+  
+
+#compile the model to be trained            
+model_2_26GLR %>% compile(
+  optimizer = optimizer_adam(learning_rate = 0.009),
+  loss = loss_mean_squared_error(),
+  metric = metric_root_mean_squared_error()
+  )
+
+#train the model and find the lowest rmse
+history <- model_2_26GLR %>% fit(
+    x = x_train,
+    y = y_train,
+    validation_data = c(x_valid, y_valid),
+    verbose = FALSE
+    )
+```
+
+* Measuring Error Model 6
+ 
+```{r L2 N26 Glot LR Pred}
+# prediction values of validation set
+y_valid_pred_2_26GLR <- predict(model_2_26GLR, x_valid)
+
+# scaling back price predictions
+y_valid_pred_2_26GLR <- valRescale(y_valid_pred_2_26GLR)
+
+# we have to change the class of y_valid_pred
+y_valid_pred_2_26GLR <- as.numeric(y_valid_pred_2_26GLR)
+
+# copmuting accuracy measures of validation set
+acc_6 <- accuracy(object = y_valid_pred_2_26GLR, x = y_valid_real)
+acc_6
+```
+
+
+### Create Neural Net Summary Table
+
+```{r NN Summary}
+NN_res <- data.frame("Model" = c("L1 N1",
+                                 "L1 N26",
+                                 "L1 N13",
+                                 "L2 N26",
+                                 "L2 N26 G",
+                                 "L2 N26 G LR"),
+                     "ME" = "",
+                     "RMSE" = "",
+                     "MAE"= "",
+                     "MPE" = "",
+                     "MAPE" = "")
+
+rownames(NN_res) <- NN_res$Model
+NN_res$Model = NULL
+
+for (i in 1:6) {
+  NN_res[i,]= round(get(paste("acc_", i, sep ="")),2)
+}
+
+kable_styling(kable(NN_res, full_width = FALSE))
+
+NNRMSEplotdata <- t(NN_res$RMSE)
+colnames(NNRMSEplotdata) <- t(rownames(NN_res))
+barplot(NNRMSEplotdata, col = "yellow")
+
+```
+
 
 ## Ensembles
 
 ```{r}
+#create Table with 0 values
+ensemble_summ <- data.frame("MLR" = 0,
+                             "RegTrees" = 0,
+                             "kNN" = 0,
+                             "NeuralNets" = 0)
+#create empty rows
+ensemble_summ[length(valid.index),] <- 0
+
+#Add values per columns
+ensemble_summ[,"MLR"] = LM_Predictions$LM_CpAIC_minus_corr_pred
+ensemble_summ[,"RegTrees"] = pred_random
+ensemble_summ[,"kNN"] = opt_knn_rescaled_prices
+ensemble_summ[,"NeuralNets"] = y_valid_pred_2_26GLR
+
+#Calculate Average
+ensemble_summ$AveragePred <- rowMeans(ensemble_summ[,1:4])
+ensemble_summ$RealPrices <- real_prices
+
+ens_error = accuracy(ensemble_summ$AveragePred, ensemble_summ$RealPrices)
+ens_error
 
 ```
 
+```{r}
+ens_rmse_summ <- NN_res[0,] #NeuralNet Error
+ens_rmse_summ[1, ] <- round(Acc4, 2)
+ens_rmse_summ[2, ] <- Tree_res[8,]
+ens_rmse_summ[3, ] <- round(opt_accuracy, 2)
+ens_rmse_summ[4, ] <- NN_res[6,]
+ens_rmse_summ[5, ] <- round(ens_error, 2)
+
+row.names(ens_rmse_summ) <- c("Multiple Linear Regression",
+                              "Regression Tree",
+                              "k-Nearest Neighbor",
+                              "Neural Network",
+                              "Ensemble")
+#display results
+kable_classic(kbl(ens_rmse_summ))
+```
+
+
+
 # Model Performance Summary
 
+
+```{r Ensemble Summary Plot, fig.height= 4, fig.width = 3.5}
+predtable_lr <- data.frame("Real" = real_prices, 
+                    "Predicted" = ensemble_summ[, 1],
+                    "Color" = diamonds[valid.index, 3],
+                    "Cut" = diamonds[valid.index, 2],
+                    "Clarity" = diamonds[valid.index, 4])
+predtable_rg <- data.frame("Real" = real_prices, 
+                    "Predicted" = ensemble_summ[, 2], 
+                    "Color" = diamonds[valid.index, 3],
+                    "Cut" = diamonds[valid.index, 2],
+                    "Clarity" = diamonds[valid.index, 4])
+predtable_knn <- data.frame("Real" = real_prices, 
+                    "Predicted" = ensemble_summ[, 3], 
+                    "Color" = diamonds[valid.index, 3],
+                    "Cut" = diamonds[valid.index, 2],
+                    "Clarity" = diamonds[valid.index, 4])
+predtable_nn <- data.frame("Real" = real_prices, 
+                    "Predicted" = ensemble_summ[, 4], 
+                    "Color" = diamonds[valid.index, 3],
+                    "Cut" = diamonds[valid.index, 2],
+                    "Clarity" = diamonds[valid.index, 4])
+predtable_ens <- data.frame("Real" = real_prices, 
+                    "Predicted" = ensemble_summ[, 5], 
+                    "Color" = diamonds[valid.index, 3],
+                    "Cut" = diamonds[valid.index, 2],
+                    "Clarity" = diamonds[valid.index, 4])
+
+
+pred_plot_lr <- ggplot(data = predtable_lr, aes(x= Real, y = Predicted, color = clarity))+
+  geom_point(show.title = FALSE)+
+  scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
+  labs(x= "Multiple Linear Regression", y = "Predicted Values")+
+  theme(legend.key.size = unit(0.5, 'cm'))
+pred_plot_lr
+
+pred_plot_rg <- ggplot(data = predtable_rg, aes(x= Real, y = Predicted, color = clarity))+
+  geom_point()+
+  scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
+  labs(x= "NN (Regression Trees", y = "")
+pred_plot_rg
+
+pred_plot_knn <- ggplot(data = predtable_knn, aes(x= Real, y = Predicted, color = clarity))+
+  geom_point()+
+  scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
+  labs(x= "k Neares Neighbor", y = "")
+pred_plot_knn
+
+pred_plot_nn <- ggplot(data = predtable_nn, aes(x= Real, y = Predicted, color = clarity))+
+  geom_point()+
+  scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
+  labs(x= "Neural Networks", y = "")
+pred_plot_nn
+
+pred_plot_ens <- ggplot(data = predtable_ens, aes(x= Real, y = Predicted, color = clarity))+
+  geom_point()+
+  scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
+  labs(x= "Ensemble", y = "")
+pred_plot_ens
+
+
+pred_plot_full <- ggarrange(pred_plot_lr, pred_plot_rg, pred_plot_knn, pred_plot_nn,pred_plot_ens,
+                            ncol=2, nrow=3, common.legend = TRUE, legend="right")
+pred_plot_full
+
+```
 # Conclusions
 
