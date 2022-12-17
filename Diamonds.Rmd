@@ -977,9 +977,26 @@ There is no standard or ideal way of setting up the amount of layers in a networ
 
 * The second model includes a hidden layer of 26 nodes, so it equals the input nodes. 
 
-* To see if there is an improvement, de do another model with just 13 nodes in a single hidden layer. 
+* To see if there is an improvement, we do another model with just 13 nodes in a single hidden layer. 
 
-Of these single layer models, the best is the one with 26 nodes. We measure this by looking at the error in prediction, also called the accuracy. There are many ways of measuring this, but as mentioned before, the two we looked at are the Mean Error, as a measure of accuracy, and Root Mean Squared Error, as a measure of precision. For the 26 node model, the RMSE is 
+Of these single layer models, the best is the one with 26 nodes. We measure this by looking at the error in prediction, also called the accuracy. There are many ways of measuring this, but as mentioned before, the two we looked at are the Mean Error, as a measure of accuracy, and Root Mean Squared Error, as a measure of precision. For the 26 node model, the RMSE is 745.16 vs 744.04 for the 13 node net. While just looking at this configuration one could infer using less nodes is better, after multiple tests it is concluded that keeping the 26 nodes as the first hidden layer is best for reducing the RMSE going forward. 
+
+The next configuration tested is adding 2 additional hidden layers, one of 26 additional nodes, and another of 13. Just by using this configuration, the model RMSE reduced to 627.65. As this is already a rather low RMSE, in comparison to previous neural networks, as well as other models seen above, it was decided to keep this structure as the definitive one for establishing the most accurate prediction. 
+
+The next two adjustments made are regarding the weights and the activation function. This structure was adjusted to use the "*Glorot Normal*" weight initiation method. This initiation method consists of assigning weights to the nodes using a de probability curve of a truncated normal distribution as so:
+
+* Glorot Normal Initialization:
+
+$w_{i} \sim Gaussian(\mu = 0, \sigma^{2} = \sqrt{\frac{2} {u_{in} + u_{out} }})$
+
+where:
+$u_{in}$ = number of input nodes
+$u_{out}$ = number of output nodes
+
+This initiation method demonstrated much better results than others such as the normal distribution, uniform distribution of the Glorot Uniform, which is why we kept it for the final model. 
+
+Finally regarding the activation function, many options are available as well. Depending on the problem at hand, one can use different functions that draw different curves and hence produce different predictions. The one used for our case was a *sigmoid* activation which by different literature is the most commonly used due to its good performance results. Though we tested others like *"relu"* or *"softplus"*, sigmoid ended being the most accurate predicting. 
+
 
 
 ### Partitioning
@@ -1342,6 +1359,8 @@ colnames(NNRMSEplotdata) <- t(rownames(NN_res))
 barplot(NNRMSEplotdata, col = "yellow")
 
 ```
+
+As can be seen, the predictive performance of the neural networks can vary a lot depending on the structure and parameters chosen. The negative point in this method is the requirement of human input to adjust the model to learn more precisely. Nevertheless, once the many trials have been executed, the results are very positive for a good predictive model. 
 
 
 ## Ensembles
