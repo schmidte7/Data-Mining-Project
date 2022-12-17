@@ -3,14 +3,14 @@ title: "Diamonds"
 author: "Francisco Arrieta, Emily Schmidt and Lucia Camenisch"
 date: "`r Sys.Date()`"
 output:
-  pdf_document:
-    toc: yes
   html_document:
     toc: yes
     toc_float:
       collapsed: no
     number_sections: yes
     theme: cosmo
+  pdf_document:
+    toc: yes
 ---
 
 ```{=html}
@@ -1115,7 +1115,7 @@ y_valid_pred_1_26 <- valRescale(y_valid_pred_1_26)
 # we have to change the class of y_valid_pred
 y_valid_pred_1_26 <- as.numeric(y_valid_pred_1_26)
 
-# copmuting accuracy measures of validation set
+# computing accuracy measures of validation set
 acc_2 <- accuracy(object = y_valid_pred_1_26, x = y_valid_real)
 
 kable_styling(kable(acc_2)%>% kable_classic(), full_width = TRUE)
@@ -1180,6 +1180,7 @@ tf$random$set_seed(111)
 model_2_26 <- keras_model_sequential(input_shape = ncol(x_train)) %>%
   layer_dense(26, activation = "sigmoid", name = "HiddenLayer") %>%  # 1st hidden layer (26 nodes)
   layer_dense(26, activation = "sigmoid", name = "HiddenLayer2") %>%  # 2nd hidden layer (26 nodes)
+  layer_dense(13, activation = "sigmoid", name = "HiddenLayer3") %>%  # 3rd hidden layer (26 nodes)
   layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
   
 
@@ -1229,6 +1230,7 @@ tf$random$set_seed(111)
 model_2_26G <- keras_model_sequential(input_shape = ncol(x_train)) %>%
   layer_dense(26, activation = "sigmoid", name = "HiddenLayer", kernel_initializer = "GlorotNormal") %>%  # 1st hidden layer (26 nodes)
   layer_dense(26, activation = "sigmoid", name = "HiddenLayer2", kernel_initializer = "GlorotNormal") %>%  # 2nd hidden layer (26 nodes)
+    layer_dense(26, activation = "sigmoid", name = "HiddenLayer3", kernel_initializer = "GlorotNormal") %>%  # 3rd hidden layer (26 nodes)
   layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
   
 
@@ -1278,6 +1280,7 @@ tf$random$set_seed(111)
 model_2_26GLR <- keras_model_sequential(input_shape = ncol(x_train)) %>%
   layer_dense(26, activation = "sigmoid", name = "HiddenLayer", kernel_initializer = "GlorotNormal") %>%  # 1st hidden layer (26 nodes)
   layer_dense(26, activation = "sigmoid", name = "HiddenLayer2", kernel_initializer = "GlorotNormal") %>%  # 2nd hidden layer (26 nodes)
+    layer_dense(13, activation = "sigmoid", name = "HiddenLayer3", kernel_initializer = "GlorotNormal") %>%  # 3rd hidden layer (26 nodes)
   layer_dense(1, activation = "sigmoid", name = "outputLayer")     # output layer (1 node)
   
 

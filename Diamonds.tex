@@ -2834,7 +2834,7 @@ Test set & -6.616364 & 3982.992 & 3025.611 & -157.4749 & 187.2922\\
 \CommentTok{\# we have to change the class of y\_valid\_pred}
 \NormalTok{y\_valid\_pred\_1\_26 }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(y\_valid\_pred\_1\_26)}
 
-\CommentTok{\# copmuting accuracy measures of validation set}
+\CommentTok{\# computing accuracy measures of validation set}
 \NormalTok{acc\_2 }\OtherTok{\textless{}{-}} \FunctionTok{accuracy}\NormalTok{(}\AttributeTok{object =}\NormalTok{ y\_valid\_pred\_1\_26, }\AttributeTok{x =}\NormalTok{ y\_valid\_real)}
 
 \FunctionTok{kable\_styling}\NormalTok{(}\FunctionTok{kable}\NormalTok{(acc\_2)}\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{kable\_classic}\NormalTok{(), }\AttributeTok{full\_width =} \ConstantTok{TRUE}\NormalTok{)}
@@ -2942,6 +2942,7 @@ Test set & -86.71198 & 744.0357 & 454.3788 & -12.8878 & 19.21285\\
 \NormalTok{model\_2\_26 }\OtherTok{\textless{}{-}} \FunctionTok{keras\_model\_sequential}\NormalTok{(}\AttributeTok{input\_shape =} \FunctionTok{ncol}\NormalTok{(x\_train)) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{layer\_dense}\NormalTok{(}\DecValTok{26}\NormalTok{, }\AttributeTok{activation =} \StringTok{"sigmoid"}\NormalTok{, }\AttributeTok{name =} \StringTok{"HiddenLayer"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}  \CommentTok{\# 1st hidden layer (26 nodes)}
   \FunctionTok{layer\_dense}\NormalTok{(}\DecValTok{26}\NormalTok{, }\AttributeTok{activation =} \StringTok{"sigmoid"}\NormalTok{, }\AttributeTok{name =} \StringTok{"HiddenLayer2"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}  \CommentTok{\# 2nd hidden layer (26 nodes)}
+  \FunctionTok{layer\_dense}\NormalTok{(}\DecValTok{13}\NormalTok{, }\AttributeTok{activation =} \StringTok{"sigmoid"}\NormalTok{, }\AttributeTok{name =} \StringTok{"HiddenLayer3"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}  \CommentTok{\# 3rd hidden layer (26 nodes)}
   \FunctionTok{layer\_dense}\NormalTok{(}\DecValTok{1}\NormalTok{, }\AttributeTok{activation =} \StringTok{"sigmoid"}\NormalTok{, }\AttributeTok{name =} \StringTok{"outputLayer"}\NormalTok{)     }\CommentTok{\# output layer (1 node)}
   
 
@@ -2992,7 +2993,7 @@ Test set & -86.71198 & 744.0357 & 454.3788 & -12.8878 & 19.21285\\
 \hline
   & ME & RMSE & MAE & MPE & MAPE\\
 \hline
-Test set & -5.224427 & 692.4611 & 428.8867 & -11.46165 & 18.94723\\
+Test set & 30.21931 & 627.652 & 364.5433 & -5.429278 & 13.48542\\
 \hline
 \end{tabu}
 \end{table}
@@ -3015,6 +3016,7 @@ GlorotNormal)}\label{model-5-with-initializer-layers-2-nodes-26-glorotnormal}}
 \NormalTok{model\_2\_26G }\OtherTok{\textless{}{-}} \FunctionTok{keras\_model\_sequential}\NormalTok{(}\AttributeTok{input\_shape =} \FunctionTok{ncol}\NormalTok{(x\_train)) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{layer\_dense}\NormalTok{(}\DecValTok{26}\NormalTok{, }\AttributeTok{activation =} \StringTok{"sigmoid"}\NormalTok{, }\AttributeTok{name =} \StringTok{"HiddenLayer"}\NormalTok{, }\AttributeTok{kernel\_initializer =} \StringTok{"GlorotNormal"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}  \CommentTok{\# 1st hidden layer (26 nodes)}
   \FunctionTok{layer\_dense}\NormalTok{(}\DecValTok{26}\NormalTok{, }\AttributeTok{activation =} \StringTok{"sigmoid"}\NormalTok{, }\AttributeTok{name =} \StringTok{"HiddenLayer2"}\NormalTok{, }\AttributeTok{kernel\_initializer =} \StringTok{"GlorotNormal"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}  \CommentTok{\# 2nd hidden layer (26 nodes)}
+    \FunctionTok{layer\_dense}\NormalTok{(}\DecValTok{26}\NormalTok{, }\AttributeTok{activation =} \StringTok{"sigmoid"}\NormalTok{, }\AttributeTok{name =} \StringTok{"HiddenLayer3"}\NormalTok{, }\AttributeTok{kernel\_initializer =} \StringTok{"GlorotNormal"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}  \CommentTok{\# 3rd hidden layer (26 nodes)}
   \FunctionTok{layer\_dense}\NormalTok{(}\DecValTok{1}\NormalTok{, }\AttributeTok{activation =} \StringTok{"sigmoid"}\NormalTok{, }\AttributeTok{name =} \StringTok{"outputLayer"}\NormalTok{)     }\CommentTok{\# output layer (1 node)}
   
 
@@ -3065,7 +3067,7 @@ GlorotNormal)}\label{model-5-with-initializer-layers-2-nodes-26-glorotnormal}}
 \hline
   & ME & RMSE & MAE & MPE & MAPE\\
 \hline
-Test set & -1.040689 & 690.6685 & 423.8377 & -11.01504 & 18.34641\\
+Test set & -32.61097 & 630.0157 & 358.2125 & -6.623257 & 12.71689\\
 \hline
 \end{tabu}
 \end{table}
@@ -3089,6 +3091,7 @@ Nodes = 26, GlorotNormal, LR =
 \NormalTok{model\_2\_26GLR }\OtherTok{\textless{}{-}} \FunctionTok{keras\_model\_sequential}\NormalTok{(}\AttributeTok{input\_shape =} \FunctionTok{ncol}\NormalTok{(x\_train)) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{layer\_dense}\NormalTok{(}\DecValTok{26}\NormalTok{, }\AttributeTok{activation =} \StringTok{"sigmoid"}\NormalTok{, }\AttributeTok{name =} \StringTok{"HiddenLayer"}\NormalTok{, }\AttributeTok{kernel\_initializer =} \StringTok{"GlorotNormal"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}  \CommentTok{\# 1st hidden layer (26 nodes)}
   \FunctionTok{layer\_dense}\NormalTok{(}\DecValTok{26}\NormalTok{, }\AttributeTok{activation =} \StringTok{"sigmoid"}\NormalTok{, }\AttributeTok{name =} \StringTok{"HiddenLayer2"}\NormalTok{, }\AttributeTok{kernel\_initializer =} \StringTok{"GlorotNormal"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}  \CommentTok{\# 2nd hidden layer (26 nodes)}
+    \FunctionTok{layer\_dense}\NormalTok{(}\DecValTok{13}\NormalTok{, }\AttributeTok{activation =} \StringTok{"sigmoid"}\NormalTok{, }\AttributeTok{name =} \StringTok{"HiddenLayer3"}\NormalTok{, }\AttributeTok{kernel\_initializer =} \StringTok{"GlorotNormal"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}  \CommentTok{\# 3rd hidden layer (26 nodes)}
   \FunctionTok{layer\_dense}\NormalTok{(}\DecValTok{1}\NormalTok{, }\AttributeTok{activation =} \StringTok{"sigmoid"}\NormalTok{, }\AttributeTok{name =} \StringTok{"outputLayer"}\NormalTok{)     }\CommentTok{\# output layer (1 node)}
   
 
@@ -3139,7 +3142,7 @@ Nodes = 26, GlorotNormal, LR =
 \hline
   & ME & RMSE & MAE & MPE & MAPE\\
 \hline
-Test set & -71.69384 & 590.4382 & 342.3988 & -6.257871 & 11.48661\\
+Test set & 8.980655 & 577.0847 & 322.9464 & -2.03136 & 10.22919\\
 \hline
 \end{tabu}
 \end{table}
@@ -3185,11 +3188,11 @@ L1 N26 & -83.28 & 745.16 & 450.94 & -11.37 & 17.91\\
 \hline
 L1 N13 & -86.71 & 744.04 & 454.38 & -12.89 & 19.21\\
 \hline
-L2 N26 & -5.22 & 692.46 & 428.89 & -11.46 & 18.95\\
+L2 N26 & 30.22 & 627.65 & 364.54 & -5.43 & 13.49\\
 \hline
-L2 N26 G & -1.04 & 690.67 & 423.84 & -11.02 & 18.35\\
+L2 N26 G & -32.61 & 630.02 & 358.21 & -6.62 & 12.72\\
 \hline
-L2 N26 G LR & -71.69 & 590.44 & 342.4 & -6.26 & 11.49\\
+L2 N26 G LR & 8.98 & 577.08 & 322.95 & -2.03 & 10.23\\
 \hline
 \end{tabular}
 \end{table}
@@ -3251,7 +3254,7 @@ description}\label{neural-network-graphic-description}}
 \hline
   & ME & RMSE & MAE & MPE & MAPE\\
 \hline
-Test set & 5.634032 & 582.0858 & 308.3214 & -2.738802 & 8.761721\\
+Test set & 25.80266 & 582.3353 & 306.1574 & -1.682175 & 8.448477\\
 \hline
 \end{tabu}
 \end{table}
