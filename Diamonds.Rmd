@@ -705,13 +705,15 @@ barplot(RGRMSEplotdata, col = "#D8B365",border = "#D8B365" ,
 #### Analysis
 As stated earlier, the table above shows how the ME got worse for k = 4, but better with RMSE once the model was optimized. In this analysis, one of the main goals is to reduce the variance between predicted and real price. Therefore, the difference of $140.00 is more important even when the ME increases. Between k = 1 and k = 4 for the $k$-NN model, k = 4 with an RMSE of $814.60 will predict prices better. 
 
-## Regression Tree
+## Decision Trees
 
-#### Overview
+#### Regression Tree Overview
+There are four methods within this section that show various ways on how trees are built. They include a regression tree, boosted tree, bagged tree, and random forest. The regression tree is most transparent and easy to interpret while the other three combine results from multiple trees.
 
+A regression tree is a flexible data-driven method that can be used for prediction of a continuous variable. The tree separates 'records into subgroups by creating splits on predictors. These splits create logical rules that are homogeneous.' Those splits create 'nodes,' making a prediction for the target variable based on the mean of the training data in each region. The regression tree is constructed by starting at the root node and repeatedly splitting the data based on the most important feature that maximally reduces the variance of the target variable. This process is repeated at each child node until a stopping criterion is reached, such as a maximum depth or a minimum number of examples in a node. 
 
-#### Methodology 
-
+#### Regression Tree Methodology
+Since the tree proactively takes into consideration the most important attributes to split on, there were multiple trees created to check its validity. This idea stemmed from wanting to ensure that by removing variables due to their weak relationship to the predictor variable or pruning produced the best results for ME and RMSE. Within the three models run, all produced the same results that is seen within the table below. There were eight terminal nodes for each model, and all had width, length, carat, and depth being the most important features to predict price. To exemplify this, we show the original regression tree that first splits on width < 6.33. 
 
 ### Partitioning
 
@@ -826,7 +828,13 @@ tree_aa3 <- forecast::accuracy(predict(RegressTree_pruned, Valid_rg), Valid_rg$p
 kable_styling(kable(tree_aa3)%>% kable_classic(), full_width = TRUE) 
 ```
 
-### Boosted Tree
+### Boosted 
+
+#### Boosted Tree Overview
+Boosted trees are a type of ensemble model that combines the predictions of multiple "weak" decision trees to produce a more accurate and robust model. The idea behind boosting is to train a series of weak models sequentially, with each model attempting to correct the errors made by the previous model. These types of trees are popular due to their nature of achieving high accuracy  with relatively little data and they are resistant to overfitting. Since this model can be sensitive to hyperparameters, there were several trees ran to get the best error rates. 
+
+#### Methodology 
+There is a wide variety of parameters that can be chosen for a boosted tree. Therefore, those options were exercised to choose the best model based off the number of predictors that were used and how deep each tree would be allowed to interact. The main difference between each tree was the number of trees used. The most n.trees used, the better the model because it only considered the most important factors. In addition, the more trees used would mean that it would use more predictors.
 
 ```{r Boosted Tree 10}
 # Boosted tree
@@ -902,7 +910,16 @@ pred_boost <- predict.gbm(tree_boost100, newdata = Valid_rg)
 head(pred_boost, 14)
 ```
 
+#### Analysis
+The best boosted model was the one with 100 trees and three cross-validation folds. The tree used six predictors to produce a model with a ME of $9.00 and RMSE of $1,170.30. What is fascinating about this tree comes from the importance variables chart. In the regression tree, clarity was one of the three least important factors, but here we see that it is the fourth which is above length. 
+
 ### Bagging Tree
+
+#### Bagging Tree Overview
+The third method is bagged trees. This type of model combines the predictions of multiple decision trees to produce a more robust and accurate model. The objective with bagging is to train a large number of decision trees on different subsets of the training data, and then average the predictions of all the trees to make a final prediction. This model has the ability to reduce variance because it introduces randomness into the training process. 
+
+#### Methodology & Analysis
+This model is pretty straight forward because the best model was built by sticking with the basics. The bagging tree predicts price better than the regression tree, but worse than boosting. The ME was the lowest at $0.93, but what is more important to consider if the RMSE which is $1,248.77.
 
 ```{r Bagged Tree}
 # Bagged tree
@@ -937,7 +954,14 @@ pred_bagged <- predict(tree_bagging, newdata = Valid_rg)
 head(pred_bagged,14)
 ```
 
-### RandomForest
+### Random Forest
+
+#### Random Forest Overview
+'Random forests are a special case of bagging, a method for improving predictive
+power by combining multiple classifiers or prediction algorithms.' They are an ensemble based on bagged trees which involves training each tree on a bootstrapped sample of the original data.
+
+#### Methodology
+Similar to the bagged trees, random forests are pretty simplistic. The main focus in this section was to check how many trees should be run within the model. There is a computational cost trade-off with the possibility of a low price change. For example, what is the difference in RMSE if the model was built off of 100 trees versus 60? This exercise showed that the model with 60 trees had a RSME of approximately $2 higher than at 100 trees but that is a trade-off worth it because the processing time and cost of running 40 more trees takes longer and has other ____. 
 
 ```{r randomForest}
 options(scipen = 9999)
