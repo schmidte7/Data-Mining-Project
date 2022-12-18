@@ -74,8 +74,8 @@ library(rattle)         #Graphical Data Interface
 
 
 ################ For Predictions ######################
-library(caret)          #for preProcess() and accuracy()
-library(forecast)       # for accuracy() measures
+library(caret)          #for preProcess()
+library(forecast)       #for accuracy() measures
 library(FNN)            #for finding k nearest neighbor
 library(gbm)            #for boosting
 library(ipred)          #for bagging
@@ -89,13 +89,12 @@ library(tensorflow)     #backend python library for neural network
 
 
 ################ Personalized Functions ######################
-source("VIF.R")         #for calculating VIF (KEEP/DELETE???????????????)
-source("ProcStep.R")    #for variable selection (forw, backw, setpw)
+source("VIF.R")         #for calculating VIF
 source("GlobalCrit.R")  #for variable selection (exhaustive search)
 
 ################ Additonal Actions ######################
 options(scipen = 999)                 #for removing scientific notation
-tf$constant("Hello Tensorflow!")      #for initializing tensoflow environment
+tf$constant("Hello Tensorflow!")      #for initializing tensorflow environment
 ```
 
 # Data Exploration 
