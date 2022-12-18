@@ -1488,7 +1488,10 @@ pred_plot_ens <- ggplot(data = predtable_ens, aes(x= Real, y = Predicted, color 
   labs(x= "Ensemble", y = "")+
   theme_classic()
 
-#pred_plot_full <- grid.arrange(ggplotGrob("Hello"),ggarrange(pred_plot_lr, pred_plot_rg, pred_plot_knn, #pred_plot_nn,pred_plot_ens, ncol=2, nrow=3, common.legend = TRUE, legend="right"), nrow = 2)
-#pred_plot_full
+pred_plot_full <- ggarrange(pred_plot_lr, pred_plot_rg, pred_plot_knn, pred_plot_nn,pred_plot_ens, ncol=2, nrow=3, common.legend = TRUE, legend="right")
+pred_plot_full
 ```
+
 # Conclusions
+
+# References

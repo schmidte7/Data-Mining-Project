@@ -52,7 +52,7 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE, fig.align = "center")
 #Gold = "#D8B365" 
 ```
 
-```{r Libraries}
+```{r Libraries, include=FALSE}
 ################ General Use ######################
 library(car)            #for statistic functions
 library(DataExplorer)   #for graphing missing value percentages
@@ -100,7 +100,7 @@ tf$constant("Hello Tensorflow!")      #for initializing tensoflow environment
 
 # Data Exploration 
 
-```{r Import Data}
+```{r Import Data, include=FALSE}
 diamonds <- fread("diamonds.csv", sep=",", header = T) # Load your data, diamonds.csv
 
 diamonds$V1 <- NULL # Remove column 'V1' as it is similar to an ID variable - no additional meaning derived
@@ -114,7 +114,7 @@ colnames(diamonds)[10] <- "depth" # z to depth
 
 ## Dimension Summary 
 
-```{r Data Exploration}
+```{r Data Exploration, include=FALSE}
 dim(diamonds) # Dimensions of data
 summary(diamonds) # Produce result summaries of all variables
 str(diamonds) # Type of variables
@@ -131,7 +131,7 @@ gg_miss_var(diamonds) + ggtitle("Missing values")
 ```
 
 
-```{r Variables check}
+```{r Variables check, include=FALSE}
 ############### carat no problems #################
 
 ############### cut ###############################
@@ -197,13 +197,13 @@ diamonds[, diff := NULL]
 ```
 
 
-```{r ordering columns}
+```{r ordering columns, include=FALSE}
 # Reorder data table to group like variable types 
 diamonds <- diamonds[, c(7, 2:4, 1, 8:10, 5:6)]
 ```
 
 
-```{r ggpairs, fig.width = 6, fig.height = 5}
+```{r ggpairs, fig.width = 6, fig.height = 5, echo=FALSE, message=FALSE, warning=FALSE}
 #Used ggpairs to create a scatterplot matrix between quantitative variables 
 ggpairs(diamonds[, c(1, 5:10)], title = "Scatterplot Matrix",
          proportions = "auto",
@@ -212,7 +212,7 @@ ggpairs(diamonds[, c(1, 5:10)], title = "Scatterplot Matrix",
 ```
 
 
-```{r Price by X and Clarity, fig.width = 6, fig.height = 6}
+```{r Price by X and Clarity, fig.width = 6, fig.height = 6, echo=FALSE, message=FALSE, warning=FALSE}
 # Create plot that looks at carat and price
 PCl1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Carat and Clarity') + theme_classic()
@@ -240,7 +240,7 @@ ggarrange(PCl1, PCl2, PCl3,PCl4, PCl5, PCl6,
                     ncol = 2, nrow = 3)
 ```
 
-```{r Price by X and Color, fig.width = 6, fig.height = 6}
+```{r Price by X and Color, fig.width = 6, fig.height = 6, echo=FALSE, message=FALSE, warning=FALSE}
 # Create plot that looks at carat and price
 PCo1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Carat and Color') + theme_classic()
@@ -268,7 +268,7 @@ ggarrange(PCo1, PCo2, PCo3,PCo4, PCo5, PCo6,
                     ncol = 2, nrow = 3)
 ```
 
-```{r Price by X and Cut, fig.width = 6, fig.height = 6}
+```{r Price by X and Cut, fig.width = 6, fig.height = 6, echo=FALSE, message=FALSE, warning=FALSE}
 # Create plot that looks at carat and price
 PCu1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Carat and Cut') + theme_classic()
@@ -297,7 +297,7 @@ ggarrange(PCu1, PCu2, PCu3,PCu4, PCu5, PCu6,
 ```
 
 
-```{r Price Correlation}
+```{r Price Correlation, echo=FALSE, message=FALSE, warning=FALSE}
 # Correlation between price and quantitative variables
 price_correlation <- with(diamonds,
      data.frame(cor_length_price = cor(length, price), cor_width_price = cor(width, price), cor_depth_price = cor(depth, price), cor_depth_ratio_price = cor(depth_ratio, price), cor_table_price2 = cor(table, price), cor_carat_price3 = cor(carat, price)))
@@ -310,7 +310,7 @@ kable_corr
 
 ## Variable Visualisation
 
-```{r Histograms}
+```{r Histograms, echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(gather(data = diamonds[, c(1, 5:10)]), aes(value)) +
   geom_histogram(aes(y = after_stat(density)),
                  bins = 10,
@@ -323,7 +323,7 @@ ggplot(gather(data = diamonds[, c(1, 5:10)]), aes(value)) +
   theme_classic() # A classic theme, with x and y axis lines and no grid lines
 ```
 
-```{r Correlation}
+```{r Correlation, echo=FALSE, message=FALSE, warning=FALSE}
 # Create heatmap to show variable correlation
 # Round the correlation coefficient to two decimal places
 cormat <- round(cor(diamonds[, c(1, 5:10)]), 2)
@@ -363,13 +363,13 @@ ggplot(cormat, aes(Var2, Var1, fill = value)) +
 rm(cormat, reorder_cormat)
 ```
 
-```{r Correlation Plot}
+```{r Correlation Plot, echo=FALSE, message=FALSE, warning=FALSE}
 #plot Correlation ellipses
 plotcorr(cor(diamonds[, -c(2:4)]), col = "#D8B365",
          main = "Pearson correlation ellipses for numerical variables")
 ```
 
-```{r train-valid-test}
+```{r train-valid-test, include=FALSE}
 # set seed for reproducing the partition
 set.seed(111)
 
@@ -392,7 +392,7 @@ Test <- diamonds[test.index, ]
 
 ## Linear Regression
 
-```{r LR data partition}
+```{r LR data partition, include=F}
 Train_lr <- diamonds[train.index, ]
 Valid_lr <- diamonds[valid.index, ]
 Test_lr  <- diamonds[ test.index, ]
@@ -501,11 +501,18 @@ kable_styling(
              Width         = c("X","X"," "," "," "," "," "," "," "," "),
              Depth         = c("X","X","X","X","X"," "," "," "," "," "),
              `Depth Ratio` = c("X","X","X","X","X","X","X","X","X","X"),
-             Table         = c("X","X"," "," "," ","X","X"," "," "," ")
-             ),
+             Table         = c("X","X"," "," "," ","X","X"," "," "," ")), 
+  caption = 'A Tale of Two Tables.', 
+  booktabs = TRUE,
   align = 'lccccccccc') %>% kable_classic(),
   full_width = TRUE)
 
+
+knitr::kable(
+  list(
+  ),
+  caption = 'A Tale of Two Tables.', booktabs = TRUE
+)
 ```
 
 In both cases, the forward selection doesn't discard any variables, whereas backward, stepwise and global selections all choose the same model with less variables than initially.
