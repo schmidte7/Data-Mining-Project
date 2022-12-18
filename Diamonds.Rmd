@@ -62,6 +62,7 @@ library(ellipse)        #for mapping correlation
 library(GGally)         #for making graphs
 library(ggplot2)        #for making graphs
 library(ggpubr)         #for plot alignment
+library(gridExtra)
 library(kableExtra)     #for more elaborate tables
 library(knitr)
 library(tidyr)          #for changing the shape and hierarchy of a data set
@@ -200,7 +201,7 @@ diamonds <- diamonds[, c(7, 2:4, 1, 8:10, 5:6)]
 ```
 
 
-```{r ggpairs, fig.width = 6, fig.height = 4}
+```{r ggpairs, fig.width = 6, fig.height = 5}
 #Used ggpairs to create a scatterplot matrix between quantitative variables 
 ggpairs(diamonds[, c(1, 5:10)], title = "Scatterplot Matrix",
          proportions = "auto",
@@ -209,7 +210,7 @@ ggpairs(diamonds[, c(1, 5:10)], title = "Scatterplot Matrix",
 ```
 
 
-```{r Price by X and Clarity}
+```{r Price by X and Clarity, fig.width = 6, fig.height = 6}
 # Create plot that looks at carat and price
 PCl1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Carat and Clarity') + theme_classic()
@@ -236,7 +237,8 @@ PCl6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha =
 ggarrange(PCl1, PCl2, PCl3,PCl4, PCl5, PCl6,
                     ncol = 2, nrow = 3)
 ```
-```{r Price by X and Color}
+
+```{r Price by X and Color, fig.width = 6, fig.height = 6}
 # Create plot that looks at carat and price
 PCo1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Carat and Color') + theme_classic()
@@ -264,7 +266,7 @@ ggarrange(PCo1, PCo2, PCo3,PCo4, PCo5, PCo6,
                     ncol = 2, nrow = 3)
 ```
 
-```{r Price by X and Cut}
+```{r Price by X and Cut, fig.width = 6, fig.height = 6}
 # Create plot that looks at carat and price
 PCu1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Carat and Cut') + theme_classic()
@@ -304,14 +306,9 @@ kable_corr <- kable(transpose) %>% kable_classic()
 kable_corr
 ```
 
-```{r Depth Ratio vs Price}
-#plot Proce per Depth Ratio to see if there is a trend
-plot(diamonds$depth_ratio,diamonds$price, col = "#D8B365", main = "Distribution of Depth Ratio on Price", xlab = "Depth Ratio", ylab= "Price")
-```
-
 ## Variable Visualisation
 
-```{r Histograms,fig.width = 4, fig.height = 4}
+```{r Histograms}
 ggplot(gather(data = diamonds[, c(1, 5:10)]), aes(value)) +
   geom_histogram(aes(y = after_stat(density)),
                  bins = 10,
@@ -324,7 +321,7 @@ ggplot(gather(data = diamonds[, c(1, 5:10)]), aes(value)) +
   theme_classic() # A classic theme, with x and y axis lines and no grid lines
 ```
 
-```{r Correlation, fig.width = 4, fig.height = 4}
+```{r Correlation}
 # Create heatmap to show variable correlation
 # Round the correlation coefficient to two decimal places
 cormat <- round(cor(diamonds[, c(1, 5:10)]), 2)
@@ -364,7 +361,7 @@ ggplot(cormat, aes(Var2, Var1, fill = value)) +
 rm(cormat, reorder_cormat)
 ```
 
-```{r Correlation Plot,fig.width = 5, fig.height = 5}
+```{r Correlation Plot}
 #plot Correlation ellipses
 plotcorr(cor(diamonds[, -c(2:4)]), col = "#D8B365",
          main = "Pearson correlation ellipses for numerical variables")
@@ -504,8 +501,9 @@ kable_styling(
              `Depth Ratio` = c("X","X","X","X","X","X","X","X","X","X"),
              Table         = c("X","X"," "," "," ","X","X"," "," "," ")
              ),
-  align = 'lccccccccc'),
-  full_width = FALSE)
+  align = 'lccccccccc') %>% kable_classic(),
+  full_width = TRUE)
+
 ```
 
 In both cases, the forward selection doesn't discard any variables, whereas backward, stepwise and global selections all choose the same model with less variables than initially.
@@ -558,10 +556,27 @@ Accs = rbindlist(Accs)
 #rm(Acc1, Acc2, Acc3, Acc4)
 Accs[, Model := c("LM_complete", "LM_CpAIC_complete", "LM_minus_corr", "LM_CpAIC_minus_corr")]
 Accs <- Accs[, c(6, 1:5)]
-kable_styling(kable(Accs)%>% kable_classic(), full_width = FALSE)
+kable_styling(kable(Accs)%>% kable_classic(), full_width = TRUE)
 ```
 
 ## $k$-NN
+
+#### Overview
+$k$-nearest neighbors (kNN) is a machine learning algorithm used for classification (categorical) and regression (continuous). Since the response variable (price) is a numeric outcome, this analysis will use $k$-NN to predict the price of a diamond. In a regression setting, the algorithm relies on finding the most 'similar' records in the training data. Then, one would calculate the average of the numerical target of the $k$-nearest neighbors for the test data point.
+
+The value of k is based on a nonparametric method since it 'draws information from similarities between the predictor values of
+the records in the dataset.' There are several ways one could choose this hyperparameter, but this analysis will focus on one method by the optimization of RMSE. k is an critical input within the $k$-NN function because it determines how many neighbors will be considered when making a prediction. For instance, a larger k leads to a smoother boundary but may also introduce noise. On the other side, a small k can lead to a more complex decision boundary and make the model more sensitive to the specific training data.
+
+The $k$-nearest neighbors algorithm is very useful when predicting price because the data does not need to be transformed or predictors selected in a particular way. 
+
+#### Methodology 
+There are several steps that need to be completed prior to running the first $k$-NN model with k = 1. First, you clean the data to ensure that missing values are either removed or explained, and that all variables are essential to the response variable (see EDA section). Next, the data is normalized so that the output remains unbiased. Normalizing simply means that the raw data is put on all the same scale ('subtracting the mean and dividing by the standard deviation'). Once the data is cleaned and normalized, it can be spliced into the training, validation, and test sets. Now that the foundation of the model has been built, let's start constructing the first $k$-NN model. 
+
+
+
+
+
+
 
 ```{r knn Create Dummies}
 diamonds_dummies <- diamonds
@@ -616,7 +631,7 @@ real_prices = diamonds[valid.index, price]
 # computing accuracy measures
 kNN_aa1 <- accuracy(object = knn_rescaled_prices, x = real_prices)
 
-kable_styling(kable(kNN_aa1)%>% kable_classic(), full_width = FALSE)
+kable_styling(kable(kNN_aa1)%>% kable_classic(), full_width = TRUE)
 ```
 
 ```{r Compute best K }
@@ -660,39 +675,10 @@ opt_knn_rescaled_prices = std_price * opt_knn_pred_y + mean_price
 
 # computing accuracy measures
 opt_accuracy <- accuracy(object = opt_knn_rescaled_prices, x = real_prices)
-kable_styling(kable(opt_accuracy)%>% kable_classic(), full_width = FALSE)
+kable_styling(kable(opt_accuracy)%>% kable_classic(), full_width = TRUE)
 ```
 
-```{r Plot KNN results, fig.height= 2.5, fig.width = 5}
-plot1 <- data.frame("Real" = real_prices, 
-                    "Predicted" = knn_rescaled_prices, 
-                    "Color" = diamonds[valid.index, 3],
-                    "Cut" = diamonds[valid.index, 2],
-                    "Clarity" = diamonds[valid.index, 4])
-plot2 <- data.frame("Real" = real_prices, 
-                    "Predicted" = opt_knn_rescaled_prices, 
-                    "Color" = diamonds[valid.index, 3],
-                    "Cut" = diamonds[valid.index, 2],
-                    "Clarity" = diamonds[valid.index, 4])
-
-
-basic_knn_plot <- ggplot(data = plot1, aes(x= Real, y = Predicted, color = clarity))+
-  geom_point(show.title = FALSE)+
-  scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
-  labs(x= "Original Model (k=1)", y = "Predicted Values")+
-  theme(legend.key.size = unit(0.5, 'cm'))
-basic_knn_plot
-
-optimal_knn_plot <- ggplot(data = plot2, aes(x= Real, y = Predicted, color = clarity))+
-  geom_point()+
-  scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
-  labs(x= "Optimal Model (k=4)", y = "")
-optimal_knn_plot
-
-full_plot <- ggarrange(basic_knn_plot, optimal_knn_plot, ncol=2, nrow=2, common.legend = TRUE, legend="right")
-full_plot
-
-```
+#### Analysis
 
 ## Regression Tree
 
@@ -728,14 +714,14 @@ length(RegressTree$frame$var[RegressTree$frame$var == "<leaf>"])
 ```{r ktable Importance - RegressTree}
 # kable and kable_styling as before
 # We multiply by 100, divide by the sum and round the percentages to 2 decimals
-kable_styling(kable(round(100*RegressTree$variable.importance / sum(RegressTree$variable.importance), 2), col.names = "Importance %"), full_width = FALSE) %>% kable_classic() 
+kable_styling(kable(round(100*RegressTree$variable.importance / sum(RegressTree$variable.importance), 2), col.names = "Importance %"), full_width = TRUE) %>% kable_classic() 
 ```
 
 ```{r Error Details on Default Tree - Valid}
 # Predict errors using accuracy() 
 tree_aa1 <- forecast::accuracy(predict(RegressTree, Valid_rg), Valid_rg$price)
 
-kable_styling(kable(tree_aa1)%>% kable_classic(), full_width = FALSE)
+kable_styling(kable(tree_aa1)%>% kable_classic(), full_width = TRUE)
 ```
 
 ```{r Default Tree Predictions}
@@ -763,14 +749,14 @@ fancyRpartPlot(RegressTree2, caption = NULL, main = "Exclusion Regression Tree",
 ```{r ktable Importance - RegressTree2}
 # kable and kable_styling as before
 # We multiply by 100, divide by the sum and round the percentages to 2 decimals
-kable_styling(kable(round(100*RegressTree2$variable.importance / sum(RegressTree2$variable.importance), 2), col.names = "Importance %"), full_width = FALSE) %>% kable_classic() 
+kable_styling(kable(round(100*RegressTree2$variable.importance / sum(RegressTree2$variable.importance), 2), col.names = "Importance %"), full_width = TRUE) %>% kable_classic() 
 ```
 
 ```{r Error Details on RegressTree2 - Valid}
 # Predict errors using accuracy() 
 tree_aa2 <- forecast::accuracy(predict(RegressTree2, Valid_rg), Valid_rg$price)
 
-kable_styling(kable(tree_aa2)%>% kable_classic(), full_width = FALSE)
+kable_styling(kable(tree_aa2)%>% kable_classic(), full_width = TRUE)
 ```
 
 ```{r Default Tree Predictions2}
@@ -806,7 +792,7 @@ fancyRpartPlot(RegressTree_pruned, caption = NULL, main = "'Pruned' Regression T
 # Predict errors using accuracy() 
 tree_aa3 <- forecast::accuracy(predict(RegressTree_pruned, Valid_rg), Valid_rg$price)
 
-kable_styling(kable(tree_aa3)%>% kable_classic(), full_width = FALSE) 
+kable_styling(kable(tree_aa3)%>% kable_classic(), full_width = TRUE) 
 ```
 
 ### Boosted Tree
@@ -833,7 +819,7 @@ vip::vip(tree_boost10, aesthetics = list(fill = "#D8B365")) +
 # Predict errors using accuracy()
 tree_aa4 <- forecast::accuracy(predict(tree_boost10, Valid_rg), Valid_rg$price)
 
-kable_styling(kable(tree_aa4)%>% kable_classic(), full_width = FALSE) 
+kable_styling(kable(tree_aa4)%>% kable_classic(), full_width = TRUE) 
 ```
 
 ```{r Boosted Tree 30}
@@ -853,7 +839,7 @@ tree_boost30
 # Predict errors using accuracy() 
 tree_aa5 <- forecast::accuracy(predict(tree_boost30, Train_rg), Train_rg$price)
 
-kable_styling(kable(tree_aa5)%>% kable_classic(), full_width = FALSE)  
+kable_styling(kable(tree_aa5)%>% kable_classic(), full_width = TRUE)  
 ```
 
 ```{r Boosted Tree 100}
@@ -875,7 +861,7 @@ tree_boost100
 # Predict errors using accuracy() 
 tree_aa6 <- forecast::accuracy(predict(tree_boost100, Valid_rg), Valid_rg$price)
 
-kable_styling(kable(tree_aa6)%>% kable_classic(), full_width = FALSE) 
+kable_styling(kable(tree_aa6)%>% kable_classic(), full_width = TRUE) 
 ```
 
 
@@ -911,7 +897,7 @@ data[,ggplot(.SD, aes(x=reorder(name, ss$Overall), y=ss$Overall)) +
 ```{r Errors Bagging}
 tree_aa7 <- forecast::accuracy(predict(tree_bagging, Valid_rg), Valid_rg$price)
 
-kable_styling(kable(tree_aa7)%>% kable_classic(), full_width = FALSE) 
+kable_styling(kable(tree_aa7)%>% kable_classic(), full_width = TRUE) 
 ```
 
 ```{r Predict Bagging}
@@ -929,7 +915,8 @@ options(scipen = 9999)
 set.seed(111)
 rdf_model <- randomForest(price~ ., ntree= 60, data = Train_rg)
 rdf_model
-plot(rdf_model)
+plot(rdf_model,
+         main = "Number of Optimal Trees")
 ```
 
 ```{r Optimal Random Trees}
@@ -951,7 +938,7 @@ vip::vip(rdf_model, aesthetics = list(fill = "#D8B365")) +
 ```{r RF Display Results}
 tree_aa8 <- forecast::accuracy(predict(rdf_model, Valid_rg), Valid_rg$price)
 
-kable_styling(kable(tree_aa8)%>% kable_classic(), full_width = FALSE) 
+kable_styling(kable(tree_aa8)%>% kable_classic(), full_width = TRUE) 
 ```
 
 ```{r Predict RandomForest}
@@ -963,14 +950,14 @@ head(pred_random,14)
 ### Create Regression Tree Summary Table
 
 ```{r RegTree Summary}
-Tree_res <- data.frame("Model_Tree" = c("Regression Tree",
-                                 "Exclusion RT",
+Tree_res <- data.frame("Model_Tree" = c("Reg. Tree",
+                                 "Exclus. RT",
                                  "Pruned RT",
                                  "Boost10",
                                  "Boost30",
                                  "Boost100",
                                  "Bagging",
-                                 "RandomForest"),
+                                 "RndmFrst"),
                      "ME" = "",
                      "RMSE" = "",
                      "MAE"= "",
@@ -984,13 +971,15 @@ for (i in 1:8) {
   Tree_res[i,]= round(get(paste("tree_aa", i, sep ="")),2)
 }
 
-kable_styling(kable(Tree_res)%>% kable_classic(), full_width = FALSE)
+kable_styling(kable(Tree_res)%>% kable_classic(), full_width = TRUE)
 
 
 RGRMSEplotdata <- t(Tree_res$RMSE)
-colnames(RGRMSEplotdata) <- t(rownames(Tree_res))
-barplot(RGRMSEplotdata, col = "#D8B365")
+colnames(RGRMSEplotdata) <- t(sort(rownames(Tree_res),decreasing = TRUE))
+RGRMSEplotdata
 
+barplot(RGRMSEplotdata, col = "#D8B365",border = "#D8B365" ,
+         main = "Regression Tree Comparison", ylab = "RMSE", las = 3, ylim=c(0,4000))
 ```
 
 ## NeuralNetworks
@@ -1098,7 +1087,7 @@ y_valid_real <- diamonds[valid.index, price]
 # copmuting accuracy measures of validation set
 acc_1 <- accuracy(object = y_valid_pred, x = y_valid_real)
 
-kable_styling(kable(acc_1)%>% kable_classic(), full_width = FALSE)
+kable_styling(kable(acc_1)%>% kable_classic(), full_width = TRUE)
 
 ```
 
@@ -1146,7 +1135,7 @@ y_valid_pred_1_26 <- as.numeric(y_valid_pred_1_26)
 # copmuting accuracy measures of validation set
 acc_2 <- accuracy(object = y_valid_pred_1_26, x = y_valid_real)
 
-kable_styling(kable(acc_2)%>% kable_classic(), full_width = FALSE)
+kable_styling(kable(acc_2)%>% kable_classic(), full_width = TRUE)
 
 ```
 
@@ -1194,7 +1183,7 @@ y_valid_pred_1_13 <- as.numeric(y_valid_pred_1_13)
 # copmuting accuracy measures of validation set
 acc_3 <- accuracy(object = y_valid_pred_1_13, x = y_valid_real)
 
-kable_styling(kable(acc_3)%>% kable_classic(), full_width = FALSE)
+kable_styling(kable(acc_3)%>% kable_classic(), full_width = TRUE)
 ```
 
 ### Model 4 (Layers = 2, Nodes = 26)
@@ -1242,7 +1231,7 @@ y_valid_pred_2_26 <- as.numeric(y_valid_pred_2_26)
 # copmuting accuracy measures of validation set
 acc_4 <- accuracy(object = y_valid_pred_2_26, x = y_valid_real)
 
-kable_styling(kable(acc_4)%>% kable_classic(), full_width = FALSE)
+kable_styling(kable(acc_4)%>% kable_classic(), full_width = TRUE)
 ```
 
 
@@ -1291,7 +1280,7 @@ y_valid_pred_2_26G <- as.numeric(y_valid_pred_2_26G)
 # copmuting accuracy measures of validation set
 acc_5 <- accuracy(object = y_valid_pred_2_26G, x = y_valid_real)
 
-kable_styling(kable(acc_5)%>% kable_classic(), full_width = FALSE)
+kable_styling(kable(acc_5)%>% kable_classic(), full_width = TRUE)
 ```
 
 
@@ -1340,7 +1329,7 @@ y_valid_pred_2_26GLR <- as.numeric(y_valid_pred_2_26GLR)
 # copmuting accuracy measures of validation set
 acc_6 <- accuracy(object = y_valid_pred_2_26GLR, x = y_valid_real)
 
-kable_styling(kable(acc_6)%>% kable_classic(), full_width = FALSE)
+kable_styling(kable(acc_6)%>% kable_classic(), full_width = TRUE)
 ```
 
 
@@ -1370,14 +1359,19 @@ kable_styling(kable(NN_res)%>% kable_classic(), full_width = FALSE)
 
 NNRMSEplotdata <- t(NN_res$RMSE)
 colnames(NNRMSEplotdata) <- t(rownames(NN_res))
-barplot(NNRMSEplotdata, col = "#D8B365")
+
+barplot(NNRMSEplotdata, col = "#D8B365",border = "#D8B365" ,
+         main = "Neural Network Comparison", ylab = "RMSE", las = 3, ylim=c(0,4000))
 
 ```
 
+### Neural network graphic description
+
+![Visual description of Neural Network](NN_rep.jpeg)
 
 ## Ensembles
 
-```{r}
+```{r ensemble table}
 #create Table with 0 values
 ensemble_summ <- data.frame("MLR" = 0,
                              "RegTrees" = 0,
@@ -1398,11 +1392,12 @@ ensemble_summ$RealPrices <- real_prices
 
 ens_error = accuracy(ensemble_summ$AveragePred, ensemble_summ$RealPrices)
 
-kable_styling(kable(ens_error)%>% kable_classic(), full_width = FALSE)
+kable_styling(kable(ens_error)%>% kable_classic(), full_width = TRUE)
 
 ```
 
-```{r}
+
+```{rensemble error table}
 ens_rmse_summ <- NN_res[0,] #NeuralNet Error
 ens_rmse_summ[1, ] <- round(Acc4, 2)
 ens_rmse_summ[2, ] <- Tree_res[8,]
@@ -1424,7 +1419,7 @@ kable_styling(kable(ens_rmse_summ)%>% kable_classic(), full_width = FALSE)
 # Model Performance Summary
 
 
-```{r Ensemble Summary Plot, fig.height= 4, fig.width = 3.5}
+```{r Ensemble Summary Plot, fig.height= 5, fig.width = 5}
 predtable_lr <- data.frame("Real" = real_prices, 
                     "Predicted" = ensemble_summ[, 1],
                     "Color" = diamonds[valid.index, 3],
@@ -1453,34 +1448,38 @@ predtable_ens <- data.frame("Real" = real_prices,
 
 
 pred_plot_lr <- ggplot(data = predtable_lr, aes(x= Real, y = Predicted, color = clarity))+
-  geom_point(show.title = FALSE)+
+  geom_point(show.title = FALSE, size = 0.5)+
   scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
   labs(x= "Multiple Linear Regression", y = "Predicted Values")+
-  theme(legend.key.size = unit(0.5, 'cm'))
+  theme(legend.key.size = unit(0.5, 'cm'))+
+  theme_classic()
 
 pred_plot_rg <- ggplot(data = predtable_rg, aes(x= Real, y = Predicted, color = clarity))+
-  geom_point()+
+  geom_point(size = 0.5)+
   scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
-  labs(x= "NN (Regression Trees", y = "")
+  labs(x= "NN (Regression Trees", y = "")+
+  theme_classic()
 
 pred_plot_knn <- ggplot(data = predtable_knn, aes(x= Real, y = Predicted, color = clarity))+
-  geom_point()+
+  geom_point(size = 0.5)+
   scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
-  labs(x= "k Neares Neighbor", y = "")
+  labs(x= "k Neares Neighbor", y = "")+
+  theme_classic()
 
 pred_plot_nn <- ggplot(data = predtable_nn, aes(x= Real, y = Predicted, color = clarity))+
-  geom_point()+
+  geom_point(size = 0.5)+
   scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
-  labs(x= "Neural Networks", y = "")
+  labs(x= "Neural Networks", y = "")+
+  theme_classic()
+
 
 pred_plot_ens <- ggplot(data = predtable_ens, aes(x= Real, y = Predicted, color = clarity))+
-  geom_point()+
+  geom_point(size = 0.5)+
   scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
-  labs(x= "Ensemble", y = "")
+  labs(x= "Ensemble", y = "")+
+  theme_classic()
 
-pred_plot_full <- ggarrange(pred_plot_lr, pred_plot_rg, pred_plot_knn, pred_plot_nn,pred_plot_ens,
-                            ncol=2, nrow=3, common.legend = TRUE, legend="right")
-pred_plot_full
+#pred_plot_full <- grid.arrange(ggplotGrob("Hello"),ggarrange(pred_plot_lr, pred_plot_rg, pred_plot_knn, #pred_plot_nn,pred_plot_ens, ncol=2, nrow=3, common.legend = TRUE, legend="right"), nrow = 2)
+#pred_plot_full
 ```
 # Conclusions
-
