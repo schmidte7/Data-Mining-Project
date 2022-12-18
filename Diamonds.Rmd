@@ -221,8 +221,8 @@ test.index <- as.integer(setdiff(row.names(diamonds), union(train.index, valid.i
 
 ```{r train-valid}
 # creating training and validation sets
-Train <- diamonds[train.index, ]
-Valid <- diamonds[valid.index, ]
+Train_lr <- diamonds[train.index, ]
+Valid_lr <- diamonds[valid.index, ]
 ```
 
 
@@ -239,50 +239,50 @@ plotcorr(cor(diamonds[, -c(2:4, 6:8)]), col = "#F9D53E",
 
 ```{r skewness}
 # applying the skewness() function of every numerical variable from our training set
-sapply(Train[, c(1, 5:10)], skewness)
+sapply(Train_lr[, c(1, 5:10)], skewness)
 
 # logarithmic transformation on price, carat and table
-Train$price <- log(Train$price)
-Train$carat <- log(Train$carat)
-Train$table <- log(Train$table)
+Train_lr$price <- log(Train_lr$price)
+Train_lr$carat <- log(Train_lr$carat)
+Train_lr$table <- log(Train_lr$table)
 
 # recomputing the skewness of numerical variables to see the improvement
-sapply(Train[, c(1, 5:10)], skewness)
+sapply(Train_lr[, c(1, 5:10)], skewness)
 
 # transforming in the validation set as well
-Valid$price <- log(Valid$price)
-Valid$carat <- log(Valid$carat)
-Valid$table <- log(Valid$table)
+Valid_lr$price <- log(Valid_lr$price)
+Valid_lr$carat <- log(Valid_lr$carat)
+Valid_lr$table <- log(Valid_lr$table)
 ```
 
 ```{r hist-unskewed}
 # computing the histograms of numerical variables now that they are unskewed
 
-ggplot(gather(data = Train[, c(1, 5:10)]), aes(value)) + # numerical vars of training set
-  geom_histogram(aes(y = after_stat(density)),           # making histograms with color params
+ggplot(gather(data = Train_lr[, c(1, 5:10)]), aes(value)) + # numerical vars of training set
+  geom_histogram(aes(y = after_stat(density)),              # making histograms with color params
                  color = "white",
                  fill = "#F9D53E") +             
-  geom_density(alpha = .2, fill = "#F9D53E") +           # making density lines
-  facet_wrap(~ key, scales = "free") +                   # multiple plots with facet
-  labs(title = "Histograms of numerical variables",      # labels of the plot
+  geom_density(alpha = .2, fill = "#F9D53E") +              # making density lines
+  facet_wrap(~ key, scales = "free") +                      # multiple plots with facet
+  labs(title = "Histograms of numerical variables",         # labels of the plot
        x = "Count",
        y = "Value") +
-  theme_classic()                                        # aesthetic theme
+  theme_classic()                                           # aesthetic theme
 ```
 
 ```{r normalizing}
 # we compute the the mean and std values based on training data (for numerical variables)
-norm.values <- preProcess(Train[, c(1, 5:10)], method=c("center", "scale"))
+norm.values <- preProcess(Train_lr[, c(1, 5:10)], method=c("center", "scale"))
 
 # we standardize the training and validation data
-Train[, c(1, 5:10)] <- predict(norm.values, Train[, c(1, 5:10)])
-Valid[, c(1, 5:10)] <- predict(norm.values, Valid[, c(1, 5:10)])
+Train_lr[, c(1, 5:10)] <- predict(norm.values, Train_lr[, c(1, 5:10)])
+Valid_lr[, c(1, 5:10)] <- predict(norm.values, Valid_lr[, c(1, 5:10)])
 ```
 
 
 ```{r LM-complete}
 # we compute the linear model using all predictors and display its summary
-LM_complete = lm(price ~. , data = Train)
+LM_complete = lm(price ~. , data = Train_lr)
 summary(LM_complete)
 ```
 
@@ -306,7 +306,7 @@ summary(LM_stepwise_complete)
 GlobalCrit(LM_complete)
 
 # we compute the linear model obtained with global methods and display its summary
-LM_CpAIC_complete = lm(price ~ . , data = Train[, c(1:6, 8, 9)])
+LM_CpAIC_complete = lm(price ~ . , data = Train_lr[, c(1:6, 8, 9)])
 summary(LM_CpAIC_complete)
 ```
 
@@ -315,7 +315,7 @@ summary(LM_CpAIC_complete)
 
 ```{r LM-minus-corr}
 # we define a training set without the correlated predictors (length, width, depth)
-Train_minus_corr <- Train[, -c(6:8)]
+Train_minus_corr <- Train_lr[, -c(6:8)]
 
 # we compute the linear model without correlated predictors and display its summary
 LM_minus_corr = lm(price ~ ., data = Train_minus_corr)
@@ -342,7 +342,7 @@ summary(LM_stepwise_minus_corr)
 GlobalCrit(LM_minus_corr)
 
 # we compute the linear model obtained with global methods and display its summary
-LM_CpAIC_minus_corr = lm(price ~ . , data = Train[, c(1:5, 9)])
+LM_CpAIC_minus_corr = lm(price ~ . , data = Train_lr[, c(1:5, 9)])
 summary(LM_CpAIC_minus_corr)
 ```
 
@@ -389,10 +389,10 @@ rm(LM_forward_complete, LM_backward_complete, LM_stepwise_complete, LM_forward_m
 # predictions are computed on validation set using predict()
 LM_Predictions =
   data.table(
-    LM_complete_pred = predict(object = LM_complete, newdata = Valid),
-    LM_CpAIC_complete_pred = predict(object = LM_CpAIC_complete, newdata = Valid),
-    LM_minus_corr_pred = predict(object = LM_minus_corr, newdata = Valid),
-    LM_CpAIC_minus_corr_pred = predict(object = LM_CpAIC_minus_corr, newdata = Valid)
+    LM_complete_pred = predict(object = LM_complete, newdata = Valid_lr),
+    LM_CpAIC_complete_pred = predict(object = LM_CpAIC_complete, newdata = Valid_lr),
+    LM_minus_corr_pred = predict(object = LM_minus_corr, newdata = Valid_lr),
+    LM_CpAIC_minus_corr_pred = predict(object = LM_CpAIC_minus_corr, newdata = Valid_lr)
     )
 ```
 
