@@ -957,11 +957,10 @@ head(pred_bagged,14)
 ### Random Forest
 
 #### Random Forest Overview
-'Random forests are a special case of bagging, a method for improving predictive
-power by combining multiple classifiers or prediction algorithms.' They are an ensemble based on bagged trees which involves training each tree on a bootstrapped sample of the original data.
+'Random forests are a special case of bagging, a method for improving predictive power by combining multiple classifiers or prediction algorithms.' They are an ensemble based on bagged trees which involves training each tree on a bootstrapped sample of the original data.
 
 #### Methodology
-Similar to the bagged trees, random forests are pretty simplistic. The main focus in this section was to check how many trees should be run within the model. There is a computational cost trade-off with the possibility of a low price change. For example, what is the difference in RMSE if the model was built off of 100 trees versus 60? This exercise showed that the model with 60 trees had a RSME of approximately $2 higher than at 100 trees but that is a trade-off worth it because the processing time and cost of running 40 more trees takes longer and has other ____. 
+Similar to the bagged trees, random forests are pretty simplistic. The main focus in this section was to check how many trees should be run within the model. There is a trade-off between computational power and RMSE. For example, what is the difference in RMSE if the model was built off of 100 trees versus 60? The model with 100 trees was the best model with an RMSE of $575.42.
 
 ```{r randomForest}
 options(scipen = 9999)
@@ -1002,6 +1001,9 @@ pred_random <- predict(rdf_model, newdata = Valid_rg)
 head(pred_random,14)
 ```
 
+#### Analysis
+Throughout this entire section, typically the lower RMSE produced the best model. In random forests though, we proposed a trade-off with picking a model with less trees because an analyst would want to choose the parsimonious  model. Therefore, the random forest with 60 trees had a slightly higher RMSE at a difference of approximately $2 which was $577.63.
+
 ### Create Regression Tree Summary Table
 
 ```{r RegTree Summary}
@@ -1037,7 +1039,8 @@ barplot(RGRMSEplotdata, col = "#D8B365",border = "#D8B365" ,
          main = "Regression Tree Comparison", ylab = "RMSE", las = 3, ylim=c(0,4000))
 ```
 
-#### Analysis
+#### Decision Tree Conclusion
+Throughout the four methods mentioned, the random forest model proved to be the most effective in predicting price with a RMSE of $577.63 which is more than two times smaller than the best boosting model. Although not all of the models results are shown, a breakdown of their error results can be seen within the table above. Overall, the regression tree, bagging and boosting were all within $100 RMSE difference, but no match for the random forest. 
 
 ## NeuralNetworks
 
