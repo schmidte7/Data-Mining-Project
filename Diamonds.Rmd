@@ -219,105 +219,141 @@ test.index <- as.integer(setdiff(row.names(diamonds), union(train.index, valid.i
 ## Linear Regression
 
 
-```{r train-valid-test}
+```{r train-valid}
+# creating training and validation sets
 Train <- diamonds[train.index, ]
 Valid <- diamonds[valid.index, ]
-Test  <- diamonds[ test.index, ]
 ```
 
 
 ```{r vif}
+# using the VIF function from statistical modelling to check multicollinearity of predictors
 VIF(y = diamonds$price, matx = diamonds[, -c(1)])
+# removing length, width and depth and computing VIF without them
 VIF(y = diamonds$price, matx = diamonds[, -c(1, 6, 7, 8)])
 
+# plotting correlation ellipses of numerical variables with length, width and depth removed
 plotcorr(cor(diamonds[, -c(2:4, 6:8)]), col = "#F9D53E",
          main = "Pearson correlation ellipses for numerical variables")
 ```
 
 ```{r skewness}
+# applying the skewness() function of every numerical variable from our training set
 sapply(Train[, c(1, 5:10)], skewness)
+
+# logarithmic transformation on price, carat and table
 Train$price <- log(Train$price)
 Train$carat <- log(Train$carat)
 Train$table <- log(Train$table)
+
+# recomputing the skewness of numerical variables to see the improvement
 sapply(Train[, c(1, 5:10)], skewness)
 
+# transforming in the validation set as well
 Valid$price <- log(Valid$price)
 Valid$carat <- log(Valid$carat)
 Valid$table <- log(Valid$table)
 ```
 
 ```{r hist-unskewed}
-ggplot(gather(data = Train[, c(1, 5:10)]), aes(value)) +
-  geom_histogram(aes(y = after_stat(density)),
+# computing the histograms of numerical variables now that they are unskewed
+
+ggplot(gather(data = Train[, c(1, 5:10)]), aes(value)) + # numerical vars of training set
+  geom_histogram(aes(y = after_stat(density)),           # making histograms with color params
                  color = "white",
-                 fill = "#F9D53E") +             # Creates bin sizing with colors
-  geom_density(alpha = .2, fill = "#F9D53E") +
-  facet_wrap(~ key, scales = "free") +           # Converting the graphs into panels
-  ggtitle("Histograms of numerical variables") + # Title name
-  ylab("Count") + xlab("Value") +                # Label names
-  theme_classic()                                # Theme with x and y axis lines and no grid lines
+                 fill = "#F9D53E") +             
+  geom_density(alpha = .2, fill = "#F9D53E") +           # making density lines
+  facet_wrap(~ key, scales = "free") +                   # multiple plots with facet
+  labs(title = "Histograms of numerical variables",      # labels of the plot
+       x = "Count",
+       y = "Value") +
+  theme_classic()                                        # aesthetic theme
 ```
 
 ```{r normalizing}
+# we compute the the mean and std values based on training data (for numerical variables)
 norm.values <- preProcess(Train[, c(1, 5:10)], method=c("center", "scale"))
 
+# we standardize the training and validation data
 Train[, c(1, 5:10)] <- predict(norm.values, Train[, c(1, 5:10)])
 Valid[, c(1, 5:10)] <- predict(norm.values, Valid[, c(1, 5:10)])
- Test[, c(1, 5:10)] <- predict(norm.values,  Test[, c(1, 5:10)])
 ```
 
 
 ```{r LM-complete}
+# we compute the linear model using all predictors and display its summary
 LM_complete = lm(price ~. , data = Train)
 summary(LM_complete)
 ```
 
 ```{r iterative-search-complete}
+# we use iterative search algorithms on the complete model: forward, backward and stepwise
+# we display summaries of the three models obtained with iterative methods
+
 LM_forward_complete = step(LM_complete, direction = "forward")
-summary(LM_forward_complete)    # no selection
+summary(LM_forward_complete)
+
 LM_backward_complete = step(LM_complete, direction = "backward")
-summary(LM_backward_complete)   # like LM_CpAIC_complete
+summary(LM_backward_complete)
+
 LM_stepwise_complete = step(LM_complete, direction = "both")
-summary(LM_stepwise_complete)   # like LM_CpAIC_complete
+summary(LM_stepwise_complete)
 ```
 
 ```{r LM_CpAIC_complete}
+# we use the GlobalCrit function from statistical modelling to reduce the number of predictors
+# using global criterions: Mallows's Cp and AIC
 GlobalCrit(LM_complete)
 
+# we compute the linear model obtained with global methods and display its summary
 LM_CpAIC_complete = lm(price ~ . , data = Train[, c(1:6, 8, 9)])
 summary(LM_CpAIC_complete)
 ```
 
 
 
+
 ```{r LM-minus-corr}
+# we define a training set without the correlated predictors (length, width, depth)
 Train_minus_corr <- Train[, -c(6:8)]
+
+# we compute the linear model without correlated predictors and display its summary
 LM_minus_corr = lm(price ~ ., data = Train_minus_corr)
 summary(LM_minus_corr)
 ```
 
 ```{r iterative-search-minus-corr}
+# we use iterative search algorithms on the model without corr: forward, backward and stepwise
+# we display summaries of the three models obtained with iterative methods
+
 LM_backward_minus_corr = step(LM_minus_corr, direction = "backward")
-summary(LM_backward_minus_corr)   # like LM_CpAIC_minus_corr
+summary(LM_backward_minus_corr)
+
 LM_forward_minus_corr = step(LM_minus_corr, direction = "forward")
-summary(LM_forward_minus_corr)    # no selection
+summary(LM_forward_minus_corr)
+
 LM_stepwise_minus_corr = step(LM_minus_corr, direction = "both")
-summary(LM_stepwise_minus_corr)   # like LM_CpAIC_minus_corr
+summary(LM_stepwise_minus_corr)
 ```
 
 ```{r LM_CpAIC_minus_corr}
+# we use the GlobalCrit function from statistical modelling to reduce the number of predictors
+# using global criterions: Mallows's Cp and AIC
 GlobalCrit(LM_minus_corr)
 
+# we compute the linear model obtained with global methods and display its summary
 LM_CpAIC_minus_corr = lm(price ~ . , data = Train[, c(1:5, 9)])
 summary(LM_CpAIC_minus_corr)
 ```
 
-```{r}
-library(knitr)
-library(kableExtra)
+```{r predictors-table}
+# we display a table of the predictors used in each model using kable()
+# kable_styling() controls the parameter fullwidth for the total width of table
+
 kable_styling(
   kable(
-  data.table(Model = c("LM_complete", "LM_forward_complete", "LM_backward_complete",
+    # the data to display in the table: model names and crosses for presence of predictor
+    data.table(Model = c("LM_complete", "LM_forward_complete", "LM_backward_complete",
                        "LM_stepwise_complete", "LM_CpAIC_complete",
                        "LM_minus_corr", "LM_forward_minus_corr", "LM_backward_minus_corr",
                        "LM_stepwise_minus_corr", "LM_CpAIC_minus_corr"),
@@ -331,22 +367,26 @@ kable_styling(
              `Depth Ratio` = c("X","X","X","X","X","X","X","X","X","X"),
              Table         = c("X","X"," "," "," ","X","X"," "," "," ")
              ),
-  align = 'lccccccccc'),
-  full_width = FALSE)
+    align = 'lccccccccc',                               # alignment of each column
+    caption = "Predictors used in each linear model"),  # caption of the table
+  full_width = FALSE)                                   # table isn't full width of page
 ```
 
 In both cases, the forward selection doesn't discard any variables, whereas backward, stepwise and global selections all choose the same model with less variables than initially.
 
 Thus, we have four different models emerging. We will keep `LM_complete`, `LM_CpAIC_complete`, `LM_minus_corr` and `LM_CpAIC_minus_corr` and remove the other models which are duplicates.
 
-```{r}
+```{r removing-models}
+# we remove redundant models
 rm(LM_forward_complete, LM_backward_complete, LM_stepwise_complete, LM_forward_minus_corr, LM_backward_minus_corr, LM_stepwise_minus_corr)
 ```
 
 
-```{r}
+```{r predictions-table}
 # predicting prices of validation set on the validation data
 
+# we create a data table of predictions which contains predictions for the four models
+# predictions are computed on validation set using predict()
 LM_Predictions =
   data.table(
     LM_complete_pred = predict(object = LM_complete, newdata = Valid),
@@ -354,9 +394,13 @@ LM_Predictions =
     LM_minus_corr_pred = predict(object = LM_minus_corr, newdata = Valid),
     LM_CpAIC_minus_corr_pred = predict(object = LM_CpAIC_minus_corr, newdata = Valid)
     )
+```
 
+
+```{r rescaling-predictions}
 # we have to scale back the price, to do so we fetch the mean and std value from norm.values
-# dsplaying all means and stds
+
+# we display all means and stds
 norm.values$mean
 norm.values$std
 
@@ -367,10 +411,18 @@ std_price = norm.values$std[1]
 # scaling back (Y*mu + sigma), then exp() (we had transformed price with a log for skewness)
 LM_Predictions = LM_Predictions*std_price + mean_price
 LM_Predictions = exp(LM_Predictions)
+```
 
 
+```{r real-prices}
 # taking real prices of validation data from diamonds (which has not been touched -> original scale)
 LM_Predictions[, real_prices := diamonds[valid.index, price]]
+```
+
+
+```{r models-accuracy-measures}
+# we compute accuracy measures for each model using accuracy() from the forecast package
+# we convert each accuracy to a table (in order to put them together afterwards)
 
 Acc1 = accuracy(object = LM_Predictions$LM_complete_pred, x = LM_Predictions$real_prices)
 Acc1 = as.data.table(Acc1)
@@ -380,69 +432,21 @@ Acc3 = accuracy(object = LM_Predictions$LM_minus_corr_pred, x = LM_Predictions$r
 Acc3 = as.data.table(Acc3)
 Acc4 = accuracy(object = LM_Predictions$LM_CpAIC_minus_corr_pred, x = LM_Predictions$real_prices)
 Acc4 = as.data.table(Acc4)
+
+# we create a list of accuracy measures
 Accs = list(Acc1, Acc2, Acc3, Acc4)
+# we use rbindlist() from the data.table package to stack the four tables on top of eachother
 Accs = rbindlist(Accs)
+# now that Accs is created we can remove the four tables
 rm(Acc1, Acc2, Acc3, Acc4)
+# we add a column to Accs with the model names
 Accs[, Model := c("LM_complete", "LM_CpAIC_complete", "LM_minus_corr", "LM_CpAIC_minus_corr")]
+# we put the Model column first
 Accs <- Accs[, c(6, 1:5)]
-kable_styling(kable(Accs), full_width = FALSE)
-```
 
-
-
-
-
-
-
-
-
-
-```{r dummies-and-dummies-minus-corr, eval=FALSE, include=FALSE}
-TrainD = dummy_cols(Train,
-                    select_columns = c("cut", "color", "clarity"),
-                    remove_first_dummy = TRUE,
-                    remove_selected_columns = TRUE)
-
-TrainD_minus_corr <- TrainD[, -c(3:5)]
-
-LM_dummies <- lm(price ~ . , data = TrainD)
-summary(LM_dummies)
-
-LM_dummies_minus_corr <- lm(price ~ . , data = TrainD_minus_corr)
-summary(LM_dummies_minus_corr)
-```
-
-
-```{r iterative-search-dummies, eval=FALSE, include=FALSE}
-LM_backward_dummies = step(LM_dummies, direction = "backward")
-summary(LM_backward_dummies)   # missing width and table
-LM_forward_dummies = step(LM_dummies, direction = "forward")
-summary(LM_forward_dummies)    # no selection
-LM_stepwise_dummies = step(LM_dummies, direction = "both")
-summary(LM_stepwise_dummies)   # missing width and table
-```
-
-
-```{r iterative-search-dummies-minus-corr, eval=FALSE, include=FALSE}
-LM_backward_dummies_minus_corr = step(LM_dummies_minus_corr, direction = "backward")
-summary(LM_backward_dummies_minus_corr)   # missing table
-LM_forward_dummies_minus_corr = step(LM_dummies_minus_corr, direction = "forward")
-summary(LM_forward_dummies_minus_corr)    # no selection
-LM_stepwise_dummies_minus_corr = step(LM_dummies_minus_corr, direction = "both")
-summary(LM_stepwise_dummies_minus_corr)   # missing table
-```
-
-
-```{r eval=FALSE, include=FALSE}
-# # GlobalCrit(LM_backward_dummies)
-# # GlobalCrit(LM_backward_dummies_minus_corr)
-# library(olsrr)
-# 
-# ols_step_best_subset(LM_backward_dummies)
-# A = regsubsets(price ~. , data = TrainD, method = "exhaustive")
-# A
-# B = summary(A)
-# B$which
+# displaying Accs as a table with kable() and adding a caption
+# kable_styling controls width of table
+kable_styling(kable(Accs, caption = "Accuracy measures of linear models"), full_width = FALSE)
 ```
 
 
