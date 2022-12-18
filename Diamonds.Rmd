@@ -574,7 +574,6 @@ colnames(diamonds_dummies)[10] = "cut_Very_Good"
 
 ```
 
-
 ```{r knn Normalize values}
 #create data frames to normalize
 knn_train <- diamonds_dummies[train.index,]
@@ -589,7 +588,6 @@ norm_values <- preProcess(knn_train[, c(1:7)], method=c("center", "scale"))
 knn_train_norm[, c(1:7)] <- predict(norm_values, knn_train[, c(1:7)])
 knn_valid_norm[,c(1:7)] <- predict(norm_values, knn_valid[, c(1:7)])
 ``` 
-
 
 ```{r knn Calculate k1}
 # computing kNN with knnreg from caret package
@@ -614,9 +612,9 @@ knn_rescaled_prices = std_price * knn_pred_y + mean_price
 real_prices = diamonds[valid.index, price]
 
 # computing accuracy measures
-kNN_aa1 <- accuracy(object = knn_rescaled_prices, x = real_prices)
+knn_aa1 <- accuracy(object = knn_rescaled_prices, x = real_prices)
 
-kable_styling(kable(kNN_aa1)%>% kable_classic(), full_width = TRUE)
+kable_styling(kable(knn_aa1)%>% kable_classic(), full_width = TRUE)
 ```
 
 ```{r Compute best K }
@@ -646,7 +644,6 @@ ggplot (data = accuracy_df, aes(x = k, y = accuracy)) +
   theme_classic() 
 ```
 
-
 ```{r knn Calculate k4}
 
 # computing kNN with knnreg from caret package
@@ -659,8 +656,34 @@ opt_knn_pred_y = predict(object = opt_kNN, newdata = knn_valid_norm[, -c(1)])
 opt_knn_rescaled_prices = std_price * opt_knn_pred_y + mean_price
 
 # computing accuracy measures
-opt_accuracy <- accuracy(object = opt_knn_rescaled_prices, x = real_prices)
-kable_styling(kable(opt_accuracy)%>% kable_classic(), full_width = TRUE)
+knn_aa2 <- accuracy(object = opt_knn_rescaled_prices, x = real_prices)
+kable_styling(kable(knn_aa2)%>% kable_classic(), full_width = TRUE)
+```
+
+```{r}
+knn_res <- data.frame("Model_kNN" = c("k = 1",
+                                "k = 4"),
+                     "ME" = "",
+                     "RMSE" = "",
+                     "MAE"= "",
+                     "MPE" = "",
+                     "MAPE" = "")
+
+rownames(knn_res) <- knn_res$Model_kNN
+knn_res$Model_kNN = NULL
+
+for (i in 1:2) {
+  knn_res[i,]= round(get(paste("knn_aa", i, sep ="")),2)
+}
+
+kable_styling(kable(knn_res)%>% kable_classic(), full_width = TRUE)
+
+RGRMSEplotdata <- t(knn_res$RMSE)
+colnames(RGRMSEplotdata) <- t(rownames(knn_res))
+RGRMSEplotdata
+
+barplot(RGRMSEplotdata, col = "#D8B365",border = "#D8B365" ,
+         main = "k-NN Tree Comparison", ylab = "RMSE", las = 3, ylim=c(0,1000))
 ```
 
 ## Regression Tree
