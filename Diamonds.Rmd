@@ -572,11 +572,9 @@ The $k$-nearest neighbors algorithm is very useful when predicting price because
 #### Methodology 
 There are several steps that need to be completed prior to running the first $k$-NN model with k = 1. First, you clean the data to ensure that missing values are either removed or explained, and that all variables are essential to the response variable (see EDA section). Next, the data is normalized so that the output remains unbiased. Normalizing simply means that the raw data is put on all the same scale ('subtracting the mean and dividing by the standard deviation'). Once the data is cleaned and normalized, it can be spliced into the training, validation, and test sets. Now that the foundation of the model has been built, let's start constructing the first $k$-NN model. 
 
+The value of k = 1 was used as a starting point to see how well the model would perform. Since price is our focal point, the two error measurements that will be compared throughout all model methods are mean error (ME) and Root Mean Squared Error (RMSE). RMSE is of particular interest because that gives the variance of how far the predicted value is away from the actual price. Seen in the first $k$-NN error table, ME ($20.60) and RMSE ($954.60) could potentially get better if we optimized the k value. 
 
-
-
-
-
+The optimal k is 4 because it produces the lowest RMSE at $814.59. After rerunning the $k$-NN model, the results improved in one aspect, but not the other. 
 
 ```{r knn Create Dummies}
 diamonds_dummies <- diamonds
@@ -629,9 +627,9 @@ knn_rescaled_prices = std_price * knn_pred_y + mean_price
 real_prices = diamonds[valid.index, price]
 
 # computing accuracy measures
-kNN_aa1 <- accuracy(object = knn_rescaled_prices, x = real_prices)
+knn_aa1 <- accuracy(object = knn_rescaled_prices, x = real_prices)
 
-kable_styling(kable(kNN_aa1)%>% kable_classic(), full_width = TRUE)
+kable_styling(kable(knn_aa1)%>% kable_classic(), full_width = TRUE)
 ```
 
 ```{r Compute best K }
@@ -674,13 +672,46 @@ opt_knn_pred_y = predict(object = opt_kNN, newdata = knn_valid_norm[, -c(1)])
 opt_knn_rescaled_prices = std_price * opt_knn_pred_y + mean_price
 
 # computing accuracy measures
-opt_accuracy <- accuracy(object = opt_knn_rescaled_prices, x = real_prices)
-kable_styling(kable(opt_accuracy)%>% kable_classic(), full_width = TRUE)
+knn_aa2 <- accuracy(object = opt_knn_rescaled_prices, x = real_prices)
+kable_styling(kable(knn_aa2)%>% kable_classic(), full_width = TRUE)
+```
+
+```{r}
+knn_res <- data.frame("Model_kNN" = c("k = 1",
+                                "k = 4"),
+                     "ME" = "",
+                     "RMSE" = "",
+                     "MAE"= "",
+                     "MPE" = "",
+                     "MAPE" = "")
+
+rownames(knn_res) <- knn_res$Model_kNN
+knn_res$Model_kNN = NULL
+
+for (i in 1:2) {
+  knn_res[i,]= round(get(paste("knn_aa", i, sep ="")),2)
+}
+
+kable_styling(kable(knn_res)%>% kable_classic(), full_width = TRUE)
+
+RGRMSEplotdata <- t(knn_res$RMSE)
+colnames(RGRMSEplotdata) <- t(rownames(knn_res))
+RGRMSEplotdata
+
+barplot(RGRMSEplotdata, col = "#D8B365",border = "#D8B365" ,
+         main = "k-NN Tree Comparison", ylab = "RMSE", las = 3, ylim=c(0,1000))
 ```
 
 #### Analysis
+As stated earlier, the table above shows how the ME got worse for k = 4, but better with RMSE once the model was optimized. In this analysis, one of the main goals is to reduce the variance between predicted and real price. Therefore, the difference of $140.00 is more important even when the ME increases. Between k = 1 and k = 4 for the $k$-NN model, k = 4 with an RMSE of $814.60 will predict prices better. 
 
 ## Regression Tree
+
+#### Overview
+
+
+#### Methodology 
+
 
 ### Partitioning
 
@@ -981,6 +1012,8 @@ RGRMSEplotdata
 barplot(RGRMSEplotdata, col = "#D8B365",border = "#D8B365" ,
          main = "Regression Tree Comparison", ylab = "RMSE", las = 3, ylim=c(0,4000))
 ```
+
+#### Analysis
 
 ## NeuralNetworks
 
