@@ -95,6 +95,9 @@ source("GlobalCrit.R")  #for variable selection (exhaustive search)
 ################ Additonal Actions ######################
 options(scipen = 999)                 #for removing scientific notation
 tf$constant("Hello Tensorflow!")      #for initializing tensorflow environment
+install.packages("tensorflow")
+
+
 ```
 
 # Data Exploration 
@@ -235,8 +238,8 @@ PCl5 <- ggplot(aes(x = depth_ratio, y = price), data = diamonds) + geom_point(al
 PCl6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2))) + ggtitle('Price by Table and Clarity')+ theme_classic() + geom_vline(xintercept=mean(diamonds$table), size = 1, color = "black")
 
 # Arrange ggplots into one frame
-ggarrange(PCl1, PCl2, PCl3,PCl4, PCl5, PCl6,
-                    ncol = 2, nrow = 3)
+ggarrange(ggtitle('Price by Table and Clarity'), PCl1, PCl2, PCl3,PCl4, PCl5, PCl6,
+                    ncol = 2, nrow = 3, common.legend = TRUE, legend="right")
 ```
 
 ```{r Price by X and Color, fig.width = 6, fig.height = 6}
@@ -264,7 +267,7 @@ PCo6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha =
 
 # Arrange ggplots into one frame
 ggarrange(PCo1, PCo2, PCo3,PCo4, PCo5, PCo6,
-                    ncol = 2, nrow = 3)
+                    ncol = 2, nrow = 3, common.legend = TRUE, legend="right")
 ```
 
 ```{r Price by X and Cut, fig.width = 6, fig.height = 6}
@@ -292,7 +295,7 @@ PCu6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha =
 
 # Arrange ggplots into one frame
 ggarrange(PCu1, PCu2, PCu3,PCu4, PCu5, PCu6,
-                    ncol = 2, nrow = 3)
+                    ncol = 2, nrow = 3, common.legend = TRUE, legend="right")
 ```
 
 
