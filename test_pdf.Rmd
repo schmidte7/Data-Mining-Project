@@ -1,0 +1,326 @@
+---
+title: "Diamonds"
+author: "Francisco Arrieta, Emily Schmidt and Lucia Camenisch"
+date: "`r Sys.Date()`"
+titlepage: true
+titlepage-rule-color: FFFFFF
+# titlepage-background: diamond-background.jpeg
+output:
+  pdf_document:
+    latex_engine: xelatex
+    toc: true
+    toc_depth: 3
+    number_sections: true
+    df_print: kable
+    keep_tex: true
+    template: eisvogel.latex
+# output:
+#   html_document:
+#     toc: yes
+#     toc_float:
+#       collapsed: no
+#     number_sections: yes
+#     theme: cosmo
+#   pdf_document:
+#     toc: yes
+---
+
+```{=html}
+<style>
+body{
+  color: #2F91AE;
+  background-color: #F2F2F2;
+}
+pre{
+  background-color: #96EAE3;
+}
+pre:not([class]){
+  background-color: #15DDD8;
+}
+.toc-content{
+  padding-left: 10px;
+  padding-right: 10px;
+}
+.col-sm-8 {
+  width: 75%;
+}
+code {
+  color: #333333;
+  background-color: #96EAE3;
+}
+</style>
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, fig.align = "center", include=FALSE,
+                      dev = "png", cache = TRUE, sanitize = TRUE)
+# external = TRUE, sanitize = TRUE
+```
+
+```{r Colors}
+#Aqua =         "#15DDD8"
+#Dark Blue =    "#2F91AE"
+#Yellow =       "#F9D53E"
+#Light Gray =   "#F2F2F2"
+#Light Aqua =   "#96EAE3"
+#Gold = "#D8B365" 
+```
+
+```{r Libraries}
+################ General Use ######################
+library(car)            #for statistic functions
+library(DataExplorer)   #for graphing missing value percentages
+library(data.table)     #for reading data.tables
+library(dplyr)          #for data manipulation
+library(fastDummies)    #for creating dummies
+library(e1071)          #for skewness
+library(ellipse)        #for mapping correlation
+library(GGally)         #for making graphs
+library(ggplot2)        #for making graphs
+library(ggpubr)         #for plot alignment
+library(gridExtra)
+library(kableExtra)     #for more elaborate tables
+library(knitr)
+library(tidyr)          #for changing the shape and hierarchy of a data set
+library(naniar)         #for missing values
+library(RColorBrewer)   #for graph colors
+library(rattle)         #Graphical Data Interface
+
+
+################ For Predictions ######################
+library(caret)          #for preProcess() and accuracy()
+library(forecast)       # for accuracy() measures
+library(FNN)            #for finding k nearest neighbor
+library(gbm)            #for boosting
+library(ipred)          #for bagging
+library(vip)            #for variable importance
+library(randomForest)   #for randomForest
+library(rpart)          #for regression trees
+library(rpart.plot)     #for plot trees
+library(keras)          #front-end library for neural networks
+library(magrittr)
+library(tensorflow)     #backend python library for neural network
+
+
+################ Personalized Functions ######################
+source("VIF.R")         #for calculating VIF (KEEP/DELETE???????????????)
+source("ProcStep.R")    #for variable selection (forw, backw, setpw)
+source("GlobalCrit.R")  #for variable selection (exhaustive search)
+
+################ Additonal Actions ######################
+options(scipen = 999)                 #for removing scientific notation
+tf$constant("Hello Tensorflow!")      #for initializing tensoflow environment
+```
+
+# Data Exploration 
+
+```{r Import Data}
+diamonds <- fread("diamonds.csv", sep=",", header = T) # Load your data, diamonds.csv
+
+diamonds$V1 <- NULL # Remove column 'V1' as it is similar to an ID variable - no additional meaning derived
+
+# Rename columns for more precise names
+colnames(diamonds)[5] <- "depth_ratio" # depth to depth_ratio
+colnames(diamonds)[8] <- "length" # x to length
+colnames(diamonds)[9] <- "width"  # y to width
+colnames(diamonds)[10] <- "depth" # z to depth
+```
+
+## Dimension Summary 
+
+```{r Data Exploration}
+dim(diamonds) # Dimensions of data
+summary(diamonds) # Produce result summaries of all variables
+str(diamonds) # Type of variables
+
+# Number of unique values in each variable
+sapply(diamonds, function(x) length(unique(x)))
+```
+
+## Missing Values
+
+```{r Missing Values, include=TRUE, echo=FALSE}
+# Missing values analysis
+gg_miss_var(diamonds) + ggtitle("Missing values")
+```
+
+
+```{r Variables check}
+############### carat no problems #################
+
+############### cut ###############################
+unique(diamonds$cut) # Review unique values for cut
+# Factor the cut to five level
+diamonds$cut <- as.factor(diamonds$cut) 
+
+# Ordered from worst to best
+diamonds$cut <- ordered(diamonds$cut, levels = c("Fair", "Good", "Very Good", "Premium", "Ideal")) 
+
+############### color ############################
+# Review unique values for color
+unique(diamonds$color) 
+
+# Factor the color to seven levels 
+diamonds$color <- as.factor(diamonds$color) 
+
+# Ordered from worst to best
+diamonds$color <- ordered(diamonds$color, levels = c("J", "I", "H", "G", "F", "E", "D")) 
+
+############### clarity ##########################
+# Review unique values for clarity
+unique(diamonds$clarity)
+
+# Factor the clarity to eight levels 
+diamonds$clarity <- as.factor(diamonds$clarity)
+
+# Ordered from worst to best
+diamonds$clarity <- ordered(diamonds$clarity, levels = c("I1", "SI2", "SI1", "VS2", "VS1", "VVS2", "VVS1", "IF")) 
+
+############### table no problems#################
+
+############### price no problems#################
+
+############### Other Checks #####################
+
+# Remove values of 0 for for dimensions which includes zeros in length and width
+nrow(diamonds[depth %in% 0,]) # Remove 20 rows due to depth = 0.0
+diamonds <- diamonds[depth > 0, ] # Include only values with depth greater than zero
+
+# Create formula to check the absolute value of length to width, comparison 
+diamonds[, subtraction := abs(length - width)]
+nrow(diamonds[subtraction>10,]) # Remove 2 rows due their extreme subtraction value (~59 and ~26)
+diamonds <- diamonds[subtraction <= 10, ] # Include only values with subtraction less than ten
+
+# Check if the Depth_Ratio value corresponds to formula indicated in the description
+diamonds[, depth_check := round(100*(2*depth)/((length + width)), 1)]
+diamonds[, diff := abs(depth_check-depth_ratio)]
+```
+
+
+```{r Variables check hist, include=TRUE, echo=FALSE}
+# Create histogram to look at the differences between how much price is off between a calculated value and what the data provided
+hist(diamonds[diff >= 0.2 & diff < 1, diff], breaks =50, col = "#D8B365", border = "#D8B365", main = "Threshold Differences", xlab = "Predicted vs. Actual Difference")
+```
+
+
+```{r Variables check 2}
+# Threshold set to 0.3 due to ... (report)
+nrow(diamonds[diff > 0.3,]) # We remove 268 rows
+diamonds <- diamonds[diff <= 0.3,]
+
+
+# Removed created columns needed to clean the data
+diamonds[, subtraction := NULL]
+diamonds[, depth_check := NULL]
+diamonds[, diff := NULL]
+# Total rows remove: 275 observations
+```
+
+
+```{r ordering columns}
+# Reorder data table to group like variable types 
+diamonds <- diamonds[, c(7, 2:4, 1, 8:10, 5:6)]
+```
+
+
+```{r ggpairs, echo=FALSE, include=TRUE}
+# Used ggpairs to create a scatterplot matrix between quantitative variables
+ggpairs(diamonds[, c(1, 5:10)], title = "Scatterplot Matrix",
+         proportions = "auto",
+         columnLabels = c("Price", "Carat", "Length", "Width", "Depth","Depth Ratio","Table"),
+         upper = list(continuous = wrap('cor',size = 3)),) + theme_light()
+```
+
+
+```{r Price by X and Clarity, echo=FALSE, include=TRUE}
+
+# Create plot that looks at carat and price
+options(tinytex.verbose = TRUE)
+PCl1 <- ggplot(aes(x = carat, y = price), data = diamonds) +
+  geom_point(alpha = 0.5, size = 1, aes(color=clarity)) +
+  scale_color_brewer(type = 'div',
+                     guide = guide_legend(title = 'Clarity',
+                                          reverse = T,
+                                          override.aes = list(alpha = 1, size = 2))) +
+  ggtitle('Price by Carat and Clarity') +
+  theme_classic()
+
+# Create plot that looks at length and price
+PCl2 <- ggplot(aes(x = length, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Length and Clarity') + theme_classic()
+
+# Create plot that looks at width and price
+PCl3 <- ggplot(aes(x = width, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Width and Clarity') + theme_classic()
+
+# Create plot that looks at depth and price
+PCl4 <- ggplot(aes(x = depth, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Depth and Clarity') + theme_classic()
+
+# Create plot that looks at depth_ratio and price
+PCl5 <- ggplot(aes(x = depth_ratio, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2))) + ggtitle('Price by Depth Ratio and Clarity')  + theme_classic() + geom_vline(xintercept=mean(diamonds$depth_ratio), size = 1, color = "black") + geom_vline(xintercept=59, size = 1, color = "red") + geom_vline(xintercept=62.3, size = 1, color = "red")
+
+# Create plot that looks at table and price
+PCl6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2))) + ggtitle('Price by Table and Clarity')+ theme_classic() + geom_vline(xintercept=mean(diamonds$table), size = 1, color = "black")
+
+# Arrange ggplots into one frame
+ggarrange(PCl1, PCl2, PCl3,PCl4, PCl5, PCl6,
+                    ncol = 2, nrow = 3)
+```
+
+
+```{r Price by X and Color, eval=FALSE, include=FALSE}
+# Create plot that looks at carat and price
+PCo1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color)) +
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Carat and Color') + theme_classic()
+
+# Create plot that looks at length and price
+PCo2 <- ggplot(aes(x = length, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color)) +
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Length and Color') + theme_classic()
+
+# Create plot that looks at width and price
+PCo3 <- ggplot(aes(x = width, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color)) +
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Width and Color') + theme_classic()
+
+# Create plot that looks at depth and price
+PCo4 <- ggplot(aes(x = depth, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color)) +
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Depth and Color') + theme_classic()
+
+# Create plot that looks at depth_ratio and price
+PCo5 <- ggplot(aes(x = depth_ratio, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2))) + ggtitle('Price by Depth Ratio and Color')  + theme_classic() + geom_vline(xintercept=mean(diamonds$depth_ratio), size = 1, color = "black")  + geom_vline(xintercept=59, size = 1, color = "red") + geom_vline(xintercept=62.3, size = 1, color = "red")
+
+# Create plot that looks at table and price
+PCo6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2))) + ggtitle('Price by Table and Color')+ theme_classic() + geom_vline(xintercept=mean(diamonds$table), size = 1, color = "black")
+
+# Arrange ggplots into one frame
+ggarrange(PCo1, PCo2, PCo3,PCo4, PCo5, PCo6,
+                    ncol = 2, nrow = 3)
+```
+
+```{r Price by X and Cut, eval=FALSE, include=FALSE}
+# Create plot that looks at carat and price
+PCu1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut)) +
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Carat and Cut') + theme_classic()
+
+# Create plot that looks at length and price
+PCu2 <- ggplot(aes(x = length, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut)) +
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Length and Cut') + theme_classic()
+
+# Create plot that looks at width and price
+PCu3 <- ggplot(aes(x = width, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut)) +
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Width and Cut') + theme_classic()
+
+# Create plot that looks at depth and price
+PCu4 <- ggplot(aes(x = depth, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut)) +
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Depth and Cut') + theme_classic()
+
+# Create plot that looks at depth_ratio and price
+PCu5 <- ggplot(aes(x = depth_ratio, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + ggtitle('Price by Depth Ratio and Cut')  + theme_classic() + geom_vline(xintercept=mean(diamonds$depth_ratio), size = 1, color = "black") + geom_vline(xintercept=59, size = 1, color = "red") + geom_vline(xintercept=62.3, size = 1, color = "red")
+
+# Create plot that looks at table and price
+PCu6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + ggtitle('Price by Table and Cut')+ theme_classic() + geom_vline(xintercept=mean(diamonds$table), size = 1, color = "black")
+
+# Arrange ggplots into one frame
+ggarrange(PCu1, PCu2, PCu3,PCu4, PCu5, PCu6,
+                    ncol = 2, nrow = 3)
+```
