@@ -101,6 +101,7 @@ install.packages("tensorflow")
 ```
 
 # Data Exploration 
+In the early stages of any analysis, data exploration is a critical process aimed at understanding and analyzing the dataset to gain insight and make valid decisions. The overarching goal of exploring the data is to obtain intuition, identify questionable values, and plan to execute an approach to fulfill the problem statement. Therefore, let's summarize the findings that explain the main characteristics of the data, and dive into the relations between variables to understand how this analysis will be directed.
 
 ```{r Import Data}
 diamonds <- fread("diamonds.csv", sep=",", header = T) # Load your data, diamonds.csv
@@ -115,6 +116,14 @@ colnames(diamonds)[10] <- "depth" # z to depth
 ```
 
 ## Dimension Summary 
+
+There is a variety of ways an analyst could approach  understanding the observations contained in the dataset. For starters, there are 53,940 records and 10 variables. The response variable (price) is a an integer variable. There are an additional six numeric values and three ordinal/categorical features that have a factored structure. Those non-numeric values (cut, color, and clarity) need to be appropriately ordered, and renamed if there are any spaces within their naming convention as later this could obstruct certain code. 
+
+To dive deeper, we consider removing observations that are invalid because they add noise. For instance, price against all features were reviewed for possible impurities. In total, there are 275 (0.5%) records removed for the following reasons:  
+1. 20 rows had a depth of 0.0. This is considered inaccurate because a diamond needs to have this dimension specified.  
+2. Between the difference of length and width, the measurements should be almost identical. If they were not, those rows were removed. In this case, only two records were not included in the dataset at differences above 36 mm. 
+3. The depth_ratio is a calculation between length, width, and length. To investigate this feature further, our group computed depth_ratio and saw there were differences between the actual and predicted values. Therefore, the executive decision was to remove any differences above a threshold of 0.3. A total of 253 rows were removed.  
+
 
 ```{r Data Exploration}
 dim(diamonds) # Dimensions of data
@@ -204,6 +213,7 @@ diamonds[, diff := NULL]
 diamonds <- diamonds[, c(7, 2:4, 1, 8:10, 5:6)]
 ```
 
+The second part of exploring the diamonds dataset is to understand the relationships between variables. Prior to analyzing their correlations, we had an idea of which continuous variables would have a strong relation due to the depth_ratio calculation. Later on, certain methods will analyze the potential issue of collinearity. By isolating price against the other continuous variables, carat, length, width, and depth, all have positively linear relations to the response feature. Some of the models used in the analysis to predict price will show these effects. In addition, the relationship between carat and price is unique  because their relation is non-linear. We were also interested in showing how the categorical variables affect price. Clarity, color, and cut have distinct patterns seen between the four continuous variables mentioned above. 
 
 ```{r ggpairs, fig.width = 6, fig.height = 5}
 #Used ggpairs to create a scatterplot matrix between quantitative variables 
@@ -213,6 +223,7 @@ ggpairs(diamonds[, c(1, 5:10)], title = "Scatterplot Matrix",
          upper = list(continuous = wrap('cor',size = 3)),) + theme_light()
 ```
 
+For instance, when plotting price by carat, width, length, and depth with clarity as the color dimension, there is a clear distinction between how these points relate. Each scatterplot shows a strong, positive correlation to price. When reviewing the x-axis for each explanatory variable, the lower tiered option is typically observed more. The cheaper the gemstone, the worse quality the customer will receive. Within each plot, there are outliers that can be explained by how the diamond was cut, which impacts the weight, length, and depth. By the color scale, it is noticed how there are more diamonds with a worse clarity (SI2/SI1) than there are with the best (IF/VVS1). Intuitively, this makes sense because not all customers have the available funds to afford the optimally designed diamond. On the other hand, no one wants to the worst clarity either. Therefore, a majority of the diamonds lie between the second and third best, and second and third worst clarity factors. In addition, the relation between depth_ratio and table to price is not distinct as those features are mixed throughout the relative ranges. Within all of the depth_ratio plots, there are vertical lines that show the depth_ratio  mean (black) and range (red) of what is considered the prime value for depth_ratio as long as it is above 59 but does not exceed 62.3. 
 
 ```{r Price by X and Clarity, fig.width = 6, fig.height = 6}
 # Create plot that looks at carat and price
@@ -241,6 +252,8 @@ ggarrange(PCl1, PCl2, PCl3,PCl4, PCl5, PCl6,
                     ncol = 2, nrow = 3, common.legend = TRUE, legend="right")
 ```
 
+A similar story can be told for price by the continuous variables but as color as the color dimension. Instead of most of the observations falling closer to the best and worth clarify features, here the reader will notice how it appears that the colors E, F and G dominate (the white to light blue). 
+
 ```{r Price by X and Color, fig.width = 6, fig.height = 6}
 # Create plot that looks at carat and price
 PCo1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color)) +
@@ -268,6 +281,8 @@ PCo6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha =
 ggarrange(PCo1, PCo2, PCo3,PCo4, PCo5, PCo6,
                     ncol = 2, nrow = 3, common.legend = TRUE, legend="right")
 ```
+
+Cut is completely different than clarity and color as a majority of customers prefer and will purchase the ideal cut. This can be seen within the depth_ratio plot especially. As stated earlier, the red lines indicate the optimal space in which a buyer would want the diamond's depth_ratio. Most of all of the ideal cut are within those bounds while the fair, good, and very good are outside. There is a clear distinction how cut relates to the depth_ratio along price.
 
 ```{r Price by X and Cut, fig.width = 6, fig.height = 6}
 # Create plot that looks at carat and price
@@ -310,6 +325,11 @@ kable_corr
 ```
 
 ## Variable Visualisation
+
+As a continuation of data exploration, variable visualization involves creating graphical representations of data to visually communicate insights and trends. It allows us to quickly and easily identify patterns that may not be immediately apparent from looking at raw data. There are three graphics that demonstrate how these continuous values are distributed. Since some models take into account transformation, those details will be described later. As a high-level review, price and carat are positively skewed. From the scatterplot by cut above, the relation to the histogram for depth_ratio can see that most cut features fall into approximately 60 to 65 mm. The relationships in the Correlation Heatmap visually show how width, length, depth, and carat continue to be highly correlated with price while depth_ratio and table are closer to 0. Another way to visualize the relationships is through the Pearson correlation ellipses chart. The skinnier the ellipse, the more correlated the two values are. 
+
+Through exploration, we can gain a deeper understanding of the data and how it can be used to answer business questions or solve real-world problems, like predicting the price of a diamond.
+
 
 ```{r Histograms}
 ggplot(gather(data = diamonds[, c(1, 5:10)]), aes(value)) +
@@ -624,6 +644,21 @@ kable_classic(kable(Accs, caption = "Accuracy measures of linear models"))
 
 ## $k$-NN
 
+#### Overview
+$k$-nearest neighbors (kNN) is a simple algorithm used for classification (categorical) and regression (continuous). Since the response variable (price) is a numeric outcome, this analysis will use $k$-NN to predict the price of a diamond. In a regression setting, the algorithm relies on finding the most 'similar' records in the training data. Then, one would calculate the weighted average of the numerical target of the $k$-nearest neighbors for the data point.
+
+According to the Data Mining textbook, the value of k is based on a nonparametric method since it 'draws information from similarities between the predictor values of the records in the dataset.' There are several ways one could choose this hyperparameter, but this analysis will focus on one method by the optimization of RMSE. k is an critical input within the $k$-NN function because it determines how many neighbors will be considered when making a prediction. Penn State states that a larger k leads to a smoother boundary but may also introduce noise. On the other side, a small k can lead 'can increase the complexity of KNN as lower when k increases.'
+
+The $k$-nearest neighbors algorithm is very useful when predicting price because the data does not need to be transformed or predictors selected in a particular way. 
+
+#### Methodology 
+There are several steps that need to be completed prior to running the first $k$-NN model with k = 1. First, you clean the data to ensure that missing values are either removed or explained, and that all variables are essential to the response variable (see EDA section). Next, the data is normalized so that the output remains unbiased. Normalizing simply means that the raw data is put on all the same scale ('subtracting the mean and dividing by the standard deviation'). Once the data is cleaned and normalized, it can be split into the training, validation, and test sets. Now that the foundation of the model has been built, let's start constructing the first $k$-NN model. 
+
+The value of k = 1 is used as a starting point to see how well the model will perform. Since price is our focal point, the two error measurements that will be compared throughout all model methods are mean error (ME) and Root Mean Squared Error (RMSE). RMSE is of particular interest because that gives the variance of how far the predicted value is away from the actual price. Seen in the first $k$-NN error table, ME ($20.60) and RMSE ($954.60) could potentially get better if we optimized the k value. 
+
+The optimal k is 4 because it produces the lowest RMSE at $814.59. After rerunning the $k$-NN model, the results improved in one aspect, but not the other. 
+
+
 ```{r knn Create Dummies}
 diamonds_dummies <- diamonds
 diamonds_dummies <- dummy_cols(diamonds_dummies, 
@@ -747,7 +782,19 @@ barplot(RGRMSEplotdata, col = "#D8B365",border = "#D8B365" ,
          main = "k-NN Tree Comparison", ylab = "RMSE", las = 3, ylim=c(0,1000))
 ```
 
-## Regression Tree
+#### Analysis
+As stated earlier, the table above shows how the ME got worse for k = 4, but better with RMSE once the model was optimized. In this analysis, one of the main goals is to reduce the variance between predicted and real price. Therefore, the difference of $140.00 is more important even when the ME slightly increases. Between k = 1 and k = 4 for the $k$-NN model, k = 4 with an RMSE of $814.60 will predict prices better. 
+
+## Decision Tree
+
+#### Regression Tree Overview
+There are four methods within this section that show various ways on how trees are built. They include a regression tree, boosted tree, bagged tree, and random forest. The regression tree is most transparent and easy to interpret while the other three combine results from multiple trees.
+
+A regression tree is a flexible data-driven method that can be used for prediction of a continuous variable. The tree separates 'records into subgroups by creating splits on predictors. These splits create logical rules that are homogeneous.' Those splits 'divide the data into subsets, that is, branches, nodes, and leaves. Like decision trees, regression trees select splits that decrease the dispersion of target attribute values. Thus, the target attribute values can be predicted from their mean values in the leaves' which reduces the variance of the target variable.  
+
+#### Regression Tree Methodology and Analysis
+Since the tree proactively takes into consideration the most important attributes to split on, multiple trees are created to check its validity. This idea stemmed from wanting to ensure that by removing variables due to their weak relationship to the predictor variable or by pruning, the results produced the best ME and RMSE. Within the three regression models, all have the same error rates. In addition, there are eight terminal nodes for each model and all had width, length, carat, and depth being the most important features to predict price. To exemplify this, we show the original regression tree that first splits on width < 6.33, seven splits total and uses the following for the primary splits:  width  < 6.325, carat  < 0.985, length < 6.325 and depth  < 3.935. 
+
 
 ### Partitioning
 
@@ -864,6 +911,12 @@ kable_styling(kable(tree_aa3)%>% kable_classic(), full_width = TRUE)
 
 ### Boosted Tree
 
+#### Boosted Tree Overview
+Boosted trees are a type of ensemble model that 'transforms weak decision trees into strong learners. Each new tree is built considering the errors of previous trees.' The idea behind boosting is to train a series of weak models additively, with each model attempting to correct the errors made by the previous model. Since this model is prone to overfitting, the parameters need to be carefully considered so that the lowest error rates can be achieved.
+
+#### Methodology 
+There is a wide variety of parameters that can be chosen for a boosted tree. Therefore, those options were exercised to choose the best model based off the number of predictors that were used and how deep each tree would be allowed to interact. The main difference between each model is the number of trees ran. The most n.trees used, the better the model because it only considers the most important factors. 
+
 ```{r Boosted Tree 10}
 # Boosted tree
 set.seed(111)
@@ -938,7 +991,17 @@ pred_boost <- predict.gbm(tree_boost100, newdata = Valid_rg)
 head(pred_boost, 14)
 ```
 
-### Bagging Tree
+#### Analysis
+The best boosted model was the one with 100 trees and three cross-validation folds. The tree used six predictors to produce a model with a ME of $9.00 and RMSE of $1,170.30. What is fascinating about this tree comes from the importance variables chart. In the regression tree, clarity was one of the three least important factors, but here we see that it is the fourth which is above length. 
+
+### Bagged Tree
+
+#### Bagging Tree Overview
+The third method is bagged trees. This type of model 'combines the predictions from multiple machine learning algorithms together to make more accurate predictions than any individual model.' The objective with bagging is to train a large number of decision trees on different subsets of the training data, and then average the predictions of all the trees to make a final prediction. This model has the ability to reduce variance because it introduces randomness into the training process. 
+
+#### Methodology & Analysis
+This model is pretty straight forward because the best model was built by sticking with the basics. 'The only parameters when bagging decision trees is the number of samples and hence the number of trees to include. This can be chosen by increasing the number of trees on run after run until the accuracy begins to stop showing improvement.' Overall, the bagging tree predicts price better than the regression tree, but worse than boosting. The ME was the lowest at $0.93, but what is more important to consider if the RMSE which is $1,248.77.
+
 
 ```{r Bagged Tree}
 # Bagged tree
@@ -973,7 +1036,14 @@ pred_bagged <- predict(tree_bagging, newdata = Valid_rg)
 head(pred_bagged,14)
 ```
 
-### RandomForest
+### Random Forest 
+
+#### Random Forest Overview
+'Random forests are a special case of bagging, a method for improving predictive power by combining multiple classifiers or prediction algorithms.' They are an ensemble based on bagged trees which involves training each tree on a bootstrapped sample of the original data.
+
+#### Methodology
+Similar to the bagged trees, random forests are pretty simplistic. The main focus in this section was to check how many trees should be run within the model. There is a trade-off between computational power and RMSE. For example, what is the difference in RMSE if the model was built off of 100 trees versus 60? The model with 100 trees was the best model with an RMSE of $575.42.
+
 
 ```{r randomForest}
 options(scipen = 9999)
@@ -1014,6 +1084,10 @@ pred_random <- predict(rdf_model, newdata = Valid_rg)
 head(pred_random,14)
 ```
 
+#### Analysis
+Throughout this entire section, typically the lower RMSE produced the best model. Additionally up to this point in regards to the trees, there have typically been three or four variables that were most importance to the model than all others had minimal impact. In the forest tree though, there is much more weight on features such as clarity and color. In random forests, we proposed a trade-off with picking a model with less trees because an analyst would want to choose the parsimonious  model. Therefore, the random forest with 60 trees had a slightly higher RMSE at a difference of approximately $2 which gave a $577.63 for the random mean square error. 
+
+
 ### Create Regression Tree Summary Table
 
 ```{r RegTree Summary}
@@ -1048,6 +1122,9 @@ RGRMSEplotdata
 barplot(RGRMSEplotdata, col = "#D8B365",border = "#D8B365" ,
          main = "Regression Tree Comparison", ylab = "RMSE", las = 3, ylim=c(0,4000))
 ```
+
+#### Decision Tree Conclusion
+Throughout the four methods mentioned, the random forest model proved to be the most effective in predicting price with a RMSE of $577.63 which is more than two times smaller than the best boosting model. Although not all of the models results are shown, a breakdown of their error results can be seen within the table above. Overall, the regression tree, bagging and boosting were all within $100 RMSE difference, but no match for the random forest. 
 
 ## NeuralNetworks
 
@@ -1441,6 +1518,9 @@ barplot(NNRMSEplotdata, col = "#D8B365",border = "#D8B365" ,
 
 ## Ensembles
 
+#### Ensembles Overview, Methodology, and Analysis
+'Ensemble methods is a machine learning technique that combines several base models in order to produce one optimal predictive model.' The simplest approach is to combine predictions from each method above that had the best/lowest RMSE. To accurately compare models, the mean is taken over the four models to compute the average predicted price and find the error rates between the calculated error and real prices. As the table reveals, the RMSE is $588.34 which is pretty close to random forests and the best neural network in terms of variance.
+
 ```{r ensemble table}
 #create Table with 0 values
 ensemble_summ <- data.frame("MLR" = 0,
@@ -1467,7 +1547,7 @@ kable_styling(kable(ens_error)%>% kable_classic(), full_width = TRUE)
 ```
 
 
-```{rensemble error table}
+```{r ensemble error table}
 ens_rmse_summ <- NN_res[0,] #NeuralNet Error
 ens_rmse_summ[1, ] <- round(Acc4, 2)
 ens_rmse_summ[2, ] <- Tree_res[8,]
@@ -1556,3 +1636,27 @@ pred_plot_full
 # Conclusions
 
 # References
+EDA
+- https://r-graph-gallery.com/199-correlation-matrix-with-ggally.html and http://www.sthda.com/english/wiki/ggplot2-quick-correlation-matrix-heatmap-r-software-and-data-visualization
+
+k-NN
+- https://online.stat.psu.edu/stat508/lesson/k#:~:text=The%20larger%20k%20is%2C%20the,Nearest%20Neighbors%20are%20shown%20below.    
+- https://www.analyticsvidhya.com/blog/2018/03/introduction-k-neighbours-algorithm-clustering/
+
+Regression Tree
+- Data Mining textbook
+- https://www.ibm.com/docs/en/db2-warehouse?topic=procedures-regression-trees
+
+Boosted Tree
+- https://towardsdatascience.com/introduction-to-boosted-trees-2692b6653b53  
+- https://leonlok.co.uk/blog/decision-trees-random-forests-gradient-boosting-whats-the-difference/
+
+Bagging Tree
+- https://machinelearningmastery.com/bagging-and-random-forest-ensemble-algorithms-for-machine-learning/
+
+Random Forest
+- Data Mining textbook
+
+Ensemble
+- https://towardsdatascience.com/ensemble-methods-in-machine-learning-what-are-they-and-why-use-them-68ec3f9fef5f
+
