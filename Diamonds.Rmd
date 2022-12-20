@@ -97,6 +97,7 @@ tf$constant("Hello Tensorflow!")      #for initializing tensoflow environment
 ```
 
 # Data Exploration 
+In the early stages of any analysis, data exploration is a critical process aimed at understanding and analyzing the dataset to gain insight and make valid decisions. The overarching goal of exploring the data is to obtain intuition, identify questionable values, and plan to execute an approach to fulfill the problem statement. Therefore, let's summarize the findings that explain the main characteristics of the data, and dive into the relations between variables to understand how this analysis will be directed.
 
 ```{r Import Data}
 diamonds <- fread("diamonds.csv", sep=",", header = T) # Load your data, diamonds.csv
@@ -111,6 +112,21 @@ colnames(diamonds)[10] <- "depth" # z to depth
 ```
 
 ## Dimension Summary 
+There is a variety of ways an analyst could approach  understanding the observations contained in the dataset. For starters, there are 53,940 records and 10 variables. The response variable (price) is a an integer variable. There are an additional six numeric values and three ordinal/categorical features that have a factored structure. Those non-numeric values (cut, color, and clarity) need to be appropriately ordered, and renamed if there are any spaces within their naming convention as later this could obstruct certain code. 
+
+To dive deeper, we consider removing observations that are invalid because they add noise. For instance, price against all features were reviewed for possible impurities. In total, there are 275 (0.5%) records removed for the following reasons:  
+1. 20 rows had a depth of 0.0. This is considered inaccurate because a diamond needs to have this dimension specified.  
+2. Between the difference of length and width, the measurements should be almost identical. If they were not, those rows were removed. In this case, only two records were not included in the dataset at differences above 36 mm. 
+3. The depth_ratio is a calculation between length, width, and length. To investigate this feature further, our group computed depth_ratio and saw there were differences between the actual and predicted values. Therefore, the executive decision was to remove any differences above a threshold of 0.3. A total of 253 rows were removed.  
+
+The second part of exploring the diamonds dataset is to understand the relationships between variables. Prior to analyzing their correlations, we had an idea of which continuous variables would have a strong relation due to the depth_ratio calculation. Later on, certain methods will analyze the potential issue of collinearity. By isolating price against the other continuous variables, carat, length, width, and depth, all have positively linear relations to the response feature. Some of the models used in the analysis to predict price will show these effects. In addition, the relationship between carat and price is unique  because their relation is non-linear. We were also interested in showing how the categorical variables affect price. Clarity, color, and cut have distinct patterns seen between the four continuous variables mentioned above. 
+
+For instance, when plotting price by carat, width, length, and depth with clarity as the color dimension, there is a clear distinction between how these points relate. Each scatterplot shows a strong, positive correlation to price. When reviewing the x-axis for each explanatory variable, the lower tiered option is typically observed more. The cheaper the gemstone, the worse quality the customer will receive. Within each plot, there are outliers that can be explained by how the diamond was cut, which impacts the weight, length, and depth. By the color scale, it is noticed how there are more diamonds with a worse clarity (SI2/SI1) than there are with the best (IF/VVS1). Intuitively, this makes sense because not all customers have the available funds to afford the optimally designed diamond. On the other hand, no one wants to the worst clarity either. Therefore, a majority of the diamonds lie between the second and third best, and second and third worst clarity factors. In addition, the relation between depth_ratio and table to price is not distinct as those features are mixed throughout the relative ranges. Within all of the depth_ratio plots, there are vertical lines that show the depth_ratio  mean (black) and range (red) of what is considered the prime value for depth_ratio as long as it is above 59 but does not exceed 62.3. 
+
+A similar story can be told for price by the continuous variables but as color as the color dimension. Instead of most of the observations falling closer to the best and worth clarify features, here the reader will notice how it appears that the colors E, F and G dominate (the white to light blue). 
+
+Cut is completely different than clarity and color as a majority of customers prefer and will purchase the ideal cut. This can be seen within the depth_ratio plot especially. As stated earlier, the red lines indicate the optimal space in which a buyer would want the diamond's depth_ratio. Most of all of the ideal cut are within those bounds while the fair, good, and very good are outside. There is a clear distinction how cut relates to the depth_ratio along price.
+
 
 ```{r Data Exploration}
 dim(diamonds) # Dimensions of data
@@ -307,6 +323,9 @@ kable_corr
 ```
 
 ## Variable Visualisation
+As a continuation of data exploration, variable visualization involves creating graphical representations of data to visually communicate insights and trends. It allows us to quickly and easily identify patterns that may not be immediately apparent from looking at raw data. There are three graphics that demonstrate how these continuous values are distributed. Since some models take into account transformation, those details will be described later. As a high-level review, price and carat are positively skewed. From the scatterplot by cut above, the relation to the histogram for depth_ratio can see that most cut features fall into approximately 60 to 65 mm. The relationships in the Correlation Heatmap visually show how width, length, depth, and carat continue to be highly correlated with price while depth_ratio and table are closer to 0. Another way to visualize the relationships is through the Pearson correlation ellipses chart. The skinnier the ellipse, the more correlated the two values are. 
+
+Through exploration, we can gain a deeper understanding of the data and how it can be used to answer business questions or solve real-world problems, like predicting the price of a diamond.
 
 ```{r Histograms}
 ggplot(gather(data = diamonds[, c(1, 5:10)]), aes(value)) +
