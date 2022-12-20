@@ -368,30 +368,37 @@ There is a variety of ways an analyst could approach understanding the
 observations in the data set. For starters, there are 53,940 records and
 10 variables. The response variable (price) is a an integer variable.
 There are an additional six numeric values and three ordinal/categorical
-features that have a factored structure. Those non-numeric values (cut,
-color, and clarity) need to be appropriately ordered, and renamed if
-there are any spaces within their naming convention as later this could
-obstruct certain code.
+features that have a factored structure. Those non-numeric values
+(\texttt{cut}, \texttt{color}, and \texttt{clarity}) need to be
+appropriately ordered, and renamed if there are any spaces within their
+naming convention as later this could obstruct certain code.
 
 To dive deeper, we consider removing observations that are invalid
 because they add noise. For instance, price against all features were
 reviewed for possible impurities. In total, there are 275 (0.5\%)
-records removed for the following reasons:\\
-1. 20 rows had a depth of 0.0. This was considered inaccurate because a
-diamond needs to have this dimension specified.\\
-2. The difference between length and width should be almost identical.
-If they were not, those rows were removed. In this case, only two
-records were not included in the data set at differences above 36.0mm.
-3. The depth\_ratio is a calculation between length, width, and length.
-To investigate this feature further, our group computed depth\_ratio and
-saw there were differences between the actual and predicted values.
-Therefore, the executive decision was to remove any differences above a
-threshold of 0.3. A total of 253 rows were removed.
+records removed for the following reasons:
 
-\hypertarget{missing-values}{%
-\subsection{Missing Values}\label{missing-values}}
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  20 rows had a depth of 0.0. This was considered inaccurate because a
+  diamond needs to have this dimension specified.
+\item
+  The difference between length and width should be almost identical. If
+  they were not, those rows were removed. In this case, only two records
+  were not included in the data set at differences above 36.0mm.
+\item
+  The depth\_ratio is a calculation between length, width, and length.
+  To investigate this feature further, our group computed depth\_ratio
+  and saw there were differences between the actual and predicted
+  values. Therefore, the executive decision was to remove any
+  differences above a threshold of 0.3. A total of 253 rows were
+  removed.
+\end{enumerate}
 
-Forunately, there were no null values that needed to be considered.
+Fortunately, there were no null values that needed to be considered.
+
+\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/threshold diff hist-1} \end{center}
 
 The second part of exploring the diamonds data set is to understand the
 relationships between variables. Prior to analyzing their correlations,
@@ -409,7 +416,7 @@ above.
 
 For instance, when plotting price by carat, width, length, and depth,
 with clarity as the color dimension, there is a clear distinction
-between how these points relate. Each scatterplot shows a strong,
+between how these points relate. Each scatter plot shows a strong,
 positive correlation to price. When reviewing the x-axis for each
 explanatory variable, the lower tiered option is typically observed
 more. The cheaper the gemstone, the worse quality the customer bought.
@@ -428,11 +435,15 @@ vertical lines that show the depth\_ratio mean (black) and range (red)
 of what is considered the prime value for depth\_ratio as long as it is
 above 59\% but does not exceed 62.3\%.
 
+\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/Price by X and Clarity-1} \end{center}
+
 A similar relationship can be seen regarding price by the continuous
 variables, but as color as the color dimension. Instead of most of the
 observations falling closer to the best and worth clarify features, here
 the reader will notice how it appears that the colors E, F and G
 dominate (the white to light blue) the retail space.
+
+\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/Price by X and Color-1} \end{center}
 
 Cut has a completely different trend than clarity and color as a
 majority of customers prefer and will purchase the ideal cut. This can
@@ -441,6 +452,8 @@ red lines indicate the optimal space in which a buyer would want the
 diamond's depth\_ratio. Most of all of the ideal cuts are within those
 bounds while the fair, good, and very good are outside. There is a clear
 distinction on how cut relates to the depth\_ratio along price.
+
+\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/Price by X and Cut-1} \end{center}
 
 \hypertarget{variable-visualisation}{%
 \subsection{Variable Visualisation}\label{variable-visualisation}}
@@ -464,6 +477,10 @@ skinnier the ellipse, the more correlated the two values are.
 Through exploration, we can gain a deeper understanding of the data and
 how it can be used to answer business questions or solve real-world
 problems, like predicting the price of a diamond.
+
+\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/Histograms-1} \end{center}
+
+\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/Correlation-1} \end{center}
 
 \hypertarget{variable-prediction-and-model-performance-evaluation}{%
 \section{Variable Prediction and Model Performance
@@ -493,6 +510,8 @@ GVIF coefficients of the remaining predictors are all under 2, which
 indicates the multicollinearity problem is solved. We display
 correlation ellipses of numerical variables without \texttt{length},
 \texttt{width} and \texttt{depth}.
+
+\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/uncorrelated-ellipses-1} \end{center}
 
 The only high correlation left is between \texttt{carat} and
 \texttt{price}, indicating that \texttt{carat} will surely be an
@@ -537,12 +556,39 @@ The value of \(b_1\) is interpreted as follows:
 We compute \(b_1\) on our numerical variables and get the following
 results.
 
+\begin{table}
+
+\caption{\label{tab:skewness-table}Skewness estimator for numerical variables}
+\centering
+\begin{tabular}[t]{l|r}
+\hline
+  & \$b\_1\$\\
+\hline
+price & 1.6259747\\
+\hline
+carat & 1.0967514\\
+\hline
+length & 0.3984689\\
+\hline
+width & 0.3922008\\
+\hline
+depth & 0.3921093\\
+\hline
+depth\_ratio & 0.0182498\\
+\hline
+table & 0.8728869\\
+\hline
+\end{tabular}
+\end{table}
+
 \texttt{price} and \texttt{carat} are highly skewed and \texttt{table}
 is moderately skewed.
 
 We apply a logarithmic transformation to all three variables. The
 improvement can also be seen in the histograms, as they look more
 symmetrical now.
+
+\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/hist-unskewed-1} \end{center}
 
 We also standardize numerical variables by subtracting their mean and
 dividing by their standard deviation. This makes the comparison of
@@ -580,6 +626,37 @@ predictors}\label{linear-models-based-on-uncorrelated-predictors}}
 
 For each of these models, we summarise which variables are used as
 predictors in the following table.
+
+\begin{table}
+
+\caption{\label{tab:Variable Selection Summary}Predictors used in each linear model}
+\centering
+\begin{tabular}[t]{l|c|c|c|c|c|c|c|c|c}
+\hline
+Model & Cut & Color & Clarity & Carat & Length & Width & Depth & Depth Ratio & Table\\
+\hline
+LM\_complete & X & X & X & X & X & X & X & X & X\\
+\hline
+LM\_forward\_complete & X & X & X & X & X & X & X & X & X\\
+\hline
+LM\_backward\_complete & X & X & X & X & X &  & X & X & \\
+\hline
+LM\_stepwise\_complete & X & X & X & X & X &  & X & X & \\
+\hline
+LM\_CpAIC\_complete & X & X & X & X & X &  & X & X & \\
+\hline
+LM\_minus\_corr & X & X & X & X &  &  &  & X & X\\
+\hline
+LM\_forward\_minus\_corr & X & X & X & X &  &  &  & X & X\\
+\hline
+LM\_backward\_minus\_corr & X & X & X & X &  &  &  & X & \\
+\hline
+LM\_stepwise\_minus\_corr & X & X & X & X &  &  &  & X & \\
+\hline
+LM\_CpAIC\_minus\_corr & X & X & X & X &  &  &  & X & \\
+\hline
+\end{tabular}
+\end{table}
 
 For both basis models, forward selection doesn't discard any variables,
 whereas backward, stepwise and global selections all choose the same
@@ -629,6 +706,25 @@ rescaled to its original scale and retransformed by taking the
 exponential (to cancel out the logarithm). Thus, the ME, RMSE and MAE
 can be interpreted in the price currency, dollars.
 
+\begin{table}
+
+\caption{\label{tab:models-accuracy-table}Accuracy measures of linear models}
+\centering
+\begin{tabular}[t]{l|r|r|r|r|r}
+\hline
+Model & ME & RMSE & MAE & MPE & MAPE\\
+\hline
+LM\_complete & 36.36648 & 846.5888 & 408.5364 & -0.8377036 & 10.33643\\
+\hline
+LM\_CpAIC\_complete & 36.32774 & 845.5018 & 408.1349 & -0.8408540 & 10.33659\\
+\hline
+LM\_minus\_corr & 50.38994 & 810.1522 & 405.0486 & -0.8420621 & 10.39559\\
+\hline
+LM\_CpAIC\_minus\_corr & 50.39878 & 810.1610 & 405.0616 & -0.8418121 & 10.39568\\
+\hline
+\end{tabular}
+\end{table}
+
 The mean error is bigger in the models without multicollinearity issues,
 but their RMSE is smaller. Since the mean error is positive in all four
 models, we are under-predicting the price of diamonds by 36 or 50
@@ -676,8 +772,8 @@ The \(k\)-nearest neighbors algorithm is very useful when predicting
 price because the data does not need to be transformed or predictors
 selected in a particular way.
 
-\hypertarget{methodology}{%
-\paragraph{Methodology}\label{methodology}}
+\hypertarget{model-structure}{%
+\paragraph{Model Structure}\label{model-structure}}
 
 There are several steps that need to be completed prior to running the
 first \(k\)-NN model with k = 1. First, you clean the data to ensure
@@ -703,8 +799,68 @@ The optimal k is 4 because it produces the lowest RMSE at \$814.59.
 After rerunning the \(k\)-NN model, the results improved in one aspect,
 but not the other.
 
-\hypertarget{analysis}{%
-\paragraph{Analysis}\label{analysis}}
+\begin{tabu} to \linewidth {>{\raggedleft}X>{\raggedleft}X}
+\hline
+k & accuracy\\
+\hline
+1 & 954.5954\\
+\hline
+2 & 861.0887\\
+\hline
+3 & 827.1196\\
+\hline
+\cellcolor[HTML]{D8B365}{\textcolor{white}{\textbf{4}}} & \cellcolor[HTML]{D8B365}{\textcolor{white}{\textbf{814.5940}}}\\
+\hline
+5 & 819.2859\\
+\hline
+6 & 818.5541\\
+\hline
+7 & 822.7554\\
+\hline
+8 & 833.2104\\
+\hline
+9 & 839.9301\\
+\hline
+10 & 847.3985\\
+\hline
+11 & 850.7010\\
+\hline
+12 & 854.8280\\
+\hline
+13 & 860.4922\\
+\hline
+14 & 867.3541\\
+\hline
+15 & 874.8586\\
+\hline
+16 & 879.9069\\
+\hline
+17 & 886.0747\\
+\hline
+18 & 891.9780\\
+\hline
+19 & 896.3521\\
+\hline
+20 & 900.0938\\
+\hline
+\end{tabu}
+
+\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/Best K Plot-1} \end{center}
+
+\begin{table}
+\centering
+\begin{tabu} to \linewidth {>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X}
+\hline
+  & ME & RMSE & MAE & MPE & MAPE\\
+\hline
+k = 1 & 20.6 & 954.6 & 487.17 & -1.83 & 13.73\\
+\hline
+k = 4 & 40.86 & 814.59 & 431.29 & -2.45 & 12.14\\
+\hline
+\end{tabu}
+\end{table}
+
+\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/knn error table-1} \end{center}
 
 As stated earlier, the table above shows how the ME got worse for k = 4,
 but better with RMSE once the model was optimized. In this analysis, one
@@ -713,8 +869,8 @@ price. Therefore, the difference of \$140.00 is more important even when
 the ME slightly increases. Between k = 1 and k = 4 for the \(k\)-NN
 model, k = 4 with an RMSE of \$814.60 will predict prices better.
 
-\hypertarget{decision-tree}{%
-\subsection{Decision Tree}\label{decision-tree}}
+\hypertarget{decision-trees}{%
+\subsection{Decision Trees}\label{decision-trees}}
 
 \hypertarget{regression-tree-overview}{%
 \paragraph{Regression Tree Overview}\label{regression-tree-overview}}
@@ -735,9 +891,9 @@ values. Thus, the target attribute values can be predicted from their
 mean values in the leaves' which reduces the variance of the target
 variable.
 
-\hypertarget{regression-tree-methodology-and-analysis}{%
-\paragraph{Regression Tree Methodology and
-Analysis}\label{regression-tree-methodology-and-analysis}}
+\hypertarget{model-structure-and-analysis}{%
+\paragraph{Model Structure and
+Analysis}\label{model-structure-and-analysis}}
 
 Since the tree proactively takes into consideration the most important
 attributes to split on, multiple trees are created to check its
@@ -752,24 +908,16 @@ on width \textless{} 6.33, seven splits total and uses the following for
 the primary splits: width \textless{} 6.325, carat \textless{} 0.985,
 length \textless{} 6.325 and depth \textless{} 3.935.
 
-\hypertarget{partitioning}{%
-\subsubsection{Partitioning}\label{partitioning}}
-
 \hypertarget{regression-tree}{%
 \subsubsection{Regression Tree}\label{regression-tree}}
 
-\hypertarget{exlcusion-regression-tree}{%
-\subsubsection{`Exlcusion' Regression
-Tree}\label{exlcusion-regression-tree}}
-
-\hypertarget{pruned-regression-tree}{%
-\subsubsection{Pruned Regression Tree}\label{pruned-regression-tree}}
+\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/Default Regression Tree-1} \end{center}
 
 \hypertarget{boosted-tree}{%
 \subsubsection{Boosted Tree}\label{boosted-tree}}
 
-\hypertarget{boosted-tree-overview}{%
-\paragraph{Boosted Tree Overview}\label{boosted-tree-overview}}
+\hypertarget{overview-1}{%
+\paragraph{Overview}\label{overview-1}}
 
 Boosted trees are a type of ensemble model that `transforms weak
 decision trees into strong learners. Each new tree is built considering
@@ -779,8 +927,9 @@ the errors made by the previous model. Since this model is prone to
 overfitting, the parameters need to be carefully considered so that the
 lowest error rates can be achieved.
 
-\hypertarget{methodology-1}{%
-\paragraph{Methodology}\label{methodology-1}}
+\hypertarget{model-structure-and-analysis-1}{%
+\paragraph{Model Structure and
+Analysis}\label{model-structure-and-analysis-1}}
 
 There is a wide variety of parameters that can be chosen for a boosted
 tree. Therefore, those options were used differently to choose the best
@@ -788,9 +937,6 @@ model based off the number of predictors and how deep each tree would be
 allowed to interact. The main difference between each model is the
 number of trees ran. As the size of the tree increase, the better the
 model because it only considered the most important factors.
-
-\hypertarget{analysis-1}{%
-\paragraph{Analysis}\label{analysis-1}}
 
 The best boosted model was the one with 100 trees and three
 cross-validation folds. The tree used six predictors to produce a model
@@ -802,8 +948,8 @@ see that it as the fourth which is above length.
 \hypertarget{bagged-tree}{%
 \subsubsection{Bagged Tree}\label{bagged-tree}}
 
-\hypertarget{bagging-tree-overview}{%
-\paragraph{Bagging Tree Overview}\label{bagging-tree-overview}}
+\hypertarget{overview-2}{%
+\paragraph{Overview}\label{overview-2}}
 
 The third method is bagged trees. This type of model `combines the
 predictions from multiple machine learning algorithms together to make
@@ -814,8 +960,9 @@ the trees to make a final prediction. This model has the ability to
 reduce variance because it introduces randomness into the training
 process.
 
-\hypertarget{methodology-analysis}{%
-\paragraph{Methodology \& Analysis}\label{methodology-analysis}}
+\hypertarget{model-structure-and-analysis-2}{%
+\paragraph{Model Structure and
+Analysis}\label{model-structure-and-analysis-2}}
 
 This model is pretty straight forward because the best model was built
 by sticking with the basics. `The only parameters when bagging decision
@@ -829,16 +976,16 @@ important to consider is the RMSE which is \$1,248.77.
 \hypertarget{random-forest}{%
 \subsubsection{Random Forest}\label{random-forest}}
 
-\hypertarget{random-forest-overview}{%
-\paragraph{Random Forest Overview}\label{random-forest-overview}}
+\hypertarget{overview-3}{%
+\paragraph{Overview}\label{overview-3}}
 
 `Random forests are a special case of bagging, a method for improving
 predictive power by combining multiple classifiers or prediction
 algorithms.' They are an ensemble based on bagged trees which involves
 training each tree on a bootstrapped sample of the original data.
 
-\hypertarget{methodology-2}{%
-\paragraph{Methodology}\label{methodology-2}}
+\hypertarget{model-structure-1}{%
+\paragraph{Model Structure}\label{model-structure-1}}
 
 Similar to the bagged trees, random forests are pretty simplistic. The
 main focus in this section was to check how many trees should be run
@@ -847,8 +994,7 @@ RMSE. For example, what is the difference in RMSE if the model was built
 off of 100 trees versus 60? The model with 100 trees was the best model
 with an RMSE of \$575.42.
 
-\hypertarget{analysis-2}{%
-\paragraph{Analysis}\label{analysis-2}}
+\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/RF Variable Importance-1} \end{center}
 
 Throughout this entire section, typically the lower RMSE produced the
 best model. Additionally up to this point, there have been three or four
@@ -860,12 +1006,36 @@ model. Therefore, the random forest with 60 trees had a slightly higher
 RMSE at a difference of approximately \$2 which gave a \$577.63 for the
 RMSE.
 
-\hypertarget{create-regression-tree-summary-table}{%
-\subsubsection{Create Regression Tree Summary
-Table}\label{create-regression-tree-summary-table}}
+\hypertarget{decision-tree-summary-table}{%
+\subsubsection{Decision Tree Summary
+Table}\label{decision-tree-summary-table}}
 
-\hypertarget{decision-tree-conclusion}{%
-\paragraph{Decision Tree Conclusion}\label{decision-tree-conclusion}}
+\begin{table}
+\centering
+\begin{tabu} to \linewidth {>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X}
+\hline
+  & ME & RMSE & MAE & MPE & MAPE\\
+\hline
+Reg. Tree & 6.1 & 1267.15 & 846.93 & -14.54 & 33.08\\
+\hline
+Exclus. RT & 6.1 & 1267.15 & 846.93 & -14.54 & 33.08\\
+\hline
+Pruned RT & 6.1 & 1267.15 & 846.93 & -14.54 & 33.08\\
+\hline
+Boost10 & -3.9 & 3660.42 & 2765.96 & -144.49 & 171.65\\
+\hline
+Boost30 & 2.54 & 1531.52 & 985.7 & -35.26 & 46.86\\
+\hline
+Boost100 & 9 & 1170.3 & 680.22 & -12.85 & 26.22\\
+\hline
+Bagging & 0.93 & 1248.77 & 808.93 & -14.35 & 31.45\\
+\hline
+RndmFrst & 2.97 & 577.63 & 289.51 & -1.4 & 7.24\\
+\hline
+\end{tabu}
+\end{table}
+
+\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/RegTree Summary-1} \end{center}
 
 Throughout the four methods mentioned, the random forest model proved to
 be the most effective in predicting price with a RMSE of \$577.63, which
@@ -922,12 +1092,6 @@ prediction in neural networks (continuous and categorical) the
 difference in amplitude is very important. This is why it is standard
 procedure to normalize the data so they are all in the same scale.
 
-\hypertarget{partitioning-1}{%
-\subsubsection{Partitioning}\label{partitioning-1}}
-
-\hypertarget{normalizing-data}{%
-\subsubsection{Normalizing Data}\label{normalizing-data}}
-
 \hypertarget{model-structures}{%
 \subsubsection{Model Structures}\label{model-structures}}
 
@@ -957,7 +1121,7 @@ measure this by looking at the error in prediction, also called the
 accuracy. There are many ways of measuring this, but as mentioned
 before, the two we looked at are the Mean Error, as a measure of
 accuracy, and Root Mean Squared Error, as a measure of precision. For
-the 26 node model, the RMSE is 745.16 vs 744.04 for the 13 node net.
+the 26 node model, the RMSE is \$745.16 vs \$744.04 for the 13 node net.
 While just looking at this configuration one could infer using less
 nodes is better, after multiple tests it is concluded that keeping the
 26 nodes as the first hidden layer is best for reducing the RMSE going
@@ -965,7 +1129,7 @@ forward.
 
 The next configuration tested is adding 2 additional hidden layers, one
 of 26 additional nodes, and another of 13. Just by using this
-configuration, the model RMSE reduced to 627.65. As this is already a
+configuration, the model RMSE reduced to \$627.65. As this is already a
 rather low RMSE, in comparison to previous neural networks, as well as
 other models seen above, it was decided to keep this structure as the
 definitive one for establishing the most accurate prediction.
@@ -976,16 +1140,15 @@ activation function. This structure was adjusted to use the
 method consists of assigning weights to the nodes using a de probability
 curve of a truncated normal distribution as so:
 
-\begin{itemize}
-\tightlist
-\item
-  Glorot Normal Initialization:
-\end{itemize}
+\textbf{Glorot Normal Initialization:}
 
-\(w_{i} \sim Gaussian(\mu = 0, \sigma^{2} = \sqrt{\frac{2} {u_{in} + u_{out} }})\)
+\[w_{i} \sim Gaussian \left(\mu = 0, \sigma^{2} = \sqrt{\frac{2} {u_{in} + u_{out} }}\right)\]
 
-where: \(u_{in}\) = number of input nodes \(u_{out}\) = number of output
-nodes
+where:
+
+\(u_{in}\) = number of input nodes
+
+\(u_{out}\) = number of output nodes
 
 This initiation method demonstrated much better results than others such
 as the normal distribution, uniform distribution of the Glorot Uniform,
@@ -999,76 +1162,32 @@ literature is the most commonly used due to its good performance
 results. Though we tested others like \emph{``relu''} or
 \emph{``softplus''}, sigmoid ended being the most accurate predicting.
 
-\hypertarget{model-1-layers-1-nodes-1}{%
-\subsubsection{Model 1 (Layers = 1, Nodes =
-1)}\label{model-1-layers-1-nodes-1}}
+\hypertarget{neural-net-summary-table}{%
+\subsubsection{Neural Net Summary
+Table}\label{neural-net-summary-table}}
 
-\begin{itemize}
-\item
-  Creating Model 1
-\item
-  Measuring Error Model 1
-\end{itemize}
+\begin{table}
+\centering
+\begin{tabular}{l|l|l|l|l|l}
+\hline
+  & ME & RMSE & MAE & MPE & MAPE\\
+\hline
+L1 N1 & -6.62 & 3982.99 & 3025.61 & -157.47 & 187.29\\
+\hline
+L1 N26 & -83.28 & 745.16 & 450.94 & -11.37 & 17.91\\
+\hline
+L1 N13 & -86.71 & 744.04 & 454.38 & -12.89 & 19.21\\
+\hline
+L2 N26 & 30.22 & 627.65 & 364.54 & -5.43 & 13.49\\
+\hline
+L2 N26 G & -32.61 & 630.02 & 358.21 & -6.62 & 12.72\\
+\hline
+L2 N26 G LR & 8.98 & 577.08 & 322.95 & -2.03 & 10.23\\
+\hline
+\end{tabular}
+\end{table}
 
-\hypertarget{model-2-layers-1-nodes-26}{%
-\subsubsection{Model 2 (Layers = 1, Nodes =
-26)}\label{model-2-layers-1-nodes-26}}
-
-\begin{itemize}
-\item
-  Creating Model 2
-\item
-  Measuring Error Model 2
-\end{itemize}
-
-\hypertarget{model-3-layers-1-nodes-13}{%
-\subsubsection{Model 3 (Layers = 1, Nodes =
-13)}\label{model-3-layers-1-nodes-13}}
-
-\begin{itemize}
-\item
-  Creating Model 3
-\item
-  Measuring Error Model 3
-\end{itemize}
-
-\hypertarget{model-4-layers-2-nodes-26}{%
-\subsubsection{Model 4 (Layers = 2, Nodes =
-26)}\label{model-4-layers-2-nodes-26}}
-
-\begin{itemize}
-\item
-  Creating Model 4
-\item
-  Measuring Error Model 4
-\end{itemize}
-
-\hypertarget{model-5-with-initializer-layers-2-nodes-26-glorotnormal}{%
-\subsubsection{Model 5 with Initializer (Layers = 2, Nodes = 26,
-GlorotNormal)}\label{model-5-with-initializer-layers-2-nodes-26-glorotnormal}}
-
-\begin{itemize}
-\item
-  Creating Model 5
-\item
-  Measuring Error Model 5
-\end{itemize}
-
-\hypertarget{model-6-with-initializer-and-learning-rate-layers-2-nodes-26-glorotnormal-lr-0.005}{%
-\subsubsection{Model 6 with Initializer and Learning Rate (Layers = 2,
-Nodes = 26, GlorotNormal, LR =
-0.005)}\label{model-6-with-initializer-and-learning-rate-layers-2-nodes-26-glorotnormal-lr-0.005}}
-
-\begin{itemize}
-\item
-  Creating model 6
-\item
-  Measuring Error Model 6
-\end{itemize}
-
-\hypertarget{create-neural-net-summary-table}{%
-\subsubsection{Create Neural Net Summary
-Table}\label{create-neural-net-summary-table}}
+\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/NN Summary-1} \end{center}
 
 As can be seen, the predictive performance of the neural networks can
 vary a lot depending on the structure and parameters chosen. The
@@ -1076,10 +1195,6 @@ negative point in this method is the requirement of human input to
 adjust the model to learn more precisely. Nevertheless, once the many
 trials have been executed, the results are very positive for a good
 predictive model.
-
-\hypertarget{neural-network-graphic-description}{%
-\subsubsection{Neural network graphic
-description}\label{neural-network-graphic-description}}
 
 \begin{figure}
 \centering
@@ -1090,9 +1205,9 @@ description}\label{neural-network-graphic-description}}
 \hypertarget{ensembles}{%
 \subsection{Ensembles}\label{ensembles}}
 
-\hypertarget{ensembles-overview-methodology-and-analysis}{%
-\paragraph{Ensembles Overview, Methodology, and
-Analysis}\label{ensembles-overview-methodology-and-analysis}}
+\hypertarget{overview-model-structure-and-analysis}{%
+\paragraph{Overview, Model Structure and
+Analysis}\label{overview-model-structure-and-analysis}}
 
 `Ensemble methods is a machine learning technique that combines several
 base models in order to produce one optimal predictive model.' The
@@ -1103,8 +1218,60 @@ find the error rates between the calculated price and real prices. As
 the table reveals, the RMSE is \$588.34 which is pretty close to random
 forests and the best neural network in terms of variance.
 
+\begin{table}
+\centering
+\begin{tabu} to \linewidth {>{\raggedright}X>{\raggedleft}X>{\raggedleft}X>{\raggedleft}X>{\raggedleft}X>{\raggedleft}X}
+\hline
+  & ME & RMSE & MAE & MPE & MAPE\\
+\hline
+Test set & 25.80266 & 582.3353 & 306.1574 & -1.682175 & 8.448477\\
+\hline
+\end{tabu}
+\end{table}
+
+\begin{table}
+\centering
+\begin{tabular}{l|l|l|l|l|l}
+\hline
+  & ME & RMSE & MAE & MPE & MAPE\\
+\hline
+Multiple Linear Regression & 50.4 & 810.16 & 405.06 & -0.84 & 10.4\\
+\hline
+Random Forest & 2.97 & 577.63 & 289.51 & -1.4 & 7.24\\
+\hline
+k-Nearest Neighbor & 40.86 & 814.59 & 431.29 & -2.45 & 12.14\\
+\hline
+Neural Network & 8.98 & 577.08 & 322.95 & -2.03 & 10.23\\
+\hline
+Ensemble & 25.8 & 582.34 & 306.16 & -1.68 & 8.45\\
+\hline
+\end{tabular}
+\end{table}
+
 \hypertarget{model-performance-summary}{%
 \section{Model Performance Summary}\label{model-performance-summary}}
+
+In this section, we can see how the predicted price behaves with respect
+to the real price, having used each of the methods and mapping per each
+categorical variable. This helps see how each model compares with
+regards to precision. The models with more precision are closer to a
+diagonal line. As can be seen,
+
+\hypertarget{predicted-price-vs-real-price-by-clarity}{%
+\subsection{Predicted Price vs Real Price by
+Clarity}\label{predicted-price-vs-real-price-by-clarity}}
+
+\hypertarget{predicted-price-vs-real-price-by-color}{%
+\subsection{Predicted Price vs Real Price by
+Color}\label{predicted-price-vs-real-price-by-color}}
+
+\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/Summ Color Plots-1} \end{center}
+
+\hypertarget{predicted-price-vs-real-price-by-cut}{%
+\subsection{Predicted Price vs Real Price by
+Cut}\label{predicted-price-vs-real-price-by-cut}}
+
+\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/Summ Cut Plots-1} \end{center}
 
 \hypertarget{conclusions}{%
 \section{Conclusions}\label{conclusions}}

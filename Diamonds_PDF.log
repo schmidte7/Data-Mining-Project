@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999994 (MiKTeX 22.12) (preloaded format=xelatex 2022.12.20)  20 DEC 2022 20:30
+This is XeTeX, Version 3.141592653-2.6-0.999994 (MiKTeX 22.12) (preloaded format=xelatex 2022.12.20)  20 DEC 2022 23:24
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1673,63 +1673,124 @@ LaTeX Font Info:    Trying to load font information for U+msb on input line 3.
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 ) (C:\Users\ficop\AppData\Local\Programs\MiKTeX\tex/latex/microtype\mt-msb.cfg
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
-)
-LaTeX Font Info:    Font shape `TU/SourceSansPro(0)/m/sl' in size <10.95> not a
-vailable
-(Font)              Font shape `TU/SourceSansPro(0)/m/it' tried instead on inpu
-t line 49.
-LaTeX Font Info:    Font shape `TU/SourceSansPro(0)/m/it' will be
-(Font)              scaled to size 10.95pt on input line 49.
-[1
-
-])
+))
 \tf@toc=\write3
 \openout3 = `Diamonds_PDF.toc'.
 
-[2]
+LaTeX Font Info:    Font shape `TU/SourceSansPro(0)/m/sl' in size <10.95> not a
+vailable
+(Font)              Font shape `TU/SourceSansPro(0)/m/it' tried instead on inpu
+t line 336.
+LaTeX Font Info:    Font shape `TU/SourceSansPro(0)/m/it' will be
+(Font)              scaled to size 10.95pt on input line 336.
+[1
+
+]
 LaTeX Font Info:    Font shape `TU/SourceSansPro(0)/b/n' will be
 (Font)              scaled to size 12.0pt on input line 365.
-[3]
 LaTeX Font Info:    Font shape `TU/SourceCodePro(6)/m/n' will be
-(Font)              scaled to size 10.95pt on input line 479.
-[4] [5] [6]
-LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 12.00128pt on input line 651.
-LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 8.00085pt on input line 651.
-LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 6.00064pt on input line 651.
-LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 11.99872pt on input line 651.
-LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 7.99915pt on input line 651.
-LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 5.99936pt on input line 651.
-[7] [8] [9] [10] [11] [12] [13]
-File: NN_rep.jpeg Graphic file (type bmp)
-<NN_rep.jpeg>
+(Font)              scaled to size 10.95pt on input line 372.
+[2]
+File: Diamonds_PDF_files/figure-latex/threshold diff hist-1.png Graphic file (t
+ype bmp)
+<Diamonds_PDF_files/figure-latex/threshold diff hist-1.png>
+[3]
+File: Diamonds_PDF_files/figure-latex/Price by X and Clarity-1.png Graphic file
+ (type bmp)
+<Diamonds_PDF_files/figure-latex/Price by X and Clarity-1.png>
+[4]
+File: Diamonds_PDF_files/figure-latex/Price by X and Color-1.png Graphic file (
+type bmp)
+<Diamonds_PDF_files/figure-latex/Price by X and Color-1.png>
+[5]
+File: Diamonds_PDF_files/figure-latex/Price by X and Cut-1.png Graphic file (ty
+pe bmp)
+<Diamonds_PDF_files/figure-latex/Price by X and Cut-1.png>
+[6] [7]
+File: Diamonds_PDF_files/figure-latex/Histograms-1.png Graphic file (type bmp)
+<Diamonds_PDF_files/figure-latex/Histograms-1.png>
+File: Diamonds_PDF_files/figure-latex/Correlation-1.png Graphic file (type bmp)
 
-Underfull \hbox (badness 1052) in paragraph at lines 1097--1105
-[] \TU/SourceSansPro(0)/b/n/10.95 3.5.0.1 Ensembles Overview, Methodology, and 
-Analysis[][] \TU/SourceSansPro(0)/m/n/10.95 ‘Ensemble methods is a machine
+<Diamonds_PDF_files/figure-latex/Correlation-1.png>
+[8] [9]
+File: Diamonds_PDF_files/figure-latex/uncorrelated-ellipses-1.png Graphic file 
+(type bmp)
+<Diamonds_PDF_files/figure-latex/uncorrelated-ellipses-1.png>
+[10]
+File: Diamonds_PDF_files/figure-latex/hist-unskewed-1.png Graphic file (type bm
+p)
+<Diamonds_PDF_files/figure-latex/hist-unskewed-1.png>
+[11]
+Overfull \hbox (49.76608pt too wide) in paragraph at lines 634--659
+ [][] 
  []
 
-[14] [15]
-Overfull \hbox (227.75766pt too wide) in paragraph at lines 1120--1124
+[12] [13]
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
+(Font)              scaled to size 12.00128pt on input line 747.
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
+(Font)              scaled to size 8.00085pt on input line 747.
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
+(Font)              scaled to size 6.00064pt on input line 747.
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
+(Font)              scaled to size 11.99872pt on input line 747.
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
+(Font)              scaled to size 7.99915pt on input line 747.
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
+(Font)              scaled to size 5.99936pt on input line 747.
+[14]
+Overfull \hbox (10.95pt too wide) in paragraph at lines 802--847
+[][] 
+ []
+
+File: Diamonds_PDF_files/figure-latex/Best K Plot-1.png Graphic file (type bmp)
+
+<Diamonds_PDF_files/figure-latex/Best K Plot-1.png>
+[15]
+File: Diamonds_PDF_files/figure-latex/knn error table-1.png Graphic file (type 
+bmp)
+<Diamonds_PDF_files/figure-latex/knn error table-1.png>
+[16] [17]
+File: Diamonds_PDF_files/figure-latex/Default Regression Tree-1.png Graphic fil
+e (type bmp)
+<Diamonds_PDF_files/figure-latex/Default Regression Tree-1.png>
+[18] [19]
+File: Diamonds_PDF_files/figure-latex/RF Variable Importance-1.png Graphic file
+ (type bmp)
+<Diamonds_PDF_files/figure-latex/RF Variable Importance-1.png>
+[20]
+File: Diamonds_PDF_files/figure-latex/RegTree Summary-1.png Graphic file (type 
+bmp)
+<Diamonds_PDF_files/figure-latex/RegTree Summary-1.png>
+[21] [22] [23]
+File: Diamonds_PDF_files/figure-latex/NN Summary-1.png Graphic file (type bmp)
+<Diamonds_PDF_files/figure-latex/NN Summary-1.png>
+[24]
+File: NN_rep.jpeg Graphic file (type bmp)
+<NN_rep.jpeg>
+File: Diamonds_PDF_files/figure-latex/Summ Color Plots-1.png Graphic file (type
+ bmp)
+<Diamonds_PDF_files/figure-latex/Summ Color Plots-1.png>
+[25] [26]
+File: Diamonds_PDF_files/figure-latex/Summ Cut Plots-1.png Graphic file (type b
+mp)
+<Diamonds_PDF_files/figure-latex/Summ Cut Plots-1.png>
+[27]
+Overfull \hbox (227.75766pt too wide) in paragraph at lines 1287--1291
 []\TU/SourceSansPro(0)/m/n/10.95 k-NN - []$[] [] [] [] [] [] [] [] [] [] [] [] 
 [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [
 ] [] [] [] [] [] []$[]:~:text=The%20larger%20k%20is%2C%20the,Nearest%20Neighbor
 s%20are%20shown%20below. 
  []
 
-[16] (Diamonds_PDF.aux) ) 
+[28] [29] (Diamonds_PDF.aux) ) 
 Here is how much of TeX's memory you used:
- 29623 strings out of 410429
- 614799 string characters out of 2810471
- 1301613 words of memory out of 3000000
- 50460 multiletter control sequences out of 15000+600000
+ 29942 strings out of 410429
+ 631405 string characters out of 2810471
+ 1291885 words of memory out of 3000000
+ 50758 multiletter control sequences out of 15000+600000
  476118 words of font info for 120 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
- 108i,20n,115p,10637b,576s stack positions out of 10000i,1000n,20000p,200000b,80000s
+ 108i,19n,115p,10637b,567s stack positions out of 10000i,1000n,20000p,200000b,80000s
 
-Output written on Diamonds_PDF.pdf (17 pages).
+Output written on Diamonds_PDF.pdf (30 pages).
