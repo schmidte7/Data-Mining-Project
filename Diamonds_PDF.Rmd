@@ -376,6 +376,7 @@ ggplot(cormat, aes(Var2, Var1, fill = value)) +
   theme_minimal() + # Minimal theme, keeps in the lines
   theme(axis.text.x = element_text(angle = 45, vjust = 1, size = 12, hjust = 1)) +
   coord_fixed() +
+  labs(x="", y = "")+
   geom_text(aes(Var2, Var1, label = value), color = "black", size = 2)
 
 rm(cormat, reorder_cormat)
