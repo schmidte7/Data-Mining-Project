@@ -100,6 +100,15 @@ options(scipen = 999)                 #for removing scientific notation
 tf$constant("Hello Tensorflow!")      #for initializing tensorflow environment
 ```
 
+# Introduction
+
+The following report provides the result of using machine learning as a tool to estimate diamond prices for a jewelry company. Using snapshot information from their asset database, various methods were applied to train predictive models using regression analysis. The main objective was to use supervised learning methods to predict prices. These models are later compared to measure their effectiveness by using error measurements to quantify the distance between the prediction and the actual price. Finally, conclusions on the capability of each model are made and suggestions are given on which model to apply for the problem at hand. 
+
+The product being analyzed is diamonds. Being a luxury object with a long history, industry standards have been developed to serve as guidelines for estimating the value of the product. A wide variety of characteristics affect the overall price of diamonds, but this analysis will focus on their physical qualities, such as size dimensions, size ratios and color. Other factors inherent to scarce products in high demand of a capitalist economy will not be considered in our machine learning exercise.
+
+The choice of methods shown in the report is not all inclusive and responds to the fact of only being some of the most used methods to this day. By implementing them, the analysts hope to provide a glimpse of the effects and importance in choosing the right model as well as displaying the differences between each one. 
+
+
 # Data Exploration 
 In the early stages of any analysis, data exploration is a critical process aimed at understanding and analyzing the data set to gain insight and make valid decisions. The overarching goal of examining the data is to obtain intuition, identify questionable values, and strategize how to answer the problem statement. Therefore, let's summarize the findings that explain the main data characteristics, and dive into the relations between variables to understand how this analysis will be directed.
 
