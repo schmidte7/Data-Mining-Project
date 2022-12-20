@@ -2,15 +2,17 @@
 title: "Diamonds"
 author: "Francisco Arrieta, Emily Schmidt and Lucia Camenisch"
 date: "`r Sys.Date()`"
+titlepage: true
+titlepage-rule-color: FFFFFF
 output:
-  html_document:
-    toc: yes
-    toc_float:
-      collapsed: no
-    number_sections: yes
-    theme: cosmo
   pdf_document:
-    toc: yes
+    latex_engine: xelatex
+    toc: true
+    toc_depth: 3
+    number_sections: true
+    df_print: kable
+    keep_tex: true
+    template: eisvogel.latex
 ---
 
 ```{=html}
@@ -40,7 +42,8 @@ code {
 ```
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(message = FALSE, warning = FALSE, fig.align = "center")
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, fig.align = "center", include=FALSE,
+                      dev = "png", cache = TRUE, sanitize = TRUE)
 ```
 
 ```{r Colors, include=FALSE}
