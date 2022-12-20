@@ -1464,7 +1464,7 @@ kable_styling(kable(ens_error)%>% kable_classic(), full_width = TRUE)
 ```
 
 
-```{rensemble error table}
+```{r ensemble error table}
 ens_rmse_summ <- NN_res[0,] #NeuralNet Error
 ens_rmse_summ[1, ] <- round(Acc4, 2)
 ens_rmse_summ[2, ] <- Tree_res[8,]
