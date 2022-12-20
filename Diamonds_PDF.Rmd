@@ -230,7 +230,7 @@ diamonds <- diamonds[, c(7, 2:4, 1, 8:10, 5:6)]
 
 The second part of exploring the diamonds data set is to understand the relationships between variables. Prior to analyzing their correlations, we had an idea of which continuous variables would have a strong relation due to the depth_ratio calculation. Later on, certain methods will analyze the potential issue of collinearity. By isolating price against the other continuous variables, carat, length, width, and depth, all have positively linear relations to the response feature. Some of the models used in the analysis to predict price will show these effects. In addition, the relationship between carat and price is unique  because their relation is non-linear. We were also interested in showing how the categorical variables affect price. Clarity, color, and cut have distinct patterns seen between the four continuous variables mentioned above. 
 
-```{r ggpairs, eval=FALSE, fig.height=, fig.width=6, include=FALSE}
+```{r ggpairs, eval=FALSE, fig.height=6, fig.width=6, include=FALSE}
 #Used ggpairs to create a scatterplot matrix between quantitative variables 
 ggpairs(diamonds[, c(1, 5:10)], title = "Scatterplot Matrix",
          proportions = "auto",
@@ -344,7 +344,7 @@ As a continuation of data exploration, variable visualization involves creating 
 
 Through exploration, we can gain a deeper understanding of the data and how it can be used to answer business questions or solve real-world problems, like predicting the price of a diamond.
 
-```{r categorical bar plots, fig.height=2.5, fig.width=4}
+```{r categorical bar plots, fig.height=2.5, fig.width=4, include=TRUE, echo=FALSE}
 ggplot(gather(data = diamonds[, c(2:4)]), aes(value)) +
   geom_bar(aes(value),
                  width = 0.3,
@@ -1623,7 +1623,7 @@ for (i in 1:6) {
   NN_res[i,]= round(get(paste("acc_", i, sep ="")),2)
 }
 
-kable_styling(kable(NN_res)%>% kable_classic(), full_width = FALSE)
+kable_styling(kable(NN_res)%>% kable_classic(), full_width = TRUE)
 
 NNRMSEplotdata <- t(NN_res$RMSE)
 colnames(NNRMSEplotdata) <- t(rownames(NN_res))
@@ -1667,7 +1667,7 @@ ensemble_summ$RealPrices <- real_prices
 
 ens_error = accuracy(ensemble_summ$AveragePred, ensemble_summ$RealPrices)
 
-kable_styling(kable(ens_error)%>% kable_classic(), full_width = TRUE)
+#kable_styling(kable(ens_error)%>% kable_classic(), full_width = TRUE)
 
 ```
 
@@ -1686,7 +1686,7 @@ row.names(ens_rmse_summ) <- c("Multiple Linear Regression",
                               "Neural Network",
                               "Ensemble")
 #display results
-kable_styling(kable(ens_rmse_summ)%>% kable_classic(), full_width = FALSE)
+kable_styling(kable(ens_rmse_summ)%>% kable_classic(), full_width = TRUE)
 ```
 
 
@@ -1698,7 +1698,7 @@ In this section, we can see how the predicted price behaves with respect to the 
 ## Predicted Price vs Real Price by Clarity 
 
 
-```{r Ensemble Summary Plot, fig.height= 5, fig.width = 5, dpi= 150}
+```{r Ensemble Summary Plot, fig.height= 5, fig.width = 5, dpi= 150, include = TRUE, echo = FALSE}
 predtable_lr <- data.frame("Real" = real_prices, 
                     "Predicted" = ensemble_summ[, 1],
                     "Color" = diamonds[valid.index, 3],
@@ -1764,7 +1764,7 @@ pred_plot_full
 
 ## Predicted Price vs Real Price by Color 
 
-```{r Summ Color Plots, include = TRUE, echo = FALSE}
+```{r Summ Color Plots, include = TRUE, echo = FALSE, dpi = 150}
 pred_plot_lr <- ggplot(data = predtable_lr, aes(x= Real, y = Predicted, color = color))+
   geom_point(show.title = FALSE, size = 0.5)+
   scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
@@ -1803,7 +1803,7 @@ pred_plot_full
 
 ## Predicted Price vs Real Price by Cut 
 
-```{r Summ Cut Plots, include = TRUE, echo = FALSE}
+```{r Summ Cut Plots, include = TRUE, echo = FALSE, dpi = 150}
 pred_plot_lr <- ggplot(data = predtable_lr, aes(x= Real, y = Predicted, color = cut))+
   geom_point(show.title = FALSE, size = 0.5)+
   scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
