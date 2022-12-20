@@ -42,11 +42,10 @@ code {
 ```
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(message = FALSE, warning = FALSE, fig.align = "center", include=FALSE,
-                      dev = "png", cache = TRUE, sanitize = TRUE)
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, fig.align = "center", include = FALSE, dev = "png", cache = TRUE)
 ```
 
-```{r Colors, include=FALSE}
+```{r Colors}
 #Aqua =         "#15DDD8"
 #Dark Blue =    "#2F91AE"
 #Yellow =       "#F9D53E"
@@ -125,12 +124,18 @@ colnames(diamonds)[10] <- "depth" # z to depth
 ```
 
 ## Dimension Summary 
-There is a variety of ways an analyst could approach understanding the observations in the data set. For starters, there are 53,940 records and 10 variables. The response variable (price) is a an integer variable. There are an additional six numeric values and three ordinal/categorical features that have a factored structure. Those non-numeric values (cut, color, and clarity) need to be appropriately ordered, and renamed if there are any spaces within their naming convention as later this could obstruct certain code. 
 
-To dive deeper, we consider removing observations that are invalid because they add noise. For instance, price against all features were reviewed for possible impurities. In total, there are 275 (0.5%) records removed for the following reasons:  
+There is a variety of ways an analyst could approach understanding the observations in the data set. For starters, there are 53,940 records and 10 variables. The response variable (price) is a an integer variable. There are an additional six numeric values and three ordinal/categorical features that have a factored structure. Those non-numeric values (`cut`, `color`, and `clarity`) need to be appropriately ordered, and renamed if there are any spaces within their naming convention as later this could obstruct certain code. 
+
+To dive deeper, we consider removing observations that are invalid because they add noise. For instance, price against all features were reviewed for possible impurities. In total, there are 275 (0.5%) records removed for the following reasons:
+
 1. 20 rows had a depth of 0.0. This was considered inaccurate because a diamond needs to have this dimension specified.  
-2. The difference between length and width should be almost identical. If they were not, those rows were removed. In this case, only two records were not included in the data set at differences above 36.0mm. 
+
+2. The difference between length and width should be almost identical. If they were not, those rows were removed. In this case, only two records were not included in the data set at differences above 36.0mm.  
+
 3. The depth_ratio is a calculation between length, width, and length. To investigate this feature further, our group computed depth_ratio and saw there were differences between the actual and predicted values. Therefore, the executive decision was to remove any differences above a threshold of 0.3. A total of 253 rows were removed.  
+
+Fortunately, there were no null values that needed to be considered.
 
 ```{r Data Exploration}
 dim(diamonds) # Dimensions of data
@@ -141,8 +146,7 @@ str(diamonds) # Type of variables
 sapply(diamonds, function(x) length(unique(x)))
 ```
 
-## Missing Values
-Forunately, there were no null values that needed to be considered.
+
 ```{r Missing Values}
 # Missing values analysis
 gg_miss_var(diamonds) + ggtitle("Missing values")
@@ -199,8 +203,6 @@ diamonds <- diamonds[subtraction <= 10, ] # Include only values with subtraction
 diamonds[, depth_check := round(100*(2*depth)/((length + width)), 1)]
 diamonds[, diff := abs(depth_check-depth_ratio)]
 
-# Create histogram to look at the differences between how much price is off between a calculated value and what the data provided
-hist(diamonds[diff >= 0.2 & diff < 1, diff], breaks =50, col = "#D8B365", border = "#D8B365", main = "Threshold Differences", xlab = "Predicted vs. Actual Difference")
 
 # Threshold set to 0.3 due to ... (report)
 nrow(diamonds[diff > 0.3,]) # We remove 268 rows
@@ -215,6 +217,11 @@ diamonds[, diff := NULL]
 ```
 
 
+```{r threshold diff hist, include = TRUE, echo = FALSE}
+# Create histogram to look at the differences between how much price is off between a calculated value and what the data provided
+hist(diamonds[diff >= 0.2 & diff < 1, diff], breaks =50, col = "#D8B365", border = "#D8B365", main = "Threshold Differences", xlab = "Predicted vs. Actual Difference")
+```
+
 ```{r ordering columns}
 # Reorder data table to group like variable types 
 diamonds <- diamonds[, c(7, 2:4, 1, 8:10, 5:6)]
@@ -222,7 +229,7 @@ diamonds <- diamonds[, c(7, 2:4, 1, 8:10, 5:6)]
 
 The second part of exploring the diamonds data set is to understand the relationships between variables. Prior to analyzing their correlations, we had an idea of which continuous variables would have a strong relation due to the depth_ratio calculation. Later on, certain methods will analyze the potential issue of collinearity. By isolating price against the other continuous variables, carat, length, width, and depth, all have positively linear relations to the response feature. Some of the models used in the analysis to predict price will show these effects. In addition, the relationship between carat and price is unique  because their relation is non-linear. We were also interested in showing how the categorical variables affect price. Clarity, color, and cut have distinct patterns seen between the four continuous variables mentioned above. 
 
-```{r ggpairs, fig.width = 6, fig.height = 5}
+```{r ggpairs, eval=FALSE, fig.height=, fig.width=6, include=FALSE}
 #Used ggpairs to create a scatterplot matrix between quantitative variables 
 ggpairs(diamonds[, c(1, 5:10)], title = "Scatterplot Matrix",
          proportions = "auto",
@@ -230,9 +237,9 @@ ggpairs(diamonds[, c(1, 5:10)], title = "Scatterplot Matrix",
          upper = list(continuous = wrap('cor',size = 3)),) + theme_light()
 ```
 
-For instance, when plotting price by carat, width, length, and depth, with clarity as the color dimension, there is a clear distinction between how these points relate. Each scatterplot shows a strong, positive correlation to price. When reviewing the x-axis for each explanatory variable, the lower tiered option is typically observed more. The cheaper the gemstone, the worse quality the customer bought. Within each plot, there are outliers that can be explained by how the diamond was cut, which impacts the weight, length, and depth. By the color scale, it is noticed how there are more diamonds with a worse clarity (SI2/SI1) than there are with the best (IF/VVS1). Intuitively, this makes sense because not all customers have the available funds to afford the optimally designed diamond. On the other hand, no one wants the worst clarity either. Therefore, a majority of the diamonds lie between the second and third best, and second and third worst clarity factors. In addition, the relation between depth_ratio and table to price is not distinct as those features are mixed throughout the relative ranges. Within all of the depth_ratio plots, there are vertical lines that show the depth_ratio  mean (black) and range (red) of what is considered the prime value for depth_ratio as long as it is above 59% but does not exceed 62.3%. 
+For instance, when plotting price by carat, width, length, and depth, with clarity as the color dimension, there is a clear distinction between how these points relate. Each scatter plot shows a strong, positive correlation to price. When reviewing the x-axis for each explanatory variable, the lower tiered option is typically observed more. The cheaper the gemstone, the worse quality the customer bought. Within each plot, there are outliers that can be explained by how the diamond was cut, which impacts the weight, length, and depth. By the color scale, it is noticed how there are more diamonds with a worse clarity (SI2/SI1) than there are with the best (IF/VVS1). Intuitively, this makes sense because not all customers have the available funds to afford the optimally designed diamond. On the other hand, no one wants the worst clarity either. Therefore, a majority of the diamonds lie between the second and third best, and second and third worst clarity factors. In addition, the relation between depth_ratio and table to price is not distinct as those features are mixed throughout the relative ranges. Within all of the depth_ratio plots, there are vertical lines that show the depth_ratio  mean (black) and range (red) of what is considered the prime value for depth_ratio as long as it is above 59% but does not exceed 62.3%. 
 
-```{r Price by X and Clarity, fig.width = 6, fig.height = 6}
+```{r Price by X and Clarity, fig.width = 6, fig.height = 6,include = TRUE, echo = FALSE}
 # Create plot that looks at carat and price
 PCl1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
@@ -261,7 +268,7 @@ ggarrange(PCl1, PCl2, PCl3,PCl4, PCl5, PCl6,
 
 A similar relationship can be seen regarding price by the continuous variables, but as color as the color dimension. Instead of most of the observations falling closer to the best and worth clarify features, here the reader will notice how it appears that the colors E, F and G dominate (the white to light blue) the retail space. 
 
-```{r Price by X and Color, fig.width = 6, fig.height = 6}
+```{r Price by X and Color, fig.width = 6, fig.height = 6, include = TRUE, echo = FALSE}
 # Create plot that looks at carat and price
 PCo1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
@@ -291,7 +298,7 @@ ggarrange(PCo1, PCo2, PCo3,PCo4, PCo5, PCo6,
 
 Cut has a completely different trend than clarity and color as a majority of customers prefer and will purchase the ideal cut. This can be seen within the depth_ratio plot especially. As stated earlier, the red lines indicate the optimal space in which a buyer would want the diamond's depth_ratio. Most of all of the ideal cuts are within those bounds while the fair, good, and very good are outside. There is a clear distinction on how cut relates to the depth_ratio along price.
 
-```{r Price by X and Cut, fig.width = 6, fig.height = 6}
+```{r Price by X and Cut, fig.width = 6, fig.height = 6, include = TRUE, echo = FALSE}
 # Create plot that looks at carat and price
 PCu1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
@@ -336,8 +343,20 @@ As a continuation of data exploration, variable visualization involves creating 
 
 Through exploration, we can gain a deeper understanding of the data and how it can be used to answer business questions or solve real-world problems, like predicting the price of a diamond.
 
+```{r categorical bar plots, fig.height=2.5, fig.width=4}
+ggplot(gather(data = diamonds[, c(2:4)]), aes(value)) +
+  geom_bar(aes(value),
+                 width = 0.3,
+                 color = "black",
+                 fill = "#D8B365") + # Creates bin sizing and sets the lines as white
+  facet_wrap(~ key, scales = "free") + # Converting the graphs into panels
+  ggtitle("Qualitative Variable Analysis") + # Title name
+  ylab("Count") + xlab("Value") + # Label names
+  theme_classic()+ theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
 
-```{r Histograms}
+
+```{r Histograms, include = TRUE, echo = FALSE}
 ggplot(gather(data = diamonds[, c(1, 5:10)]), aes(value)) +
   geom_histogram(aes(y = after_stat(density)),
                  bins = 10,
@@ -350,7 +369,8 @@ ggplot(gather(data = diamonds[, c(1, 5:10)]), aes(value)) +
   theme_classic() # A classic theme, with x and y axis lines and no grid lines
 ```
 
-```{r Correlation}
+
+```{r Correlation, include = TRUE, echo = FALSE}
 # Create heatmap to show variable correlation
 # Round the correlation coefficient to two decimal places
 cormat <- round(cor(diamonds[, c(1, 5:10)]), 2)
@@ -391,11 +411,6 @@ ggplot(cormat, aes(Var2, Var1, fill = value)) +
 rm(cormat, reorder_cormat)
 ```
 
-```{r Correlation Plot}
-#plot Correlation ellipses
-plotcorr(cor(diamonds[, -c(2:4)]), col = "#D8B365",
-         main = "Pearson correlation ellipses for numerical variables")
-```
 
 ```{r train-valid-test}
 # set seed for reproducing the partition
@@ -439,9 +454,12 @@ Valid_lr <- diamonds[valid.index, ]
 VIF(y = diamonds$price, matx = diamonds[, -c(1)])
 # removing length, width and depth and computing VIF without them
 VIF(y = diamonds$price, matx = diamonds[, -c(1, 6, 7, 8)])
+```
 
+
+```{r uncorrelated-ellipses, include=TRUE, echo=FALSE}
 # plotting correlation ellipses of numerical variables with length, width and depth removed
-plotcorr(cor(diamonds[, -c(2:4, 6:8)]), col = "#D8B365",
+plotcorr(cor(diamonds[, -c(2:4)]), col = "#D8B365",
          main = "Pearson correlation ellipses for numerical variables")
 ```
 
@@ -466,7 +484,7 @@ The value of $b_1$ is interpreted as follows:
 
 We compute $b_1$ on our numerical variables and get the following results.
 
-```{r skewness-table}
+```{r skewness-table, include=TRUE, echo=FALSE}
 # applying the skewness() function of every numerical variable from our training set
 kable_classic(kable(sapply(Train_lr[, c(1, 5:10)], skewness), col.names = "$b_1$",
       caption = "Skewness estimator for numerical variables"))
@@ -492,7 +510,7 @@ Valid_lr$table <- log(Valid_lr$table)
 
 We apply a logarithmic transformation to all three variables. The improvement can also be seen in the histograms, as they look more symmetrical now.
 
-```{r hist-unskewed}
+```{r hist-unskewed, include=TRUE, echo=FALSE}
 # computing the histograms of numerical variables now that they are unskewed
 
 ggplot(gather(data = Train_lr[, c(1, 5:10)]), aes(value)) + # numerical vars of training set
@@ -598,7 +616,7 @@ summary(LM_CpAIC_minus_corr)
 
 For each of these models, we summarise which variables are used as predictors in the following table.
 
-```{r Variable Selection Summary}
+```{r Variable Selection Summary, include=TRUE, echo=FALSE}
 # we display a table of the predictors used in each model using kable()
 # kable_classic() changes the kable style
 
@@ -706,7 +724,10 @@ rm(Acc1, Acc2, Acc3)
 Accs[, Model := c("LM_complete", "LM_CpAIC_complete", "LM_minus_corr", "LM_CpAIC_minus_corr")]
 # we put the Model column first
 Accs <- Accs[, c(6, 1:5)]
+```
 
+
+```{r models-accuracy-table, include=TRUE, echo=FALSE}
 # displaying Accs as a table with kable() and adding a caption
 # kable_classic controls style of table
 kable_classic(kable(Accs, caption = "Accuracy measures of linear models"))
@@ -720,6 +741,7 @@ Considering the parsimony principle and the RMSE, the best choice is our fourth 
 
 Overall, the RMSE for linear regression remains quite high and as we will see in the following chapters, some models will achieve much better predictive performances.
 
+
 ## $k$-NN
 
 #### Overview
@@ -729,7 +751,8 @@ According to the Data Mining textbook, the value of k is based on a nonparametri
 
 The $k$-nearest neighbors algorithm is very useful when predicting price because the data does not need to be transformed or predictors selected in a particular way. 
 
-#### Methodology 
+#### Model Structure
+
 There are several steps that need to be completed prior to running the first $k$-NN model with k = 1. First, you clean the data to ensure that missing values are either removed or explained, and that all variables are essential to the response variable (see EDA section). Next, the data is normalized so that the output remains unbiased. Normalizing simply means that the raw data is put on all the same scale ('subtracting the mean and dividing by the standard deviation'). Once the data is cleaned and normalized, it can be split into the training, validation, and test sets. Now that the foundation of the model has been built, let's start constructing the first $k$-NN model. 
 
 The value of k = 1 is used as a starting point to see how well the model will perform. Since price is our focal point, the two error measurements that will be compared throughout all model methods are Mean Error (ME) and Root Mean Squared Error (RMSE). RMSE is of particular interest because that gives the variance of how far the predicted value is away from the actual price. Seen in the first $k$-NN error table, ME (\$20.60) and RMSE (\$954.60) could potentially get better if we optimized k. 
@@ -791,8 +814,7 @@ knn_aa1 <- accuracy(object = knn_rescaled_prices, x = real_prices)
 kable_styling(kable(knn_aa1)%>% kable_classic(), full_width = TRUE)
 ```
 
-```{r Compute best K }
-
+```{r Compute best K}
 #create a data frame to store accuracy results
 accuracy_df <- data.frame(k = seq(1, 20, 1), accuracy = rep(0, 20))
 
@@ -806,10 +828,16 @@ temp_knn_rescaled_prices = std_price * temp_knn_pred_y + mean_price
 #update the accuracy table with results of confusion matrix accuracy from the loop
 accuracy_df[i, 2] <- accuracy(object = temp_knn_rescaled_prices, x = real_prices)[2]
 }
+```
 
+
+```{r Best K table, include= TRUE, echo=FALSE}
 #display results
-row_spec(kable_classic(kbl(accuracy_df)), 4, bold = T, color = "white", background = "#D8B365") 
+row_spec(kable_classic(kbl(accuracy_df), full_width = TRUE), 4, bold = T, color = "white", background = "#D8B365")
+```
 
+
+```{r Best K Plot, include= TRUE, echo=FALSE}
 #plot results
 ggplot (data = accuracy_df, aes(x = k, y = accuracy)) +
   geom_line (size = 1.2, color = "black") +
@@ -834,7 +862,7 @@ knn_aa2 <- accuracy(object = opt_knn_rescaled_prices, x = real_prices)
 kable_styling(kable(knn_aa2)%>% kable_classic(), full_width = TRUE)
 ```
 
-```{r}
+```{r knn error table, include= TRUE, echo=FALSE}
 knn_res <- data.frame("Model_kNN" = c("k = 1",
                                 "k = 4"),
                      "ME" = "",
@@ -852,28 +880,28 @@ for (i in 1:2) {
 
 kable_styling(kable(knn_res)%>% kable_classic(), full_width = TRUE)
 
-RGRMSEplotdata <- t(knn_res$RMSE)
-colnames(RGRMSEplotdata) <- t(rownames(knn_res))
-RGRMSEplotdata
+KNNRMSEplotdata <- t(knn_res$RMSE)
+colnames(KNNRMSEplotdata) <- t(rownames(knn_res))
 
-barplot(RGRMSEplotdata, col = "#D8B365",border = "#D8B365" ,
+barplot(KNNRMSEplotdata, col = "#D8B365",border = "#D8B365" ,
          main = "k-NN Tree Comparison", ylab = "RMSE", las = 3, ylim=c(0,1000))
 ```
 
-#### Analysis
+
 As stated earlier, the table above shows how the ME got worse for k = 4, but better with RMSE once the model was optimized. In this analysis, one of the main goals is to reduce the variance between predicted and real price. Therefore, the difference of \$140.00 is more important even when the ME slightly increases. Between k = 1 and k = 4 for the $k$-NN model, k = 4 with an RMSE of \$814.60 will predict prices better. 
 
-## Decision Tree
+## Decision Trees
 
 #### Regression Tree Overview
+
 There are four methods within this section that show various ways on how trees are built. They include a regression tree, boosted tree, bagged tree, and a random forest. The regression tree is most transparent and easy to interpret while the other three combine results from multiple trees.
 
 A regression tree is a flexible data-driven method that can be used for prediction of a continuous variable. The tree separates 'records into subgroups by creating splits on predictors. These splits create logical rules that are homogeneous.' Those splits 'divide the data into subsets, that is, branches, nodes, and leaves. Like decision trees, regression trees select splits that decrease the dispersion of target attribute values. Thus, the target attribute values can be predicted from their mean values in the leaves' which reduces the variance of the target variable.  
 
-#### Regression Tree Methodology and Analysis
+#### Model Structure and Analysis
+
 Since the tree proactively takes into consideration the most important attributes to split on, multiple trees are created to check its validity. This idea stemmed from wanting to ensure that by removing variables due to their weak relationship to the predictor variable or by pruning, the results produced the best ME and RMSE. Within the three regression models, all have the same error rates. In addition, there are eight terminal nodes for each model and all had width, length, carat, and depth being the most important features to predict price. To exemplify this, we show the original regression tree that first splits on width < 6.33, seven splits total and uses the following for the primary splits:  width  < 6.325, carat < 0.985, length < 6.325 and depth < 3.935. 
 
-### Partitioning
 
 ```{r RT - Train, Valid, Test }
 #Rename data specifically for regression trees
@@ -886,7 +914,7 @@ Valid_rg <- diamonds[valid.index, ]
 
 ### Regression Tree
 
-```{r Default Regression Tree}
+```{r Default Regression Tree, dpi=150, include = TRUE, echo = FALSE}
 # Use rpart() to run tree on continuous response 
 RegressTree <- rpart(price ~ ., 
               data = Train_rg, 
@@ -899,7 +927,7 @@ RegressTree <- rpart(price ~ .,
 fancyRpartPlot(RegressTree, caption = NULL, main = "Regression Tree", palettes = "YlGnBu", digits = -3)
 
 # Count number of leaves 
-length(RegressTree$frame$var[RegressTree$frame$var == "<leaf>"]) 
+#length(RegressTree$frame$var[RegressTree$frame$var == "<leaf>"]) 
 ```
 
 ```{r ktable Importance - RegressTree}
@@ -923,7 +951,6 @@ pred_Diamond_test <- predict(RegressTree, newdata = Valid_rg)
 head(pred_Diamond_test,14)
 ```
 
-### 'Exlcusion' Regression Tree 
 
 ```{r Default Regression Tree Minus Variables}
 RegressTree2 <- rpart(price ~ length+width+depth+carat+cut+color+clarity, 
@@ -970,7 +997,6 @@ min.xerror
 plotcp(RegressTree2)
 ```
 
-### Pruned Regression Tree
 
 ```{r Pruned Regression Tree Minus Variables}
 RegressTree_pruned <- prune(RegressTree2, cp = min.xerror) 
@@ -988,10 +1014,10 @@ kable_styling(kable(tree_aa3)%>% kable_classic(), full_width = TRUE)
 
 ### Boosted Tree
 
-#### Boosted Tree Overview
+#### Overview
 Boosted trees are a type of ensemble model that 'transforms weak decision trees into strong learners. Each new tree is built considering the errors of previous trees.' The idea behind boosting is to train a series of weak models additively, with each model attempting to correct the errors made by the previous model. Since this model is prone to overfitting, the parameters need to be carefully considered so that the lowest error rates can be achieved.
 
-#### Methodology 
+#### Model Structure and Analysis
 There is a wide variety of parameters that can be chosen for a boosted tree. Therefore, those options were used differently to choose the best model based off the number of predictors and how deep each tree would be allowed to interact. The main difference between each model is the number of trees ran. As the size of the tree increase, the better the model because it only considered the most important factors. 
 
 ```{r Boosted Tree 10}
@@ -1068,15 +1094,15 @@ pred_boost <- predict.gbm(tree_boost100, newdata = Valid_rg)
 head(pred_boost, 14)
 ```
 
-#### Analysis
+
 The best boosted model was the one with 100 trees and three cross-validation folds. The tree used six predictors to produce a model with a ME of \$9.00 and RMSE of \$1,170.30. What is fascinating about this tree comes from the importance variables chart. In the regression tree, clarity was one of the three least important factors, but here we see that it as the fourth which is above length. 
 
 ### Bagged Tree
 
-#### Bagging Tree Overview
+#### Overview
 The third method is bagged trees. This type of model 'combines the predictions from multiple machine learning algorithms together to make more accurate predictions than any individual model.' The objective with bagging is to train a large number of decision trees on different subsets of the training data, and then average the predictions of all the trees to make a final prediction. This model has the ability to reduce variance because it introduces randomness into the training process. 
 
-#### Methodology & Analysis
+#### Model Structure and Analysis
 This model is pretty straight forward because the best model was built by sticking with the basics. 'The only parameters when bagging decision trees is the number of samples and hence the number of trees to include. This can be chosen by increasing the number of trees on run after run until the accuracy begins to stop showing improvement.' Overall, the bagging tree predicts price better than the regression tree, but worse than boosting. The ME was the lowest at \$0.93, but what is more important to consider is the RMSE which is \$1,248.77.
 
 
@@ -1115,10 +1141,10 @@ head(pred_bagged,14)
 
 ### Random Forest 
 
-#### Random Forest Overview
+#### Overview
 'Random forests are a special case of bagging, a method for improving predictive power by combining multiple classifiers or prediction algorithms.' They are an ensemble based on bagged trees which involves training each tree on a bootstrapped sample of the original data.
 
-#### Methodology
+#### Model Structure
 Similar to the bagged trees, random forests are pretty simplistic. The main focus in this section was to check how many trees should be run within the model. There is a trade-off between computational power and RMSE. For example, what is the difference in RMSE if the model was built off of 100 trees versus 60? The model with 100 trees was the best model with an RMSE of \$575.42.
 
 ```{r randomForest}
@@ -1138,7 +1164,7 @@ plot(rdf_model,
 which.min(rdf_model$mse)
 ```
 
-```{r  RF Variable Importance}
+```{r  RF Variable Importance, include = TRUE, echo = FALSE}
 options(scipen = 9999)
 
 # Create variable importance chart
@@ -1160,12 +1186,12 @@ pred_random <- predict(rdf_model, newdata = Valid_rg)
 head(pred_random,14)
 ```
 
-#### Analysis
+
 Throughout this entire section, typically the lower RMSE produced the best model. Additionally up to this point, there have been three or four variables that were most importance to the model. In the random forest though, there is much more weight on features such as clarity and color. In random forests, we proposed a trade-off with picking a model with less trees because an analyst would want to choose the parsimonious model. Therefore, the random forest with 60 trees had a slightly higher RMSE at a difference of approximately \$2 which gave a \$577.63 for the RMSE. 
 
-### Create Regression Tree Summary Table
+### Decision Tree Summary Table
 
-```{r RegTree Summary}
+```{r RegTree Summary, include = TRUE, echo = FALSE}
 Tree_res <- data.frame("Model_Tree" = c("Reg. Tree",
                                  "Exclus. RT",
                                  "Pruned RT",
@@ -1192,13 +1218,12 @@ kable_styling(kable(Tree_res)%>% kable_classic(), full_width = TRUE)
 
 RGRMSEplotdata <- t(Tree_res$RMSE)
 colnames(RGRMSEplotdata) <- t(sort(rownames(Tree_res),decreasing = TRUE))
-RGRMSEplotdata
 
 barplot(RGRMSEplotdata, col = "#D8B365",border = "#D8B365" ,
          main = "Regression Tree Comparison", ylab = "RMSE", las = 3, ylim=c(0,4000))
 ```
 
-#### Decision Tree Conclusion
+
 Throughout the four methods mentioned, the random forest model proved to be the most effective in predicting price with a RMSE of \$577.63, which is more than two times smaller than the best boosting model. Although not all of the models results are shown, a breakdown of their error results can be seen within the table above. Overall, the regression tree, bagging and boosting were all within \$100 RMSE difference, but no match for the random forest. 
 
 ## NeuralNetworks
@@ -1223,14 +1248,12 @@ diamonds_dummies <- diamonds_dummies[,-c(2:4)]
 colnames(diamonds_dummies)[10] = "cut_Very_Good"
 ```
 
-### Partitioning
 
 ```{r NN Partitioning}
 Train_nn <- diamonds_dummies[train.index,]
 Valid_nn <- diamonds_dummies[valid.index,]
 ```
 
-### Normalizing Data
 
 ```{r NN Normalize}
 # use preProcess() to normalize non-categorical variables
@@ -1250,18 +1273,20 @@ There is no standard or ideal way of setting up the amount of layers in a networ
 
 * To see if there is an improvement, we do another model with just 13 nodes in a single hidden layer. 
 
-Of these single layer models, the best is the one with 26 nodes. We measure this by looking at the error in prediction, also called the accuracy. There are many ways of measuring this, but as mentioned before, the two we looked at are the Mean Error, as a measure of accuracy, and Root Mean Squared Error, as a measure of precision. For the 26 node model, the RMSE is 745.16 vs 744.04 for the 13 node net. While just looking at this configuration one could infer using less nodes is better, after multiple tests it is concluded that keeping the 26 nodes as the first hidden layer is best for reducing the RMSE going forward. 
+Of these single layer models, the best is the one with 26 nodes. We measure this by looking at the error in prediction, also called the accuracy. There are many ways of measuring this, but as mentioned before, the two we looked at are the Mean Error, as a measure of accuracy, and Root Mean Squared Error, as a measure of precision. For the 26 node model, the RMSE is \$745.16 vs \$744.04 for the 13 node net. While just looking at this configuration one could infer using less nodes is better, after multiple tests it is concluded that keeping the 26 nodes as the first hidden layer is best for reducing the RMSE going forward. 
 
-The next configuration tested is adding 2 additional hidden layers, one of 26 additional nodes, and another of 13. Just by using this configuration, the model RMSE reduced to 627.65. As this is already a rather low RMSE, in comparison to previous neural networks, as well as other models seen above, it was decided to keep this structure as the definitive one for establishing the most accurate prediction. 
+The next configuration tested is adding 2 additional hidden layers, one of 26 additional nodes, and another of 13. Just by using this configuration, the model RMSE reduced to \$627.65. As this is already a rather low RMSE, in comparison to previous neural networks, as well as other models seen above, it was decided to keep this structure as the definitive one for establishing the most accurate prediction. 
 
 The next two adjustments made are regarding the weights and the activation function. This structure was adjusted to use the "*Glorot Normal*" weight initiation method. This initiation method consists of assigning weights to the nodes using a de probability curve of a truncated normal distribution as so:
 
-* Glorot Normal Initialization:
+**Glorot Normal Initialization:**
 
-$w_{i} \sim Gaussian(\mu = 0, \sigma^{2} = \sqrt{\frac{2} {u_{in} + u_{out} }})$
+$$w_{i} \sim Gaussian \left(\mu = 0, \sigma^{2} = \sqrt{\frac{2} {u_{in} + u_{out} }}\right)$$
 
 where:
+
 $u_{in}$ = number of input nodes
+
 $u_{out}$ = number of output nodes
 
 This initiation method demonstrated much better results than others such as the normal distribution, uniform distribution of the Glorot Uniform, which is why we kept it for the final model. 
@@ -1269,10 +1294,6 @@ This initiation method demonstrated much better results than others such as the 
 Finally regarding the activation function, many options are available as well. Depending on the problem at hand, one can use different functions that draw different curves and hence produce different predictions. The one used for our case was a *sigmoid* activation which by different literature is the most commonly used due to its good performance results. Though we tested others like *"relu"* or *"softplus"*, sigmoid ended being the most accurate predicting. 
 
 
-
-### Model 1 (Layers = 1, Nodes = 1)
-
-* Creating Model 1
 
 ```{r NN L1 N1 Model}
 #create data sets to train and validate the model
@@ -1316,7 +1337,7 @@ history <- model_1_1 %>% fit(
     )
 ```
 
-* Measuring Error Model 1
+
 
 ```{r L1 N1 Pred}
 # prediction values of validation set
@@ -1349,9 +1370,6 @@ kable_styling(kable(acc_1)%>% kable_classic(), full_width = TRUE)
 
 ```
 
-### Model 2 (Layers = 1, Nodes = 26)
-
-* Creating Model 2
 
 ```{r L1 N26 Model}
 #create model
@@ -1378,7 +1396,7 @@ history <- model_1_26 %>% fit(
     )
 ```
 
-* Measuring Error Model 2
+
 
 ```{r L1 N26 Pred}
 # prediction values of validation set
@@ -1397,9 +1415,6 @@ kable_styling(kable(acc_2)%>% kable_classic(), full_width = TRUE)
 
 ```
 
-### Model 3 (Layers = 1, Nodes = 13)
-
-* Creating Model 3
 
 ```{r L1 N13 Model}
 #create model
@@ -1426,7 +1441,7 @@ history <- model_1_13 %>% fit(
     )
 ```
 
-* Measuring Error Model 3
+
 
 ```{r L1 N13 Pred}
 # prediction values of validation set
@@ -1444,9 +1459,7 @@ acc_3 <- accuracy(object = y_valid_pred_1_13, x = y_valid_real)
 kable_styling(kable(acc_3)%>% kable_classic(), full_width = TRUE)
 ```
 
-### Model 4 (Layers = 2, Nodes = 26)
 
-* Creating Model 4
 
 ```{r L2 N26 Model}
 #create model
@@ -1475,7 +1488,7 @@ history <- model_2_26 %>% fit(
     )
 ```
 
-* Measuring Error Model 4
+
 
 ```{r L2 N26 Pred}
 # prediction values of validation set
@@ -1494,9 +1507,6 @@ kable_styling(kable(acc_4)%>% kable_classic(), full_width = TRUE)
 ```
 
 
-### Model 5 with Initializer (Layers = 2, Nodes = 26, GlorotNormal)
-
-* Creating Model 5
 
 ```{r L2 N26 Glot Model}
 #create model
@@ -1525,7 +1535,6 @@ history <- model_2_26G %>% fit(
     )
 ```
 
-* Measuring Error Model 5
 
 ```{r L2 N26 Glot Pred}
 # prediction values of validation set
@@ -1544,9 +1553,6 @@ kable_styling(kable(acc_5)%>% kable_classic(), full_width = TRUE)
 ```
 
 
-### Model 6 with Initializer and Learning Rate (Layers = 2, Nodes = 26, GlorotNormal, LR = 0.005)
-
-* Creating model 6
 
 ```{r L2 N26 Glot LR Model}
 #create model
@@ -1575,7 +1581,7 @@ history <- model_2_26GLR %>% fit(
     )
 ```
 
-* Measuring Error Model 6
+
  
 ```{r L2 N26 Glot LR Pred}
 # prediction values of validation set
@@ -1594,9 +1600,9 @@ kable_styling(kable(acc_6)%>% kable_classic(), full_width = TRUE)
 ```
 
 
-### Create Neural Net Summary Table
+### Neural Net Summary Table
 
-```{r NN Summary}
+```{r NN Summary, include = TRUE, echo = FALSE}
 NN_res <- data.frame("Model" = c("L1 N1",
                                  "L1 N26",
                                  "L1 N13",
@@ -1630,16 +1636,16 @@ barplot(NNRMSEplotdata, col = "#D8B365",border = "#D8B365" ,
 As can be seen, the predictive performance of the neural networks can vary a lot depending on the structure and parameters chosen. The negative point in this method is the requirement of human input to adjust the model to learn more precisely. Nevertheless, once the many trials have been executed, the results are very positive for a good predictive model. 
 
 
-### Neural network graphic description
 
 ![Visual description of Neural Network](NN_rep.jpeg)
 
 ## Ensembles
 
-#### Ensembles Overview, Methodology, and Analysis
+#### Overview, Model Structure and Analysis
+
 'Ensemble methods is a machine learning technique that combines several base models in order to produce one optimal predictive model.' The simplest approach is to combine predictions from each method above that had the best/lowest RMSE. To accurately compare models, the mean is taken over the four models to compute the average predicted price and find the error rates between the calculated price and real prices. As the table reveals, the RMSE is $588.34 which is pretty close to random forests and the best neural network in terms of variance.
 
-```{r ensemble table}
+```{r ensemble table, include = TRUE, echo = FALSE}
 #create Table with 0 values
 ensemble_summ <- data.frame("MLR" = 0,
                              "RegTrees" = 0,
@@ -1665,7 +1671,7 @@ kable_styling(kable(ens_error)%>% kable_classic(), full_width = TRUE)
 ```
 
 
-```{r ensemble error table}
+```{r ensemble error table, include=TRUE, echo=FALSE}
 ens_rmse_summ <- NN_res[0,] #NeuralNet Error
 ens_rmse_summ[1, ] <- round(Acc4, 2)
 ens_rmse_summ[2, ] <- Tree_res[8,]
@@ -1674,7 +1680,7 @@ ens_rmse_summ[4, ] <- NN_res[6,]
 ens_rmse_summ[5, ] <- round(ens_error, 2)
 
 row.names(ens_rmse_summ) <- c("Multiple Linear Regression",
-                              "Regression Tree",
+                              "Random Forest",
                               "k-Nearest Neighbor",
                               "Neural Network",
                               "Ensemble")
@@ -1686,8 +1692,12 @@ kable_styling(kable(ens_rmse_summ)%>% kable_classic(), full_width = FALSE)
 
 # Model Performance Summary
 
+In this section, we can see how the predicted price behaves with respect to the real price, having used each of the methods and mapping per each categorical variable. This helps see how each model compares with regards to precision. The models with more precision are closer to a diagonal line. As can be seen, 
 
-```{r Ensemble Summary Plot, fig.height= 5, fig.width = 5}
+## Predicted Price vs Real Price by Clarity 
+
+
+```{r Ensemble Summary Plot, fig.height= 5, fig.width = 5, dpi= 150}
 predtable_lr <- data.frame("Real" = real_prices, 
                     "Predicted" = ensemble_summ[, 1],
                     "Color" = diamonds[valid.index, 3],
@@ -1725,13 +1735,13 @@ pred_plot_lr <- ggplot(data = predtable_lr, aes(x= Real, y = Predicted, color = 
 pred_plot_rg <- ggplot(data = predtable_rg, aes(x= Real, y = Predicted, color = clarity))+
   geom_point(size = 0.5)+
   scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
-  labs(x= "NN (Regression Trees", y = "")+
+  labs(x= "Random Forest", y = "")+
   theme_classic()
 
 pred_plot_knn <- ggplot(data = predtable_knn, aes(x= Real, y = Predicted, color = clarity))+
   geom_point(size = 0.5)+
   scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
-  labs(x= "k Neares Neighbor", y = "")+
+  labs(x= "k Nearest Neighbor", y = "")+
   theme_classic()
 
 pred_plot_nn <- ggplot(data = predtable_nn, aes(x= Real, y = Predicted, color = clarity))+
@@ -1742,6 +1752,84 @@ pred_plot_nn <- ggplot(data = predtable_nn, aes(x= Real, y = Predicted, color = 
 
 
 pred_plot_ens <- ggplot(data = predtable_ens, aes(x= Real, y = Predicted, color = clarity))+
+  geom_point(size = 0.5)+
+  scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
+  labs(x= "Ensemble", y = "")+
+  theme_classic()
+
+pred_plot_full <- ggarrange(pred_plot_lr, pred_plot_rg, pred_plot_knn, pred_plot_nn,pred_plot_ens, ncol=2, nrow=3, common.legend = TRUE, legend="right")
+pred_plot_full
+```
+
+## Predicted Price vs Real Price by Color 
+
+```{r Summ Color Plots, include = TRUE, echo = FALSE}
+pred_plot_lr <- ggplot(data = predtable_lr, aes(x= Real, y = Predicted, color = color))+
+  geom_point(show.title = FALSE, size = 0.5)+
+  scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
+  labs(x= "Multiple Linear Regression", y = "Predicted Values")+
+  theme(legend.key.size = unit(0.5, 'cm'))+
+  theme_classic()
+
+pred_plot_rg <- ggplot(data = predtable_rg, aes(x= Real, y = Predicted, color = color))+
+  geom_point(size = 0.5)+
+  scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
+  labs(x= "Random Forest", y = "")+
+  theme_classic()
+
+pred_plot_knn <- ggplot(data = predtable_knn, aes(x= Real, y = Predicted, color = color))+
+  geom_point(size = 0.5)+
+  scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
+  labs(x= "k Nearest Neighbor", y = "")+
+  theme_classic()
+
+pred_plot_nn <- ggplot(data = predtable_nn, aes(x= Real, y = Predicted, color = color))+
+  geom_point(size = 0.5)+
+  scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
+  labs(x= "Neural Networks", y = "")+
+  theme_classic()
+
+
+pred_plot_ens <- ggplot(data = predtable_ens, aes(x= Real, y = Predicted, color = color))+
+  geom_point(size = 0.5)+
+  scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
+  labs(x= "Ensemble", y = "")+
+  theme_classic()
+
+pred_plot_full <- ggarrange(pred_plot_lr, pred_plot_rg, pred_plot_knn, pred_plot_nn,pred_plot_ens, ncol=2, nrow=3, common.legend = TRUE, legend="right")
+pred_plot_full
+```
+
+## Predicted Price vs Real Price by Cut 
+
+```{r Summ Color Plots, include = TRUE, echo = FALSE}
+pred_plot_lr <- ggplot(data = predtable_lr, aes(x= Real, y = Predicted, color = cut))+
+  geom_point(show.title = FALSE, size = 0.5)+
+  scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
+  labs(x= "Multiple Linear Regression", y = "Predicted Values")+
+  theme(legend.key.size = unit(0.5, 'cm'))+
+  theme_classic()
+
+pred_plot_rg <- ggplot(data = predtable_rg, aes(x= Real, y = Predicted, color = cut))+
+  geom_point(size = 0.5)+
+  scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
+  labs(x= "Random Forest", y = "")+
+  theme_classic()
+
+pred_plot_knn <- ggplot(data = predtable_knn, aes(x= Real, y = Predicted, color = cut))+
+  geom_point(size = 0.5)+
+  scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
+  labs(x= "k Nearest Neighbor", y = "")+
+  theme_classic()
+
+pred_plot_nn <- ggplot(data = predtable_nn, aes(x= Real, y = Predicted, color = cut))+
+  geom_point(size = 0.5)+
+  scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
+  labs(x= "Neural Networks", y = "")+
+  theme_classic()
+
+
+pred_plot_ens <- ggplot(data = predtable_ens, aes(x= Real, y = Predicted, color = cut))+
   geom_point(size = 0.5)+
   scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
   labs(x= "Ensemble", y = "")+
