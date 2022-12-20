@@ -207,8 +207,14 @@ diamonds[, diff := abs(depth_check-depth_ratio)]
 # Threshold set to 0.3 due to ... (report)
 nrow(diamonds[diff > 0.3,]) # We remove 268 rows
 diamonds <- diamonds[diff <= 0.3,]
+```
 
+```{r threshold diff hist, include = TRUE, echo = FALSE}
+# Create histogram to look at the differences between how much price is off between a calculated value and what the data provided
+hist(diamonds[diff >= 0.2 & diff < 1, diff], breaks =50, col = "#D8B365", border = "#D8B365", main = "Threshold Differences", xlab = "Predicted vs. Actual Difference")
+```
 
+```{r remove columns}
 # Removed created columns needed to clean the data
 diamonds[, subtraction := NULL]
 diamonds[, depth_check := NULL]
@@ -216,11 +222,6 @@ diamonds[, diff := NULL]
 # Total rows remove: 275 observations
 ```
 
-
-```{r threshold diff hist, include = TRUE, echo = FALSE}
-# Create histogram to look at the differences between how much price is off between a calculated value and what the data provided
-hist(diamonds[diff >= 0.2 & diff < 1, diff], breaks =50, col = "#D8B365", border = "#D8B365", main = "Threshold Differences", xlab = "Predicted vs. Actual Difference")
-```
 
 ```{r ordering columns}
 # Reorder data table to group like variable types 
