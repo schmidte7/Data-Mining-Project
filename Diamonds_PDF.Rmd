@@ -108,7 +108,8 @@ The product being analyzed is diamonds. Being a luxury object with a long histor
 The choice of methods shown in the report is not all inclusive and responds to the fact of only being some of the most used methods to this day. By implementing them, the analysts hope to provide a glimpse of the effects and importance in choosing the right model as well as displaying the differences between each one. 
 
 
-# Data Exploration 
+# Data Exploration
+
 In the early stages of any analysis, data exploration is a critical process aimed at understanding and analyzing the data set to gain insight and make valid decisions. The overarching goal of examining the data is to obtain intuition, identify questionable values, and strategize how to answer the problem statement. Therefore, let's summarize the findings that explain the main data characteristics, and dive into the relations between variables to understand how this analysis will be directed.
 
 ```{r Import Data}

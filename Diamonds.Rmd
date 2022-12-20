@@ -1557,6 +1557,3 @@ pred_plot_full <- ggarrange(pred_plot_lr, pred_plot_rg, pred_plot_knn, pred_plot
 pred_plot_full
 ```
 
-# Conclusions
-
-# References
