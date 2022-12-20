@@ -3,11 +3,13 @@ title: "Diamonds"
 author: "Francisco Arrieta, Emily Schmidt and Lucia Camenisch"
 date: "`r Sys.Date()`"
 output:
+  pdf_document:
+    toc: yes
   html_document:
-    toc: true             # creating a table of contents (toc)
-    toc_float: 
-      collapsed: false    # toc does not collapse and is shown as a sidebar (toc_float)
-    number_sections: true # document sections are numbered
+    toc: yes
+    toc_float:
+      collapsed: no
+    number_sections: yes
     theme: cosmo
 ---
 
