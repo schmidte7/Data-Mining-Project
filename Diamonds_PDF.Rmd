@@ -52,7 +52,7 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE, fig.align = "center")
 #Gold = "#D8B365" 
 ```
 
-```{r Libraries, include=FALSE}
+```{r Libraries}
 ################ General Use ######################
 library(car)            #for statistic functions
 library(DataExplorer)   #for graphing missing value percentages
@@ -74,8 +74,8 @@ library(rattle)         #Graphical Data Interface
 
 
 ################ For Predictions ######################
-library(caret)          #for preProcess() and accuracy()
-library(forecast)       # for accuracy() measures
+library(caret)          #for preProcess()
+library(forecast)       #for accuracy() measures
 library(FNN)            #for finding k nearest neighbor
 library(gbm)            #for boosting
 library(ipred)          #for bagging
@@ -89,18 +89,20 @@ library(tensorflow)     #backend python library for neural network
 
 
 ################ Personalized Functions ######################
-source("VIF.R")         #for calculating VIF (KEEP/DELETE???????????????)
-source("ProcStep.R")    #for variable selection (forw, backw, setpw)
+source("VIF.R")         #for calculating VIF
 source("GlobalCrit.R")  #for variable selection (exhaustive search)
 
 ################ Additonal Actions ######################
 options(scipen = 999)                 #for removing scientific notation
-tf$constant("Hello Tensorflow!")      #for initializing tensoflow environment
+tf$constant("Hello Tensorflow!")      #for initializing tensorflow environment
+install.packages("tensorflow")
+
+
 ```
 
 # Data Exploration 
 
-```{r Import Data, include=FALSE}
+```{r Import Data}
 diamonds <- fread("diamonds.csv", sep=",", header = T) # Load your data, diamonds.csv
 
 diamonds$V1 <- NULL # Remove column 'V1' as it is similar to an ID variable - no additional meaning derived
@@ -114,7 +116,7 @@ colnames(diamonds)[10] <- "depth" # z to depth
 
 ## Dimension Summary 
 
-```{r Data Exploration, include=FALSE}
+```{r Data Exploration}
 dim(diamonds) # Dimensions of data
 summary(diamonds) # Produce result summaries of all variables
 str(diamonds) # Type of variables
@@ -131,7 +133,7 @@ gg_miss_var(diamonds) + ggtitle("Missing values")
 ```
 
 
-```{r Variables check, include=FALSE}
+```{r Variables check}
 ############### carat no problems #################
 
 ############### cut ###############################
@@ -197,13 +199,13 @@ diamonds[, diff := NULL]
 ```
 
 
-```{r ordering columns, include=FALSE}
+```{r ordering columns}
 # Reorder data table to group like variable types 
 diamonds <- diamonds[, c(7, 2:4, 1, 8:10, 5:6)]
 ```
 
 
-```{r ggpairs, fig.width = 6, fig.height = 5, echo=FALSE, message=FALSE, warning=FALSE}
+```{r ggpairs, fig.width = 6, fig.height = 5}
 #Used ggpairs to create a scatterplot matrix between quantitative variables 
 ggpairs(diamonds[, c(1, 5:10)], title = "Scatterplot Matrix",
          proportions = "auto",
@@ -212,92 +214,91 @@ ggpairs(diamonds[, c(1, 5:10)], title = "Scatterplot Matrix",
 ```
 
 
-```{r Price by X and Clarity, fig.width = 6, fig.height = 6, echo=FALSE, message=FALSE, warning=FALSE}
+```{r Price by X and Clarity, fig.width = 6, fig.height = 6}
 # Create plot that looks at carat and price
 PCl1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
-  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Carat and Clarity') + theme_classic()
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at length and price
 PCl2 <- ggplot(aes(x = length, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
-  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Length and Clarity') + theme_classic()
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at width and price
 PCl3 <- ggplot(aes(x = width, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
-  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Width and Clarity') + theme_classic()
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at depth and price
 PCl4 <- ggplot(aes(x = depth, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
-  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Depth and Clarity') + theme_classic()
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2)))  + theme_classic()
 
 # Create plot that looks at depth_ratio and price
-PCl5 <- ggplot(aes(x = depth_ratio, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2))) + ggtitle('Price by Depth Ratio and Clarity')  + theme_classic() + geom_vline(xintercept=mean(diamonds$depth_ratio), size = 1, color = "black") + geom_vline(xintercept=59, size = 1, color = "red") + geom_vline(xintercept=62.3, size = 1, color = "red")
+PCl5 <- ggplot(aes(x = depth_ratio, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2)))  + theme_classic() + geom_vline(xintercept=mean(diamonds$depth_ratio), size = 1, color = "black") + geom_vline(xintercept=59, size = 1, color = "red") + geom_vline(xintercept=62.3, size = 1, color = "red")
 
 # Create plot that looks at table and price
-PCl6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2))) + ggtitle('Price by Table and Clarity')+ theme_classic() + geom_vline(xintercept=mean(diamonds$table), size = 1, color = "black")
-
+PCl6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic() + geom_vline(xintercept=mean(diamonds$table), size = 1, color = "black") 
 # Arrange ggplots into one frame
 ggarrange(PCl1, PCl2, PCl3,PCl4, PCl5, PCl6,
-                    ncol = 2, nrow = 3)
+                    ncol = 2, nrow = 3, common.legend = TRUE, legend="right")
 ```
 
-```{r Price by X and Color, fig.width = 6, fig.height = 6, echo=FALSE, message=FALSE, warning=FALSE}
+```{r Price by X and Color, fig.width = 6, fig.height = 6}
 # Create plot that looks at carat and price
 PCo1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color)) +
-  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Carat and Color') + theme_classic()
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at length and price
 PCo2 <- ggplot(aes(x = length, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color)) +
-  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Length and Color') + theme_classic()
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at width and price
 PCo3 <- ggplot(aes(x = width, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color)) +
-  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Width and Color') + theme_classic()
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at depth and price
 PCo4 <- ggplot(aes(x = depth, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color)) +
-  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Depth and Color') + theme_classic()
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2)))   + theme_classic()
 
 # Create plot that looks at depth_ratio and price
-PCo5 <- ggplot(aes(x = depth_ratio, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2))) + ggtitle('Price by Depth Ratio and Color')  + theme_classic() + geom_vline(xintercept=mean(diamonds$depth_ratio), size = 1, color = "black")  + geom_vline(xintercept=59, size = 1, color = "red") + geom_vline(xintercept=62.3, size = 1, color = "red")
+PCo5 <- ggplot(aes(x = depth_ratio, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic() + geom_vline(xintercept=mean(diamonds$depth_ratio), size = 1, color = "black")  + geom_vline(xintercept=59, size = 1, color = "red") + geom_vline(xintercept=62.3, size = 1, color = "red")
 
 # Create plot that looks at table and price
-PCo6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2))) + ggtitle('Price by Table and Color')+ theme_classic() + geom_vline(xintercept=mean(diamonds$table), size = 1, color = "black")
+PCo6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic() + geom_vline(xintercept=mean(diamonds$table), size = 1, color = "black")
 
 # Arrange ggplots into one frame
 ggarrange(PCo1, PCo2, PCo3,PCo4, PCo5, PCo6,
-                    ncol = 2, nrow = 3)
+                    ncol = 2, nrow = 3, common.legend = TRUE, legend="right")
 ```
 
-```{r Price by X and Cut, fig.width = 6, fig.height = 6, echo=FALSE, message=FALSE, warning=FALSE}
+```{r Price by X and Cut, fig.width = 6, fig.height = 6}
 # Create plot that looks at carat and price
 PCu1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut)) +
-  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Carat and Cut') + theme_classic()
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at length and price
 PCu2 <- ggplot(aes(x = length, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut)) +
-  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Length and Cut') + theme_classic()
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at width and price
 PCu3 <- ggplot(aes(x = width, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut)) +
-  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Width and Cut') + theme_classic()
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at depth and price
 PCu4 <- ggplot(aes(x = depth, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut)) +
-  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Depth and Cut') + theme_classic()
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at depth_ratio and price
-PCu5 <- ggplot(aes(x = depth_ratio, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + ggtitle('Price by Depth Ratio and Cut')  + theme_classic() + geom_vline(xintercept=mean(diamonds$depth_ratio), size = 1, color = "black") + geom_vline(xintercept=59, size = 1, color = "red") + geom_vline(xintercept=62.3, size = 1, color = "red")
+PCu5 <- ggplot(aes(x = depth_ratio, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic() + geom_vline(xintercept=mean(diamonds$depth_ratio), size = 1, color = "black") + geom_vline(xintercept=59, size = 1, color = "red") + geom_vline(xintercept=62.3, size = 1, color = "red")
 
 # Create plot that looks at table and price
-PCu6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + ggtitle('Price by Table and Cut')+ theme_classic() + geom_vline(xintercept=mean(diamonds$table), size = 1, color = "black")
+PCu6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic() + geom_vline(xintercept=mean(diamonds$table), size = 1, color = "black")
 
 # Arrange ggplots into one frame
 ggarrange(PCu1, PCu2, PCu3,PCu4, PCu5, PCu6,
-                    ncol = 2, nrow = 3)
+                    ncol = 2, nrow = 3, common.legend = TRUE, legend="right")
 ```
 
 
-```{r Price Correlation, echo=FALSE, message=FALSE, warning=FALSE}
+```{r Price Correlation}
 # Correlation between price and quantitative variables
 price_correlation <- with(diamonds,
      data.frame(cor_length_price = cor(length, price), cor_width_price = cor(width, price), cor_depth_price = cor(depth, price), cor_depth_ratio_price = cor(depth_ratio, price), cor_table_price2 = cor(table, price), cor_carat_price3 = cor(carat, price)))
@@ -310,7 +311,7 @@ kable_corr
 
 ## Variable Visualisation
 
-```{r Histograms, echo=FALSE, message=FALSE, warning=FALSE}
+```{r Histograms}
 ggplot(gather(data = diamonds[, c(1, 5:10)]), aes(value)) +
   geom_histogram(aes(y = after_stat(density)),
                  bins = 10,
@@ -323,7 +324,7 @@ ggplot(gather(data = diamonds[, c(1, 5:10)]), aes(value)) +
   theme_classic() # A classic theme, with x and y axis lines and no grid lines
 ```
 
-```{r Correlation, echo=FALSE, message=FALSE, warning=FALSE}
+```{r Correlation}
 # Create heatmap to show variable correlation
 # Round the correlation coefficient to two decimal places
 cormat <- round(cor(diamonds[, c(1, 5:10)]), 2)
@@ -363,13 +364,13 @@ ggplot(cormat, aes(Var2, Var1, fill = value)) +
 rm(cormat, reorder_cormat)
 ```
 
-```{r Correlation Plot, echo=FALSE, message=FALSE, warning=FALSE}
+```{r Correlation Plot}
 #plot Correlation ellipses
 plotcorr(cor(diamonds[, -c(2:4)]), col = "#D8B365",
          main = "Pearson correlation ellipses for numerical variables")
 ```
 
-```{r train-valid-test, include=FALSE}
+```{r train-valid-test}
 # set seed for reproducing the partition
 set.seed(111)
 
@@ -392,104 +393,144 @@ Test <- diamonds[test.index, ]
 
 ## Linear Regression
 
-```{r LR data partition, include=F}
+### Data preparation
+
+```{r LR data partition}
+# creating training and validation sets
 Train_lr <- diamonds[train.index, ]
 Valid_lr <- diamonds[valid.index, ]
-Test_lr  <- diamonds[ test.index, ]
 ```
 
 ```{r vif}
+# using the VIF function from statistical modelling to check multicollinearity of predictors
 VIF(y = diamonds$price, matx = diamonds[, -c(1)])
+# removing length, width and depth and computing VIF without them
 VIF(y = diamonds$price, matx = diamonds[, -c(1, 6, 7, 8)])
 
+# plotting correlation ellipses of numerical variables with length, width and depth removed
 plotcorr(cor(diamonds[, -c(2:4, 6:8)]), col = "#D8B365",
          main = "Pearson correlation ellipses for numerical variables")
 ```
 
 ```{r skewness}
+# applying the skewness() function of every numerical variable from our training set
 sapply(Train_lr[, c(1, 5:10)], skewness)
+
+# logarithmic transformation on price, carat and table
 Train_lr$price <- log(Train_lr$price)
 Train_lr$carat <- log(Train_lr$carat)
 Train_lr$table <- log(Train_lr$table)
+
+# recomputing the skewness of numerical variables to see the improvement
 sapply(Train_lr[, c(1, 5:10)], skewness)
 
+# transforming in the validation set as well
 Valid_lr$price <- log(Valid_lr$price)
 Valid_lr$carat <- log(Valid_lr$carat)
 Valid_lr$table <- log(Valid_lr$table)
 ```
 
 ```{r hist-unskewed}
-ggplot(gather(data = Train_lr[, c(1, 5:10)]), aes(value)) +
-  geom_histogram(aes(y = after_stat(density)),
+# computing the histograms of numerical variables now that they are unskewed
+
+ggplot(gather(data = Train_lr[, c(1, 5:10)]), aes(value)) + # numerical vars of training set
+  geom_histogram(aes(y = after_stat(density)),              # making histograms with color params
                  color = "white",
-                 fill = "#D8B365") +             # Creates bin sizing with colors
-  geom_density(alpha = .2, fill = "#D8B365") +
-  facet_wrap(~ key, scales = "free") +           # Converting the graphs into panels
-  ggtitle("Histograms of numerical variables") + # Title name
-  ylab("Count") + xlab("Value") +                # Label names
-  theme_classic()                                # Theme with x and y axis lines and no grid lines
+                 fill = "#D8B365") +             
+  geom_density(alpha = .2, fill = "#D8B365") +              # making density lines
+  facet_wrap(~ key, scales = "free") +                      # multiple plots with facet
+  labs(title = "Histograms of numerical variables",         # labels of the plot
+       x = "Count",
+       y = "Value") +
+  theme_classic()                                           # aesthetic theme
 ```
 
 ```{r normalizing}
+# we compute the the mean and std values based on training data (for numerical variables)
 norm.values <- preProcess(Train_lr[, c(1, 5:10)], method=c("center", "scale"))
 
+# we standardize the training and validation data
 Train_lr[, c(1, 5:10)] <- predict(norm.values, Train_lr[, c(1, 5:10)])
 Valid_lr[, c(1, 5:10)] <- predict(norm.values, Valid_lr[, c(1, 5:10)])
- Test_lr[, c(1, 5:10)] <- predict(norm.values,  Test_lr[, c(1, 5:10)])
 ```
 
+### Linear models based on complete set of predictors
 
 ```{r LM-complete}
+# we compute the linear model using all predictors and display its summary
 LM_complete = lm(price ~. , data = Train_lr)
 summary(LM_complete)
 ```
 
 ```{r iterative-search-complete}
+# we use iterative search algorithms on the complete model: forward, backward and stepwise
+# we display summaries of the three models obtained with iterative methods
+
 LM_forward_complete = step(LM_complete, direction = "forward")
-summary(LM_forward_complete)    # no selection
+summary(LM_forward_complete)
+
 LM_backward_complete = step(LM_complete, direction = "backward")
-summary(LM_backward_complete)   # like LM_CpAIC_complete
+summary(LM_backward_complete)
+
 LM_stepwise_complete = step(LM_complete, direction = "both")
-summary(LM_stepwise_complete)   # like LM_CpAIC_complete
+summary(LM_stepwise_complete)
 ```
 
 ```{r LM_CpAIC_complete}
-options(scipen = 999)
+# we use the GlobalCrit function from statistical modelling to reduce the number of predictors
+# using global criterions: Mallows's Cp and AIC
 GlobalCrit(LM_complete)
 
+# we compute the linear model obtained with global methods and display its summary
 LM_CpAIC_complete = lm(price ~ . , data = Train_lr[, c(1:6, 8, 9)])
 summary(LM_CpAIC_complete)
 ```
 
-
+### Linear models based on uncorrelated predictors
 
 ```{r LM-minus-corr}
+# we define a training set without the correlated predictors (length, width, depth)
 Train_minus_corr <- Train_lr[, -c(6:8)]
+
+# we compute the linear model without correlated predictors and display its summary
 LM_minus_corr = lm(price ~ ., data = Train_minus_corr)
 summary(LM_minus_corr)
 ```
 
 ```{r iterative-search-minus-corr}
+# we use iterative search algorithms on the model without corr: forward, backward and stepwise
+# we display summaries of the three models obtained with iterative methods
+
 LM_backward_minus_corr = step(LM_minus_corr, direction = "backward")
-summary(LM_backward_minus_corr)   # like LM_CpAIC_minus_corr
+summary(LM_backward_minus_corr)
+
 LM_forward_minus_corr = step(LM_minus_corr, direction = "forward")
-summary(LM_forward_minus_corr)    # no selection
+summary(LM_forward_minus_corr)
+
 LM_stepwise_minus_corr = step(LM_minus_corr, direction = "both")
-summary(LM_stepwise_minus_corr)   # like LM_CpAIC_minus_corr
+summary(LM_stepwise_minus_corr)
 ```
 
 ```{r LM_CpAIC_minus_corr}
+# we use the GlobalCrit function from statistical modelling to reduce the number of predictors
+# using global criterions: Mallows's Cp and AIC
 GlobalCrit(LM_minus_corr)
 
+# we compute the linear model obtained with global methods and display its summary
 LM_CpAIC_minus_corr = lm(price ~ . , data = Train_lr[, c(1:5, 9)])
 summary(LM_CpAIC_minus_corr)
 ```
 
-```{r Variable Selection Summary}
+### Summary of models
 
-kable_styling(
+```{r Variable Selection Summary}
+# we display a table of the predictors used in each model using kable()
+# kable_classic() changes the kable style
+
+kable_classic(
   kable(
-  data.table(Model = c("LM_complete", "LM_forward_complete", "LM_backward_complete",
+    # the data to display in the table: model names and crosses for presence of predictor
+    data.table(Model = c("LM_complete", "LM_forward_complete", "LM_backward_complete",
                        "LM_stepwise_complete", "LM_CpAIC_complete",
                        "LM_minus_corr", "LM_forward_minus_corr", "LM_backward_minus_corr",
                        "LM_stepwise_minus_corr", "LM_CpAIC_minus_corr"),
@@ -501,32 +542,26 @@ kable_styling(
              Width         = c("X","X"," "," "," "," "," "," "," "," "),
              Depth         = c("X","X","X","X","X"," "," "," "," "," "),
              `Depth Ratio` = c("X","X","X","X","X","X","X","X","X","X"),
-             Table         = c("X","X"," "," "," ","X","X"," "," "," ")), 
-  caption = 'A Tale of Two Tables.', 
-  booktabs = TRUE,
-  align = 'lccccccccc') %>% kable_classic(),
-  full_width = TRUE)
+             Table         = c("X","X"," "," "," ","X","X"," "," "," ")
+             ),
+    align = 'lccccccccc',                               # alignment of each column
+    caption = "Predictors used in each linear model"),  # caption of the table
+    )
 
-
-knitr::kable(
-  list(
-  ),
-  caption = 'A Tale of Two Tables.', booktabs = TRUE
-)
 ```
 
-In both cases, the forward selection doesn't discard any variables, whereas backward, stepwise and global selections all choose the same model with less variables than initially.
-
-Thus, we have four different models emerging. We will keep `LM_complete`, `LM_CpAIC_complete`, `LM_minus_corr` and `LM_CpAIC_minus_corr` and remove the other models which are duplicates.
-
 ```{r remove models}
+# we remove redundant models
 rm(LM_forward_complete, LM_backward_complete, LM_stepwise_complete, LM_forward_minus_corr, LM_backward_minus_corr, LM_stepwise_minus_corr)
 ```
 
+### Accuracy measures of models on validation set
 
-```{r create accuracy table}
+```{r predictions-table}
 # predicting prices of validation set on the validation data
 
+# we create a data table of predictions which contains predictions for the four models
+# predictions are computed on validation set using predict()
 LM_Predictions =
   data.table(
     LM_complete_pred = predict(object = LM_complete, newdata = Valid_lr),
@@ -534,9 +569,12 @@ LM_Predictions =
     LM_minus_corr_pred = predict(object = LM_minus_corr, newdata = Valid_lr),
     LM_CpAIC_minus_corr_pred = predict(object = LM_CpAIC_minus_corr, newdata = Valid_lr)
     )
+```
 
+```{r rescaling-predictions}
 # we have to scale back the price, to do so we fetch the mean and std value from norm.values
-# dsplaying all means and stds
+
+# we display all means and stds
 norm.values$mean
 norm.values$std
 
@@ -547,10 +585,16 @@ std_price = norm.values$std[1]
 # scaling back (Y*mu + sigma), then exp() (we had transformed price with a log for skewness)
 LM_Predictions = LM_Predictions*std_price + mean_price
 LM_Predictions = exp(LM_Predictions)
+```
 
-
+```{r real-prices}
 # taking real prices of validation data from diamonds (which has not been touched -> original scale)
 LM_Predictions[, real_prices := diamonds[valid.index, price]]
+```
+
+```{r models-accuracy-measures}
+# we compute accuracy measures for each model using accuracy() from the forecast package
+# we convert each accuracy to a table (in order to put them together afterwards)
 
 Acc1 = accuracy(object = LM_Predictions$LM_complete_pred, x = LM_Predictions$real_prices)
 Acc1 = as.data.table(Acc1)
@@ -560,13 +604,23 @@ Acc3 = accuracy(object = LM_Predictions$LM_minus_corr_pred, x = LM_Predictions$r
 Acc3 = as.data.table(Acc3)
 Acc4 = accuracy(object = LM_Predictions$LM_CpAIC_minus_corr_pred, x = LM_Predictions$real_prices)
 Acc4 = as.data.table(Acc4)
+
+# we create a list of accuracy measures
 Accs = list(Acc1, Acc2, Acc3, Acc4)
+# we use rbindlist() from the data.table package to stack the four tables on top of eachother
 Accs = rbindlist(Accs)
-#rm(Acc1, Acc2, Acc3, Acc4)
+# now that Accs is created we can remove the four tables
+rm(Acc1, Acc2, Acc3, Acc4)
+# we add a column to Accs with the model names
 Accs[, Model := c("LM_complete", "LM_CpAIC_complete", "LM_minus_corr", "LM_CpAIC_minus_corr")]
+# we put the Model column first
 Accs <- Accs[, c(6, 1:5)]
-kable_styling(kable(Accs)%>% kable_classic(), full_width = TRUE)
+
+# displaying Accs as a table with kable() and adding a caption
+# kable_classic controls style of table
+kable_classic(kable(Accs, caption = "Accuracy measures of linear models"))
 ```
+
 
 ## $k$-NN
 
@@ -580,7 +634,6 @@ diamonds_dummies <- dummy_cols(diamonds_dummies,
 colnames(diamonds_dummies)[10] = "cut_Very_Good"
 
 ```
-
 
 ```{r knn Normalize values}
 #create data frames to normalize
@@ -596,7 +649,6 @@ norm_values <- preProcess(knn_train[, c(1:7)], method=c("center", "scale"))
 knn_train_norm[, c(1:7)] <- predict(norm_values, knn_train[, c(1:7)])
 knn_valid_norm[,c(1:7)] <- predict(norm_values, knn_valid[, c(1:7)])
 ``` 
-
 
 ```{r knn Calculate k1}
 # computing kNN with knnreg from caret package
@@ -621,9 +673,9 @@ knn_rescaled_prices = std_price * knn_pred_y + mean_price
 real_prices = diamonds[valid.index, price]
 
 # computing accuracy measures
-kNN_aa1 <- accuracy(object = knn_rescaled_prices, x = real_prices)
+knn_aa1 <- accuracy(object = knn_rescaled_prices, x = real_prices)
 
-kable_styling(kable(kNN_aa1)%>% kable_classic(), full_width = TRUE)
+kable_styling(kable(knn_aa1)%>% kable_classic(), full_width = TRUE)
 ```
 
 ```{r Compute best K }
@@ -653,7 +705,6 @@ ggplot (data = accuracy_df, aes(x = k, y = accuracy)) +
   theme_classic() 
 ```
 
-
 ```{r knn Calculate k4}
 
 # computing kNN with knnreg from caret package
@@ -666,8 +717,34 @@ opt_knn_pred_y = predict(object = opt_kNN, newdata = knn_valid_norm[, -c(1)])
 opt_knn_rescaled_prices = std_price * opt_knn_pred_y + mean_price
 
 # computing accuracy measures
-opt_accuracy <- accuracy(object = opt_knn_rescaled_prices, x = real_prices)
-kable_styling(kable(opt_accuracy)%>% kable_classic(), full_width = TRUE)
+knn_aa2 <- accuracy(object = opt_knn_rescaled_prices, x = real_prices)
+kable_styling(kable(knn_aa2)%>% kable_classic(), full_width = TRUE)
+```
+
+```{r}
+knn_res <- data.frame("Model_kNN" = c("k = 1",
+                                "k = 4"),
+                     "ME" = "",
+                     "RMSE" = "",
+                     "MAE"= "",
+                     "MPE" = "",
+                     "MAPE" = "")
+
+rownames(knn_res) <- knn_res$Model_kNN
+knn_res$Model_kNN = NULL
+
+for (i in 1:2) {
+  knn_res[i,]= round(get(paste("knn_aa", i, sep ="")),2)
+}
+
+kable_styling(kable(knn_res)%>% kable_classic(), full_width = TRUE)
+
+RGRMSEplotdata <- t(knn_res$RMSE)
+colnames(RGRMSEplotdata) <- t(rownames(knn_res))
+RGRMSEplotdata
+
+barplot(RGRMSEplotdata, col = "#D8B365",border = "#D8B365" ,
+         main = "k-NN Tree Comparison", ylab = "RMSE", las = 3, ylim=c(0,1000))
 ```
 
 ## Regression Tree
@@ -1472,7 +1549,10 @@ pred_plot_ens <- ggplot(data = predtable_ens, aes(x= Real, y = Predicted, color 
   labs(x= "Ensemble", y = "")+
   theme_classic()
 
-#pred_plot_full <- grid.arrange(ggplotGrob("Hello"),ggarrange(pred_plot_lr, pred_plot_rg, pred_plot_knn, #pred_plot_nn,pred_plot_ens, ncol=2, nrow=3, common.legend = TRUE, legend="right"), nrow = 2)
-#pred_plot_full
+pred_plot_full <- ggarrange(pred_plot_lr, pred_plot_rg, pred_plot_knn, pred_plot_nn,pred_plot_ens, ncol=2, nrow=3, common.legend = TRUE, legend="right")
+pred_plot_full
 ```
+
 # Conclusions
+
+# References
