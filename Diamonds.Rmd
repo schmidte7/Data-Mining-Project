@@ -607,7 +607,7 @@ Accs = list(Acc1, Acc2, Acc3, Acc4)
 # we use rbindlist() from the data.table package to stack the four tables on top of eachother
 Accs = rbindlist(Accs)
 # now that Accs is created we can remove the four tables
-rm(Acc1, Acc2, Acc3, Acc4)
+rm(Acc1, Acc2, Acc3)
 # we add a column to Accs with the model names
 Accs[, Model := c("LM_complete", "LM_CpAIC_complete", "LM_minus_corr", "LM_CpAIC_minus_corr")]
 # we put the Model column first
