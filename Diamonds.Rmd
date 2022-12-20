@@ -95,9 +95,6 @@ source("GlobalCrit.R")  #for variable selection (exhaustive search)
 ################ Additonal Actions ######################
 options(scipen = 999)                 #for removing scientific notation
 tf$constant("Hello Tensorflow!")      #for initializing tensorflow environment
-install.packages("tensorflow")
-
-
 ```
 
 # Data Exploration 
