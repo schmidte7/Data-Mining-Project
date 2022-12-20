@@ -217,53 +217,52 @@ ggpairs(diamonds[, c(1, 5:10)], title = "Scatterplot Matrix",
 ```{r Price by X and Clarity, fig.width = 6, fig.height = 6}
 # Create plot that looks at carat and price
 PCl1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
-  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Carat and Clarity') + theme_classic()
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at length and price
 PCl2 <- ggplot(aes(x = length, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
-  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Length and Clarity') + theme_classic()
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at width and price
 PCl3 <- ggplot(aes(x = width, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
-  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Width and Clarity') + theme_classic()
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at depth and price
 PCl4 <- ggplot(aes(x = depth, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
-  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Depth and Clarity') + theme_classic()
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2)))  + theme_classic()
 
 # Create plot that looks at depth_ratio and price
-PCl5 <- ggplot(aes(x = depth_ratio, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2))) + ggtitle('Price by Depth Ratio and Clarity')  + theme_classic() + geom_vline(xintercept=mean(diamonds$depth_ratio), size = 1, color = "black") + geom_vline(xintercept=59, size = 1, color = "red") + geom_vline(xintercept=62.3, size = 1, color = "red")
+PCl5 <- ggplot(aes(x = depth_ratio, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2)))  + theme_classic() + geom_vline(xintercept=mean(diamonds$depth_ratio), size = 1, color = "black") + geom_vline(xintercept=59, size = 1, color = "red") + geom_vline(xintercept=62.3, size = 1, color = "red")
 
 # Create plot that looks at table and price
-PCl6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2))) + ggtitle('Price by Table and Clarity')+ theme_classic() + geom_vline(xintercept=mean(diamonds$table), size = 1, color = "black")
-
+PCl6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic() + geom_vline(xintercept=mean(diamonds$table), size = 1, color = "black") 
 # Arrange ggplots into one frame
-ggarrange(ggtitle('Price by Table and Clarity'), PCl1, PCl2, PCl3,PCl4, PCl5, PCl6,
+ggarrange(PCl1, PCl2, PCl3,PCl4, PCl5, PCl6,
                     ncol = 2, nrow = 3, common.legend = TRUE, legend="right")
 ```
 
 ```{r Price by X and Color, fig.width = 6, fig.height = 6}
 # Create plot that looks at carat and price
 PCo1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color)) +
-  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Carat and Color') + theme_classic()
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at length and price
 PCo2 <- ggplot(aes(x = length, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color)) +
-  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Length and Color') + theme_classic()
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at width and price
 PCo3 <- ggplot(aes(x = width, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color)) +
-  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Width and Color') + theme_classic()
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at depth and price
 PCo4 <- ggplot(aes(x = depth, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color)) +
-  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Depth and Color') + theme_classic()
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2)))   + theme_classic()
 
 # Create plot that looks at depth_ratio and price
-PCo5 <- ggplot(aes(x = depth_ratio, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2))) + ggtitle('Price by Depth Ratio and Color')  + theme_classic() + geom_vline(xintercept=mean(diamonds$depth_ratio), size = 1, color = "black")  + geom_vline(xintercept=59, size = 1, color = "red") + geom_vline(xintercept=62.3, size = 1, color = "red")
+PCo5 <- ggplot(aes(x = depth_ratio, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic() + geom_vline(xintercept=mean(diamonds$depth_ratio), size = 1, color = "black")  + geom_vline(xintercept=59, size = 1, color = "red") + geom_vline(xintercept=62.3, size = 1, color = "red")
 
 # Create plot that looks at table and price
-PCo6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2))) + ggtitle('Price by Table and Color')+ theme_classic() + geom_vline(xintercept=mean(diamonds$table), size = 1, color = "black")
+PCo6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic() + geom_vline(xintercept=mean(diamonds$table), size = 1, color = "black")
 
 # Arrange ggplots into one frame
 ggarrange(PCo1, PCo2, PCo3,PCo4, PCo5, PCo6,
@@ -273,25 +272,25 @@ ggarrange(PCo1, PCo2, PCo3,PCo4, PCo5, PCo6,
 ```{r Price by X and Cut, fig.width = 6, fig.height = 6}
 # Create plot that looks at carat and price
 PCu1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut)) +
-  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Carat and Cut') + theme_classic()
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at length and price
 PCu2 <- ggplot(aes(x = length, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut)) +
-  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Length and Cut') + theme_classic()
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at width and price
 PCu3 <- ggplot(aes(x = width, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut)) +
-  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Width and Cut') + theme_classic()
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at depth and price
 PCu4 <- ggplot(aes(x = depth, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut)) +
-  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Depth and Cut') + theme_classic()
+  scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at depth_ratio and price
-PCu5 <- ggplot(aes(x = depth_ratio, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + ggtitle('Price by Depth Ratio and Cut')  + theme_classic() + geom_vline(xintercept=mean(diamonds$depth_ratio), size = 1, color = "black") + geom_vline(xintercept=59, size = 1, color = "red") + geom_vline(xintercept=62.3, size = 1, color = "red")
+PCu5 <- ggplot(aes(x = depth_ratio, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic() + geom_vline(xintercept=mean(diamonds$depth_ratio), size = 1, color = "black") + geom_vline(xintercept=59, size = 1, color = "red") + geom_vline(xintercept=62.3, size = 1, color = "red")
 
 # Create plot that looks at table and price
-PCu6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + ggtitle('Price by Table and Cut')+ theme_classic() + geom_vline(xintercept=mean(diamonds$table), size = 1, color = "black")
+PCu6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic() + geom_vline(xintercept=mean(diamonds$table), size = 1, color = "black")
 
 # Arrange ggplots into one frame
 ggarrange(PCu1, PCu2, PCu3,PCu4, PCu5, PCu6,
