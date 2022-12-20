@@ -413,6 +413,12 @@ Test <- diamonds[test.index, ]
 
 ### Data preparation
 
+We begin by performing linear regressions on our data. As we saw during the exploration phase, some predictors (`carat`, `length`, `width` and `depth`) are highly correlated. Therefore, multicollinearity might be an issue.
+
+We use the Generalized Variation Inflation Factors (GVIF) to measure the multicollinearity level of our data. This generalized version of the VIF allows us to take into account numerical and categorical predictors together. The GVIF clearly confirms that there is an issue, as `length`, `width` and `depth` all have coefficients above 1000. `carat` and `depth_ratio` also have high values above 25, but they aren't as high extreme as the other three.
+
+After removing `length`, `width` and `depth`, the GVIF coefficients of the remaining predictors are all under 2, which indicates the multicollinearity problem is solved. We display correlation ellipses of numerical variables without `length`, `width` and `depth`.
+
 ```{r LR data partition}
 # creating training and validation sets
 Train_lr <- diamonds[train.index, ]
@@ -430,10 +436,35 @@ plotcorr(cor(diamonds[, -c(2:4, 6:8)]), col = "#D8B365",
          main = "Pearson correlation ellipses for numerical variables")
 ```
 
-```{r skewness}
-# applying the skewness() function of every numerical variable from our training set
-sapply(Train_lr[, c(1, 5:10)], skewness)
+The only high correlation left is between `carat` and `price`, indicating that `carat` will surely be an important predictor for determining `price`.
 
+Thus, we will perform linear regressions on two different models:
+
+1.  `LM_complete` which contains all predictors
+2.  `LM_minus_corr` which has `length`, `width` and `depth` removed.
+
+These two models will serve as basis for variable selection procedures later.
+
+However, before starting to build our models, we also need to account for skewed variables. Linear regression might perform worse when dealing with skewed variables and it is common to use transformations such as a logarithm or a $n$th root to make variable more symmetrical.
+
+We use an estimator of skewness called \$b_1\$, whose definition can be found [here](https://en.wikipedia.org/wiki/Skewness#Sample_skewness).
+
+The value of $b_1$ is interpreted as follows:
+
+-   $0 \leq |b_1| < 0.5$: variable is symmetrical;
+-   $0.5 \leq |b_1| < 1$: variable is moderately skewed;
+-   $|b_1| \geq 1$: variable is highly skewed.
+
+We compute $b_1$ on our numerical variables and get the following results.
+
+```{r skewness-table}
+# applying the skewness() function of every numerical variable from our training set
+kable_classic(kable(sapply(Train_lr[, c(1, 5:10)], skewness), col.names = "$b_1$",
+      caption = "Skewness estimator for numerical variables"))
+```
+
+
+```{r skewness}
 # logarithmic transformation on price, carat and table
 Train_lr$price <- log(Train_lr$price)
 Train_lr$carat <- log(Train_lr$carat)
@@ -447,6 +478,10 @@ Valid_lr$price <- log(Valid_lr$price)
 Valid_lr$carat <- log(Valid_lr$carat)
 Valid_lr$table <- log(Valid_lr$table)
 ```
+
+`price` and `carat` are highly skewed and `table` is moderately skewed.
+
+We apply a logarithmic transformation to all three variables. The improvement can also be seen in the histograms, as they look more symmetrical now.
 
 ```{r hist-unskewed}
 # computing the histograms of numerical variables now that they are unskewed
@@ -463,6 +498,9 @@ ggplot(gather(data = Train_lr[, c(1, 5:10)]), aes(value)) + # numerical vars of 
   theme_classic()                                           # aesthetic theme
 ```
 
+
+We also standardize numerical variables by subtracting their mean and dividing by their standard deviation. This makes the comparison of $\beta$ coefficients between variables easier.
+
 ```{r normalizing}
 # we compute the the mean and std values based on training data (for numerical variables)
 norm.values <- preProcess(Train_lr[, c(1, 5:10)], method=c("center", "scale"))
@@ -473,6 +511,14 @@ Valid_lr[, c(1, 5:10)] <- predict(norm.values, Valid_lr[, c(1, 5:10)])
 ```
 
 ### Linear models based on complete set of predictors
+
+The data is now ready for our linear models. For both `LM_complete` and `LM_minus_corr`, we perform the following linear regressions:
+
+1. Linear regression on the whole model
+2. Forward selection on the model (iterative method)
+3. Backward selection on the model (iterative method)
+4. Stepwise selection on the model (iterative method)
+5. Mallows's $C_p$ and AIC selection on the model (global method)
 
 ```{r LM-complete}
 # we compute the linear model using all predictors and display its summary
@@ -541,6 +587,8 @@ summary(LM_CpAIC_minus_corr)
 
 ### Summary of models
 
+For each of these models, we summarise which variables are used as predictors in the following table.
+
 ```{r Variable Selection Summary}
 # we display a table of the predictors used in each model using kable()
 # kable_classic() changes the kable style
@@ -567,6 +615,20 @@ kable_classic(
     )
 
 ```
+
+
+For both basis models, forward selection doesn't discard any variables, whereas backward, stepwise and global selections all choose the same model with less variables than initially.
+
+Thus, we have four distinct models in total. We assess the predictive performance of these four models on our validation set by computing the five accuracy measures seen during the course.
+
+Let us recall the definitions and meaning of these measures (Data Mining for Business Analytics - Concepts, Techniques, and Applications in R, chapter 5.2, page 119). We denote the residuals by $r = y - \hat y$.
+
+1.  **ME** (Mean Error) gives an indication of whether the predictions are on average over- or under-predicting the outcome variable. $$ME = \dfrac{1}{n} \sum_{i=1}^{n}r_i$$
+2.  **RMSE** (Root Mean Squared Error) is similar to the standard error of estimate in linear regression, except that it is computed on the validation data rather than on the training data. $$RMSE =  \sqrt{\dfrac{1}{n}\sum_{i=1}^{n}r_i^2}$$
+3.  **MAE** (Mean Absolute Error) gives the magnitude of the average absolute error. $$MAE = \dfrac{1}{n} \sum_{i=1}^{n}|r_i|$$
+4.  **MPE** (Mean Percentage Error) gives the percentage score of how predictions deviate from the actual values (on average), taking into account the direction of the error. $$MPE = 100 \cdot \dfrac{1}{n} \sum_{i=1}^{n} \dfrac{r_i}{y_i}$$
+5.  **MAPE** (Mean Absolute Percentage Error) gives a percentage score of how predictions deviate (on average) from the actual values. $$MAPE = 100 \cdot \dfrac{1}{n} \sum_{i=1}^{n} \left| \dfrac{r_i}{y_i}\right|$$
+
 
 ```{r remove models}
 # we remove redundant models
@@ -610,6 +672,8 @@ LM_Predictions = exp(LM_Predictions)
 LM_Predictions[, real_prices := diamonds[valid.index, price]]
 ```
 
+The accuracy measures for our four models are summarized below. In order to give meaningful results, the outcome variable `price` has been rescaled to its original scale and retransformed by taking the exponential (to cancel out the logarithm). Thus, the ME, RMSE and MAE can be interpreted in the price currency, dollars.
+
 ```{r models-accuracy-measures}
 # we compute accuracy measures for each model using accuracy() from the forecast package
 # we convert each accuracy to a table (in order to put them together afterwards)
@@ -639,6 +703,13 @@ Accs <- Accs[, c(6, 1:5)]
 kable_classic(kable(Accs, caption = "Accuracy measures of linear models"))
 ```
 
+The mean error is bigger in the models without multicollinearity issues, but their RMSE is smaller. Since the mean error is positive in all four models, we are under-predicting the price of diamonds by 36 or 50 dollars on average depending on the model.
+
+An increase of 14$ in the mean error is a good trade-off to reducing the RMSE, which indicates how much the predictions will fluctuate from real values. The other three measures are quite close in all four models.
+
+Considering the parsimony principle and the RMSE, the best choice is our fourth linear model, which contains `cut`, `color`, `clarity`, `carat` and `depth_ratio`.
+
+Overall, the RMSE for linear regression remains quite high and as we will see in the following chapters, some models will achieve much better predictive performances.
 
 ## $k$-NN
 
