@@ -325,7 +325,7 @@ kable_corr
 ## Variable Visualisation
 As a continuation of data exploration, variable visualization involves creating graphical representations of data to visually communicate insights and trends. It allows us to quickly and easily identify patterns that may not be immediately apparent from looking at raw data. There are three graphics that demonstrate how these continuous values are distributed. Since some models take into account transformation, those details will be described later. As a high-level review, price and carat are positively skewed. From the scatterplot by cut above, the relation to the histogram for depth_ratio can see that most cut features fall into approximately 60 to 65 mm. The relationships in the Correlation Heatmap visually show how width, length, depth, and carat continue to be highly correlated with price while depth_ratio and table are closer to 0. Another way to visualize the relationships is through the Pearson correlation ellipses chart. The skinnier the ellipse, the more correlated the two values are. 
 
-Through exploration, we can gain a deeper understanding of the data and how it can be used to answer business questions or solve real-world problems, like predicting the price of a diamond.
+Through exploration, we can gain a deeper understanding of the data and how it can be used to answer business questions or solve real-world problems, like predicting the the price of a diamond.
 
 ```{r Histograms}
 ggplot(gather(data = diamonds[, c(1, 5:10)]), aes(value)) +
