@@ -836,7 +836,7 @@ accuracy_df[i, 2] <- accuracy(object = temp_knn_rescaled_prices, x = real_prices
 
 ```{r Best K table, include= TRUE, echo=FALSE}
 #display results
-row_spec(kable_classic(kbl(accuracy_df, full_width = TRUE)), 4, bold = T, color = "white", background = "#D8B365")
+row_spec(kable_classic(kbl(accuracy_df), full_width = TRUE), 4, bold = T, color = "white", background = "#D8B365")
 ```
 
 
