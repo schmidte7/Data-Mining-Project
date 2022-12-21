@@ -110,7 +110,7 @@ The choice of methods shown in the report is not all inclusive and responds to t
 
 # Data Exploration
 
-In the early stages of any analysis, data exploration is a critical process aimed at understanding and analyzing the data set to gain insight and make valid decisions. The overarching goal of examining the data is to obtain intuition, identify questionable values, and strategize how to answer the problem statement. Therefore, let's summarize the findings that explain the main data characteristics, and dive into the relations between variables to understand how this analysis will be directed.
+In the early stages of any analysis, data exploration is a critical process aimed at understanding and analyzing the data set to gain insight and make valid decisions. The overarching goal of examining the data is to obtain intuition, identify questionable values, and strategize how to answer the problem statement. Therefore, let's summarize the findings that explain the main data characteristics, and dive into the relations between variables.
 
 ```{r Import Data}
 diamonds <- fread("diamonds.csv", sep=",", header = T) # Load your data, diamonds.csv
@@ -126,17 +126,29 @@ colnames(diamonds)[10] <- "depth" # z to depth
 
 ## Dimension Summary 
 
-There is a variety of ways an analyst could approach understanding the observations in the data set. For starters, there are 53,940 records and 10 variables. The response variable (price) is a an integer variable. There are an additional six numeric values and three ordinal/categorical features that have a factored structure. Those non-numeric values (`cut`, `color`, and `clarity`) need to be appropriately ordered, and renamed if there are any spaces within their naming convention as later this could obstruct certain code. 
+There is a variety of ways an analyst could approach understanding the observations in the data set. For starters, there are 53,940 records and 10 variables. 
 
-To dive deeper, we consider removing observations that are invalid because they add noise. For instance, price against all features were reviewed for possible impurities. In total, there are 275 (0.5%) records removed for the following reasons:
+-   `price`: The response variable which is measured in USD and ranges between \$326 to \$18,823
 
-1. 20 rows had a depth of 0.0. This was considered inaccurate because a diamond needs to have this dimension specified.  
+-   `carat`: Continuous value that gives information about the weight of the diamond (1 ct = 200 mg)
 
-2. The difference between length and width should be almost identical. If they were not, those rows were removed. In this case, only two records were not included in the data set at differences above 36.0mm.  
+-   `cut`: Quality of the circular cut and has five levels  (worst: `Fair` | best: `Ideal`)
 
-3. The depth_ratio is a calculation between length, width, and length. To investigate this feature further, our group computed depth_ratio and saw there were differences between the actual and predicted values. Therefore, the executive decision was to remove any differences above a threshold of 0.3. A total of 253 rows were removed.  
+-   `color`: The less color within the diamond the better (yellow-ish: `J` | clear: `D`)
 
-Fortunately, there were no null values that needed to be considered.
+-   `clarity`: A categorical value that measures how clear the diamond appears without impurities (worst: `I1` | best: `IF`)
+
+-   `x`: A numeric variable that relates to the diamond `length` in millimeters (mm), which ranges from 0.00 mm to 10.74 mm 
+
+-   `y`: A numeric variable that relates to the diamond `width` in millimeters (mm), which ranges from 0 mm to 58.90 mm 
+
+-   `z`: A numeric variable that relates to the diamond `depth`/height in millimeters (mm), which ranges from 0 mm to 31.80 mm 
+
+-   `depth total`: A calculated value that is computed with `x`, `y`, and `z` in terms of a percentage. This feature does not exceed 79.00%
+
+-   `table`: The width of the top of diamond relative to widest point that can be seen when the stone is viewed face up
+
+The outcome variable (price) is a an integer. There are an additional six numeric values and three ordinal/categorical features that have a factored structure. Those non-numeric values (`cut`, `color`, and `clarity`) need to be appropriately ordered, and renamed if there are any spaces within their naming convention as later this could obstruct certain code. 
 
 ```{r Data Exploration}
 dim(diamonds) # Dimensions of data
@@ -210,6 +222,16 @@ diamonds[, diff := abs(depth_check-depth_ratio)]
 hist(diamonds[diff >= 0.2 & diff < 1, diff], breaks =50, col = "#D8B365", border = "#D8B365", main = "Threshold Differences", xlab = "Predicted vs. Actual Difference", cex.lab=0.8, cex.axis=0.8, cex.main=0.8, cex.sub=0.8)
 ```
 
+To dive deeper, we consider removing records that are invalid because they add noise. For instance, price against all features were reviewed for possible impurities. In total, there are 275 (0.5%) rows removed for the following reasons:
+
+1. 20 rows had a depth of 0.00. This was considered inaccurate because a diamond needs to have this dimension specified.  
+
+2. The difference between length and width should be almost identical since the diamond should be cut approximately circular. If they were not, those rows were removed. In this case, only two records were not included in the data set at differences above 36.00 mm.  
+
+3. The depth_ratio is a calculation between `length` (`x`), `width` (`y`), and `depth` (`z`). To investigate this feature further, our group computed `depth_ratio` and saw there were differences between the actual and predicted values. Therefore, the executive decision was to remove any differences above a threshold of 0.3. A total of 253 rows were removed.  
+
+In the remaining 53,918 observations, there were no missing values. 
+
 ```{r Variables check cont.}
 # Threshold set to 0.3 due to ... (report)
 nrow(diamonds[diff > 0.3,]) # We remove 268 rows
@@ -230,105 +252,105 @@ diamonds[, diff := NULL]
 diamonds <- diamonds[, c(7, 2:4, 1, 8:10, 5:6)]
 ```
 
-The second part of exploring the diamonds data set is to understand the relationships between variables. Prior to analyzing their correlations, we had an idea of which continuous variables would have a strong relation due to the depth_ratio calculation. Later on, certain methods will analyze the potential issue of collinearity. By isolating price against the other continuous variables, carat, length, width, and depth, all have positively linear relations to the response feature. Some of the models used in the analysis to predict price will show these effects. In addition, the relationship between carat and price is unique  because their relation is non-linear. We were also interested in showing how the categorical variables affect price. Clarity, color, and cut have distinct patterns seen between the four continuous variables mentioned above. 
+In continuation of exploring the diamonds dataset, we now look at the relationships between variables. By isolating price against the other continuous variables, it is seen that `carat`, `length`, `width`, and `depth`, all have a positively linear relation to the response feature. Some of the models used in the analysis to predict price will show these effects later as a possible issue of collinearity could occur. In addition, the relationship between carat and price is unique because their relation is non-linear. We were also interested in showing how the categorical variables affect price. `Clarity`, `color`, and `cut` have distinct patterns seen between the four continuous variables mentioned above. 
 
 ```{r ggpairs, eval=FALSE, fig.height=6, fig.width=6, include=FALSE}
 #Used ggpairs to create a scatterplot matrix between quantitative variables 
-ggpairs(diamonds[, c(1, 5:10)], title = "Scatterplot Matrix",
+ggpairs(diamonds[, c(1, 5:10)], title = "Scatter plot Matrix",
          proportions = "auto",
          columnLabels = c("Price", "Carat", "Length", "Width", "Depth","Depth Ratio","Table"),
          upper = list(continuous = wrap('cor',size = 3)),) + theme_light()
 ```
 
-For instance, when plotting price by carat, width, length, and depth, with clarity as the color dimension, there is a clear distinction between how these points relate. Each scatter plot shows a strong, positive correlation to price. When reviewing the x-axis for each explanatory variable, the lower tiered option is typically observed more. The cheaper the gemstone, the worse quality the customer bought. Within each plot, there are outliers that can be explained by how the diamond was cut, which impacts the weight, length, and depth. By the color scale, it is noticed how there are more diamonds with a worse clarity (SI2/SI1) than there are with the best (IF/VVS1). Intuitively, this makes sense because not all customers have the available funds to afford the optimally designed diamond. On the other hand, no one wants the worst clarity either. Therefore, a majority of the diamonds lie between the second and third best, and second and third worst clarity factors. In addition, the relation between depth_ratio and table to price is not distinct as those features are mixed throughout the relative ranges. Within all of the depth_ratio plots, there are vertical lines that show the depth_ratio  mean (black) and range (red) of what is considered the prime value for depth_ratio as long as it is above 59% but does not exceed 62.3%. 
 
 ```{r Price by X and Clarity, fig.width = 6, fig.height = 6,include = TRUE, echo = FALSE, dpi = 150}
 # Create plot that looks at carat and price
-PCl1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
+PCl1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1,aes(color=clarity)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at length and price
-PCl2 <- ggplot(aes(x = length, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
+PCl2 <- ggplot(aes(x = length, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, aes(color=clarity)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at width and price
-PCl3 <- ggplot(aes(x = width, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
+PCl3 <- ggplot(aes(x = width, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, aes(color=clarity)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at depth and price
-PCl4 <- ggplot(aes(x = depth, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
+PCl4 <- ggplot(aes(x = depth, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, aes(color=clarity)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2)))  + theme_classic()
 
 # Create plot that looks at depth_ratio and price
-PCl5 <- ggplot(aes(x = depth_ratio, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2)))  + theme_classic() + geom_vline(xintercept=mean(diamonds$depth_ratio), size = 1, color = "black") + geom_vline(xintercept=59, size = 1, color = "red") + geom_vline(xintercept=62.3, size = 1, color = "red")
+PCl5 <- ggplot(aes(x = depth_ratio, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, aes(color=clarity))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2)))  + theme_classic() + geom_vline(xintercept=mean(diamonds$depth_ratio), size = 1, color = "black") + geom_vline(xintercept=59, size = 1, color = "red") + geom_vline(xintercept=62.3, size = 1, color = "red")
 
 # Create plot that looks at table and price
-PCl6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic() + geom_vline(xintercept=mean(diamonds$table), size = 1, color = "black") 
+PCl6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha = 0.5, size = 1, aes(color=clarity))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic() + geom_vline(xintercept=mean(diamonds$table), size = 1, color = "black") 
+
 # Arrange ggplots into one frame
-ggarrange(PCl1, PCl2, PCl3,PCl4, PCl5, PCl6,
-                    ncol = 2, nrow = 3, common.legend = TRUE, legend="right")
+ggarrange(PCl1, PCl2, PCl3,PCl4, PCl5, PCl6, ncol = 2, nrow = 3, common.legend = TRUE, legend="right")
 ```
 
-A similar relationship can be seen regarding price by the continuous variables, but as color as the color dimension. Instead of most of the observations falling closer to the best and worth clarify features, here the reader will notice how it appears that the colors E, F and G dominate (the white to light blue) the retail space. 
+When plotting `price` by `carat`, `width`, `length`, and `depth`, with `clarity` as the color dimension, there is a clear distinction between how these observations relate. Each scatter plot shows a strong, positive correlation to `price`. When reviewing the x-axis for each explanatory variable, the lower tiered option is typically observed more. The cheaper the gemstone, the worse quality. Within each plot, there are outliers that can be explained by how the diamond was cut, which impacts the `weight`, `length`, and `depth`. By the color scale, it is noticed how there are more diamonds with a worse clarity (SI2/SI1) than there are with the best (IF/VVS1). Intuitively, this makes sense because perfecting a diamond's clarity is quite difficult. Therefore, a majority of the diamonds lie between the second and third best, and second and third worst clarity factors. In addition, the relation between `depth_ratio` and `table` to `price` is not distinct as those features are mixed throughout the relative ranges. Within all of the `depth_ratio` plots, there are vertical lines that show the `depth_ratio` mean (black) and range (red) of what is considered the prime value for `depth_ratio` as long as it is above 59.00% but does not exceed 62.30%. 
 
 ```{r Price by X and Color, fig.width = 6, fig.height = 6, include = TRUE, echo = FALSE, dpi = 150}
 # Create plot that looks at carat and price
-PCo1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color)) +
+PCo1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, aes(color=color)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at length and price
-PCo2 <- ggplot(aes(x = length, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color)) +
+PCo2 <- ggplot(aes(x = length, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, aes(color=color)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at width and price
-PCo3 <- ggplot(aes(x = width, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color)) +
+PCo3 <- ggplot(aes(x = width, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, aes(color=color)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at depth and price
-PCo4 <- ggplot(aes(x = depth, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color)) +
+PCo4 <- ggplot(aes(x = depth, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, aes(color=color)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2)))   + theme_classic()
 
 # Create plot that looks at depth_ratio and price
-PCo5 <- ggplot(aes(x = depth_ratio, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic() + geom_vline(xintercept=mean(diamonds$depth_ratio), size = 1, color = "black")  + geom_vline(xintercept=59, size = 1, color = "red") + geom_vline(xintercept=62.3, size = 1, color = "red")
+PCo5 <- ggplot(aes(x = depth_ratio, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, aes(color=color))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic() + geom_vline(xintercept=mean(diamonds$depth_ratio), size = 1, color = "black")  + geom_vline(xintercept=59, size = 1, color = "red") + geom_vline(xintercept=62.3, size = 1, color = "red")
 
 # Create plot that looks at table and price
-PCo6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic() + geom_vline(xintercept=mean(diamonds$table), size = 1, color = "black")
+PCo6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha = 0.5, size = 1, aes(color=color))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic() + geom_vline(xintercept=mean(diamonds$table), size = 1, color = "black")
 
 # Arrange ggplots into one frame
 ggarrange(PCo1, PCo2, PCo3,PCo4, PCo5, PCo6,
                     ncol = 2, nrow = 3, common.legend = TRUE, legend="right")
 ```
 
-Cut has a completely different trend than clarity and color as a majority of customers prefer and will purchase the ideal cut. This can be seen within the depth_ratio plot especially. As stated earlier, the red lines indicate the optimal space in which a buyer would want the diamond's depth_ratio. Most of all of the ideal cuts are within those bounds while the fair, good, and very good are outside. There is a clear distinction on how cut relates to the depth_ratio along price.
+A similar relationship can be seen regarding `price` by the continuous variables, but as `color` as the color dimension. Instead of a majority the observations falling closer to the best and worst `clarify` features, here the reader will notice how it appears that the colors E, F and G dominate (the white to light blue) the space. 
 
 ```{r Price by X and Cut, fig.width = 6, fig.height = 6, include = TRUE, echo = FALSE, dpi = 150}
 # Create plot that looks at carat and price
-PCu1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut)) +
+PCu1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, aes(color=cut)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at length and price
-PCu2 <- ggplot(aes(x = length, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut)) +
+PCu2 <- ggplot(aes(x = length, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, aes(color=cut)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at width and price
-PCu3 <- ggplot(aes(x = width, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut)) +
+PCu3 <- ggplot(aes(x = width, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, aes(color=cut)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at depth and price
-PCu4 <- ggplot(aes(x = depth, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut)) +
+PCu4 <- ggplot(aes(x = depth, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, aes(color=cut)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
 
 # Create plot that looks at depth_ratio and price
-PCu5 <- ggplot(aes(x = depth_ratio, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic() + geom_vline(xintercept=mean(diamonds$depth_ratio), size = 1, color = "black") + geom_vline(xintercept=59, size = 1, color = "red") + geom_vline(xintercept=62.3, size = 1, color = "red")
+PCu5 <- ggplot(aes(x = depth_ratio, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, aes(color=cut))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic() + geom_vline(xintercept=mean(diamonds$depth_ratio), size = 1, color = "black") + geom_vline(xintercept=59, size = 1, color = "red") + geom_vline(xintercept=62.3, size = 1, color = "red")
 
 # Create plot that looks at table and price
-PCu6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic() + geom_vline(xintercept=mean(diamonds$table), size = 1, color = "black")
+PCu6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha = 0.5, size = 1, aes(color=cut))  + scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic() + geom_vline(xintercept=mean(diamonds$table), size = 1, color = "black")
 
 # Arrange ggplots into one frame
 ggarrange(PCu1, PCu2, PCu3,PCu4, PCu5, PCu6,
                     ncol = 2, nrow = 3, common.legend = TRUE, legend="right")
 ```
 
+`Cut` has completely different trends than `clarity` and `color` as a majority of the diamonds are either `ideal` or `premium`. This can especially be seen within the `depth_ratio` plot. As stated earlier, the red lines indicate the optimal space in which the luxury brand attempts to get the best ratio. Most of all of the prime cuts are within those bounds while the `fair`, `good`, and `very good` are outside. There is a clear distinction on how `cut` relates to the `depth_ratio` along `price`.
 
 ```{r Price Correlation}
 # Correlation between price and quantitative variables
@@ -342,22 +364,44 @@ kable_corr
 ```
 
 ## Variable Visualisation
-As a continuation of data exploration, variable visualization involves creating graphical representations of data to visually communicate insights and trends. It allows us to quickly and easily identify patterns that may not be immediately apparent from looking at raw data. There are three graphics that demonstrate how these continuous values are distributed. Since some models take into account transformation, those details will be described later. As a high-level overview, price and carat are positively skewed. In the scatter plot regarding price by cut for the depth_ratio, the histogram also displays the same conclusion that the cut features  fall into approximately 60 to 65 mm. The relationships in the Correlation heat map visually show how width, length, depth, and carat continue to be highly correlated with price while depth_ratio and table are closer to 0. Another way to visualize the relationships is through the Pearson Correlation Ellipses chart. The skinnier the ellipse, the more correlated the two values are. 
+This section involves creating graphical representations of data to visually communicate insights and trends. It allows us to quickly and easily identify patterns that may not be immediately apparent from looking at raw data. There are several graphics that demonstrate how these qualitative and quantitative variables are distributed. Since some models take into account transformation, those details will be described later.
 
-Through exploration, we can gain a deeper understanding of the data and how it can be used to answer business questions or solve real-world problems, like predicting the price of a diamond.
+```{r categorical bar plots, fig.height=3, fig.width=4, include=TRUE, echo=FALSE}
+clarity <- ggplot(data = diamonds, aes(x = clarity)) +
+    geom_bar(width = 0.5,
+                 color = "#D8B365",
+                 fill = "#D8B365") + ggtitle("Clarity") + # Title name
+  ylab("Frequency")  + # Label names
+  theme_classic() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
-```{r categorical bar plots, fig.height=2.5, fig.width=4, include=TRUE, echo=FALSE}
-ggplot(gather(data = diamonds[, c(2:4)]), aes(value)) +
-  geom_bar(aes(value),
-                 width = 0.3,
-                 color = "black",
-                 fill = "#D8B365") + # Creates bin sizing and sets the lines as white
-  facet_wrap(~ key, scales = "free") + # Converting the graphs into panels
-  ggtitle("Qualitative Variable Analysis") + # Title name
-  ylab("Count") + xlab("Value") + # Label names
-  theme_classic()+ theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+color <- ggplot(data = diamonds, aes(x = color)) +
+    geom_bar(width = 0.5,
+                 color = "#D8B365",
+                 fill = "#D8B365") + ggtitle("Color") + # Title name
+  ylab("") + # Label names
+  theme_classic() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+cut <- ggplot(data = diamonds, aes(x = cut)) +
+    geom_bar(width = 0.5,
+                 color = "#D8B365",
+                 fill = "#D8B365") + ggtitle("Cut") + # Title name
+  ylab("") + # Label names
+  theme_classic() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+# Arrange ggplots into one frame
+ggarrange(clarity, color, cut, ncol = 3, nrow = 1, common.legend = TRUE, legend="right")
+
+
+
 ```
 
+Recall the variable descriptions in the beginning of the exploratory data analysis. 
+
+-   `clarity`: After the worst clarity (`I1`), the bulk of diamonds range from `SI2` and `VS1`. This correlates to the scatter plot with the goldish toned points as there appear to be more of those diamonds than ones with better clarity. 
+
+-   `cut`: The less yellow the diamond, the better. The dataset shows that most diamonds are either `G`, `F`, or `E`, which are the closest three to the least colored diamond.
+
+-   `color`: There are over 20,000 diamonds that have an `ideal` cut which `premium` and `very good` between 10,000 and 15,000.
 
 ```{r Histograms, include = TRUE, echo = FALSE, dpi = 150}
 ggplot(gather(data = diamonds[, c(1, 5:10)]), aes(value)) +
@@ -372,6 +416,10 @@ ggplot(gather(data = diamonds[, c(1, 5:10)]), aes(value)) +
   theme_classic() # A classic theme, with x and y axis lines and no grid lines
 ```
 
+
+At a high-level overview, price and carat are positively skewed. In the scatter plot regarding price by cut for the depth_ratio, the histogram also displays the same conclusion that the cut features  fall into approximately 60 to 65 mm. The relationships in the Correlation heat map visually show how width, length, depth, and carat continue to be highly correlated with price while depth_ratio and table are closer to 0. Another way to visualize the relationships is through the Pearson Correlation Ellipses chart. The skinnier the ellipse, the more correlated the two values are. 
+
+Through exploration, we can gain a deeper understanding of the data and how it can be used to answer business questions or solve real-world problems, like predicting the price of a diamond.
 
 ```{r Correlation, include = TRUE, echo = FALSE, dpi = 150, fig.height = 3, fig.width = 3}
 # Create heatmap to show variable correlation
