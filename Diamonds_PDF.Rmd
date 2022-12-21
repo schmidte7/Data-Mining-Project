@@ -151,7 +151,7 @@ There is a variety of ways an analyst could approach understanding the observati
 
 -   `table`: The width of the top of diamond relative to widest point that can be seen when the stone is viewed face up
 
-The outcome variable (price) is a an integer. There are an additional six numeric values and three ordinal/categorical features that have a factored structure. Those non-numeric values (`cut`, `color`, and `clarity`) need to be appropriately ordered, and renamed if there are any spaces within their naming convention as later this could obstruct certain code. 
+The outcome variable (`price`) is a an integer. There are an additional six numeric values and three ordinal/categorical features that have a factored structure. Those non-numeric values (`cut`, `color`, and `clarity`) need to be appropriately ordered, and renamed if there are any spaces within their naming convention as later this could obstruct certain code. 
 
 ```{r Data Exploration}
 dim(diamonds) # Dimensions of data
@@ -231,7 +231,7 @@ To dive deeper, we consider removing records that are invalid because they add n
 
 2. The difference between length and width should be almost identical since the diamond should be cut approximately circular. If they were not, those rows were removed. In this case, only two records were not included in the data set at differences above 36.00 mm.  
 
-3. The depth_ratio is a calculation between `length` (`x`), `width` (`y`), and `depth` (`z`). To investigate this feature further, our group computed `depth_ratio` and saw there were differences between the actual and predicted values. Therefore, the executive decision was to remove any differences above a threshold of 0.3. A total of 253 rows were removed.  
+3. The depth_ratio is a calculation between `length` (`x`), `width` (`y`), and `depth` (`z`). To investigate this feature further, our group computed `depth_ratio` and saw there were differences between the actual and predicted values. As seen in **Figure 1**, most errors were at 0.2, hence the executive decision was to remove any differences above a threshold of 0.3. A total of 253 rows were removed.  
 
 In the remaining 53,918 observations, there were no missing values. 
 
@@ -255,7 +255,7 @@ diamonds[, diff := NULL]
 diamonds <- diamonds[, c(7, 2:4, 1, 8:10, 5:6)]
 ```
 
-In continuation of exploring the diamonds dataset, we now look at the relationships between variables. By isolating price against the other continuous variables, it is seen that `carat`, `length`, `width`, and `depth`, all have a positively linear relation to the response feature. Some of the models used in the analysis to predict price will show these effects later as a possible issue of collinearity could occur. In addition, the relationship between carat and price is unique because their relation is non-linear. We were also interested in showing how the categorical variables affect price. `Clarity`, `color`, and `cut` have distinct patterns seen between the four continuous variables mentioned above. 
+In continuation of exploring the diamonds dataset, we now look at the relationships between variables. By isolating price against the other continuous variables, it is seen that `carat`, `length`, `width`, and `depth`, all have a positively linear relation to the response feature. Some of the models used in the analysis to predict price will show these effects later as a possible issue of collinearity could occur. In addition, the relationship between carat and price is unique because their relation is non-linear. We were also interested in showing how the categorical variables affect price. `clarity`, `color`, and `cut` have distinct patterns seen between the four continuous variables mentioned above. 
 
 ```{r ggpairs, eval=FALSE, include=FALSE}
 #Used ggpairs to create a scatterplot matrix between quantitative variables 
@@ -323,7 +323,7 @@ ggarrange(PCo1, PCo2, PCo3,PCo4, PCo5, PCo6,
                     ncol = 2, nrow = 3, common.legend = TRUE, legend="right")
 ```
 
-A similar relationship can be seen regarding `price` by the continuous variables, but as `color` as the color dimension. Instead of a majority the observations falling closer to the best and worst `clarify` features, here the reader will notice how it appears that the colors E, F and G dominate (the white to light blue) the space. 
+A similar relationship can be seen regarding `price` by the continuous variables, but as `color` as the color dimension. Instead of a majority the observations falling closer to the best and worst `clarity` features, here the reader will notice how it appears that the colors E, F and G dominate (the white to light blue) the space. 
 
 ```{r Price by X and Cut, include = TRUE, echo = FALSE, out.width="\\linewidth", fig.cap="Price with respect to numerical variables, by Cut"}
 # Create plot that looks at carat and price
@@ -353,7 +353,7 @@ ggarrange(PCu1, PCu2, PCu3,PCu4, PCu5, PCu6,
                     ncol = 2, nrow = 3, common.legend = TRUE, legend="right")
 ```
 
-`Cut` has completely different trends than `clarity` and `color` as a majority of the diamonds are either `ideal` or `premium`. This can especially be seen within the `depth_ratio` plot. As stated earlier, the red lines indicate the optimal space in which the luxury brand attempts to get the best ratio. Most of all of the prime cuts are within those bounds while the `fair`, `good`, and `very good` are outside. There is a clear distinction on how `cut` relates to the `depth_ratio` along `price`.
+`Cut` has completely different trends than `clarity` and `color` as a majority of the diamonds are either `Ideal` or `Premium`. This can especially be seen within the `depth_ratio` plot. As stated earlier, the red lines indicate the optimal space in which the luxury brand attempts to get the best ratio. Most of all of the prime cuts are within those bounds while the `Fair`, `Good`, and `Very good` are outside. There is a clear distinction on how `cut` relates to the `depth_ratio` along `price`.
 
 ```{r Price Correlation}
 # Correlation between price and quantitative variables
@@ -1263,11 +1263,11 @@ for (i in 1:8) {
   Tree_res[i,2:6]= round(get(paste("tree_aa", i, sep ="")),2)
 }
 
-kable_styling(kable(Tree_res, caption = "Accuracy measures of decision tree models") %>%
+kable_styling(kable(Tree_res[,2:6], caption = "Accuracy measures of decision tree models") %>%
                 kable_classic(), full_width = TRUE, latex_options = "hold_position")
 
 
-RGTreecomp <- ggplot(data = Tree_res, aes(x = Model_Tree, y = RMSE))+
+RGTreecomp <- ggplot(data = Tree_res, aes(x = Model_Tree, y = as.numeric(RMSE)))+
   geom_bar(stat = "identity", fill = "#D8B365")+
   theme_classic()+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, size = 8, hjust = 1), text = element_text(size = 10))+
