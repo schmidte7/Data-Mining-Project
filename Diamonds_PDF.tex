@@ -109,20 +109,7 @@
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 \setcounter{secnumdepth}{5}
-\usepackage{booktabs}
-\usepackage{longtable}
-\usepackage{array}
-\usepackage{multirow}
-\usepackage{wrapfig}
 \usepackage{float}
-\usepackage{colortbl}
-\usepackage{pdflscape}
-\usepackage{tabu}
-\usepackage{threeparttable}
-\usepackage{threeparttablex}
-\usepackage[normalem]{ulem}
-\usepackage{makecell}
-\usepackage{xcolor}
 \ifLuaTeX
   \usepackage{selnolig}  % disable illegal ligatures
 \fi
@@ -418,7 +405,14 @@ factored structure. Those non-numeric values (\texttt{cut},
 and renamed if there are any spaces within their naming convention as
 later this could obstruct certain code.
 
-\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/threshold diff hist-1} \end{center}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.5\linewidth,]{Diamonds_PDF_files/figure-latex/threshold diff hist-1} 
+
+}
+
+\caption{Amount of records by difference between computed depth ratio and actual depth ratio}\label{fig:threshold diff hist}
+\end{figure}
 
 To dive deeper, we consider removing records that are invalid because
 they add noise. For instance, price against all features were reviewed
@@ -459,7 +453,14 @@ also interested in showing how the categorical variables affect price.
 \texttt{Clarity}, \texttt{color}, and \texttt{cut} have distinct
 patterns seen between the four continuous variables mentioned above.
 
-\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/Price by X and Clarity-1} \end{center}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=\linewidth,]{Diamonds_PDF_files/figure-latex/Price by X and Clarity-1} 
+
+}
+
+\caption{Price with respect to numerical variables, by Clarity}\label{fig:Price by X and Clarity}
+\end{figure}
 
 When plotting \texttt{price} by \texttt{carat}, \texttt{width},
 \texttt{length}, and \texttt{depth}, with \texttt{clarity} as the color
@@ -483,7 +484,14 @@ there are vertical lines that show the \texttt{depth\_ratio} mean
 \texttt{depth\_ratio} as long as it is above 59.00\% but does not exceed
 62.30\%.
 
-\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/Price by X and Color-1} \end{center}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=\linewidth,]{Diamonds_PDF_files/figure-latex/Price by X and Color-1} 
+
+}
+
+\caption{Price with respect to numerical variables, by Color}\label{fig:Price by X and Color}
+\end{figure}
 
 A similar relationship can be seen regarding \texttt{price} by the
 continuous variables, but as \texttt{color} as the color dimension.
@@ -492,7 +500,14 @@ worst \texttt{clarify} features, here the reader will notice how it
 appears that the colors E, F and G dominate (the white to light blue)
 the space.
 
-\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/Price by X and Cut-1} \end{center}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=\linewidth,]{Diamonds_PDF_files/figure-latex/Price by X and Cut-1} 
+
+}
+
+\caption{Price with respect to numerical variables, by Cut}\label{fig:Price by X and Cut}
+\end{figure}
 
 \texttt{Cut} has completely different trends than \texttt{clarity} and
 \texttt{color} as a majority of the diamonds are either \texttt{ideal}
@@ -515,7 +530,14 @@ these qualitative and quantitative variables are distributed. Since some
 models take into account transformation, those details will be described
 later.
 
-\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/categorical bar plots-1} \end{center}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=\linewidth,]{Diamonds_PDF_files/figure-latex/categorical bar plots-1} 
+
+}
+
+\caption{Bar plots of categorical variables}\label{fig:categorical bar plots}
+\end{figure}
 
 Recall the variable descriptions in the beginning of the exploratory
 data analysis.
@@ -536,9 +558,23 @@ data analysis.
   between 10,000 and 15,000.
 \end{itemize}
 
-\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/Histograms-1} \end{center}
+\begin{figure}[H]
 
-\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/Correlation-1} \end{center}
+{\centering \includegraphics[width=\linewidth,]{Diamonds_PDF_files/figure-latex/Histograms-1} 
+
+}
+
+\caption{Histograms of numerical variables}\label{fig:Histograms}
+\end{figure}
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.5\linewidth,]{Diamonds_PDF_files/figure-latex/Correlation-1} 
+
+}
+
+\caption{Correlation heatmap of numerical variables}\label{fig:Correlation}
+\end{figure}
 
 At a high-level, \texttt{price} and \texttt{carat} can be seen as
 positively skewed. In the scatter plot regarding \texttt{price} by
@@ -581,7 +617,14 @@ GVIF coefficients of the remaining predictors are all under 2, which
 indicates the multicollinearity problem is solved. We display
 correlation ellipses of numerical variables.
 
-\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/uncorrelated-ellipses-1} \end{center}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.4\linewidth,]{Diamonds_PDF_files/figure-latex/uncorrelated-ellipses-1} 
+
+}
+
+\caption{Correlation ellipses for numerical variables}\label{fig:uncorrelated-ellipses}
+\end{figure}
 
 Thus, we will perform linear regressions on two different models:
 
@@ -654,7 +697,14 @@ We apply a logarithmic transformation to all three variables. The
 improvement can also be seen in the histograms, as they look more
 symmetrical now.
 
-\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/hist-unskewed-1} \end{center}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=\linewidth,]{Diamonds_PDF_files/figure-latex/hist-unskewed-1} 
+
+}
+
+\caption{Histograms of numerical variables after unskewing}\label{fig:hist-unskewed}
+\end{figure}
 
 We also standardize numerical variables by subtracting their mean and
 dividing by their standard deviation. This makes the comparison of
@@ -878,7 +928,14 @@ k = 4 & 40.86142 & 814.5940 & 431.2913 & -2.452640 & 12.13511\\
 \end{tabu}
 \end{table}
 
-\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/knn double plot-1} \end{center}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.5\linewidth,]{Diamonds_PDF_files/figure-latex/knn double plot-1} 
+
+}
+
+\caption{Evolution of RMSE with respect to k and difference of RMSE for k = 1 and k = 4}\label{fig:knn double plot}
+\end{figure}
 
 As stated earlier, the table above shows how the ME got worse for \(k\)
 = 4, but better with RMSE once the model was optimized. In this
@@ -929,7 +986,14 @@ primary splits: \texttt{width} \textless{} 6.325, \texttt{carat}
 \textless{} 0.985, \texttt{length} \textless{} 6.325 and \texttt{depth}
 \textless{} 3.935.
 
-\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/Default Regression Tree-1} \end{center}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=\linewidth,]{Diamonds_PDF_files/figure-latex/Default Regression Tree-1} 
+
+}
+
+\caption{Regression tree diagram}\label{fig:Default Regression Tree}
+\end{figure}
 
 \hypertarget{boosted-tree}{%
 \subsubsection{Boosted Tree}\label{boosted-tree}}
@@ -1012,7 +1076,14 @@ RMSE. For example, what is the difference in RMSE if the model was built
 off of 100 trees versus 60? The model with 100 trees was the best model
 with an RMSE of \$575.42.
 
-\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/RF Variable Importance-1} \end{center}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.5\linewidth,]{Diamonds_PDF_files/figure-latex/RF Variable Importance-1} 
+
+}
+
+\caption{Variable importance for random forest}\label{fig:RF Variable Importance}
+\end{figure}
 
 Throughout this entire section, typically the lower RMSE produced the
 best model. Additionally up to this point, there have been three or four
@@ -1055,7 +1126,14 @@ RndmFrst & RndmFrst & 2.97 & 577.63 & 289.51 & -1.4 & 7.24\\
 \end{tabu}
 \end{table}
 
-\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/RegTree Summary-1} \end{center}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.5\linewidth,]{Diamonds_PDF_files/figure-latex/RegTree Summary-1} 
+
+}
+
+\caption{RMSE of decision trees}\label{fig:RegTree Summary}
+\end{figure}
 
 Throughout the four methods mentioned, the random forest model proved to
 be the most effective in predicting \texttt{price} with a RMSE of
@@ -1194,24 +1272,29 @@ Table}\label{neural-net-summary-table}}
 \hline
   & ME & RMSE & MAE & MPE & MAPE\\
 \hline
-L1 N1 & -44.91 & 1194.35 & 802.25 & -34.01 & 45.94\\
+L1 N1 & -246.53 & 1175.41 & 890.47 & -53.75 & 63.14\\
 \hline
-L1 N26 & -82.17 & 748.17 & 452.68 & -10.45 & 17.26\\
+L1 N26 & -88.66 & 760.74 & 465.61 & -11.44 & 18.28\\
 \hline
-L1 N13 & -94.09 & 745.83 & 458.35 & -13.64 & 19.8\\
+L1 N13 & -90.67 & 749.84 & 452.97 & -11.41 & 17.76\\
 \hline
-L2 N26 & 59.47 & 610.61 & 353.87 & -2.2 & 12.09\\
+L2 N26 & 22.48 & 636.79 & 364.38 & -4.75 & 12.82\\
 \hline
-L2 N26 G & -58.25 & 661.95 & 387.95 & -9.52 & 15.13\\
+L2 N26 G & -45.24 & 662.5 & 383.93 & -8.36 & 14.19\\
 \hline
-L2 N26 G LR & -29.86 & 584.63 & 332.03 & -3.58 & 10.57\\
+L2 N26 G LR & -51.05 & 591.6 & 340.12 & -5.26 & 11.16\\
 \hline
 \end{tabu}
 \end{table}
 
-\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/NN Summary-1} \end{center}
+\begin{figure}[H]
 
-\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/NN Summary-2} \end{center}
+{\centering \includegraphics[width=0.5\linewidth,]{Diamonds_PDF_files/figure-latex/NN Summary-1} 
+
+}
+
+\caption{RMSE of neural networks}\label{fig:NN Summary}
+\end{figure}
 
 As can be seen, the predictive performance of the neural networks can
 vary a lot depending on the structure and parameters chosen. The
@@ -1222,7 +1305,7 @@ predictive model.
 
 \begin{figure}
 \centering
-\includegraphics{NN_rep.jpeg}
+\includegraphics{NN_res.jpeg}
 \caption{Visual description of Neural Network}
 \end{figure}
 
@@ -1257,47 +1340,102 @@ Random Forest & 2.97 & 577.63 & 289.51 & -1.4 & 7.24\\
 \hline
 k-Nearest Neighbor & 40.86 & 814.59 & 431.29 & -2.45 & 12.14\\
 \hline
-Neural Network & -29.86 & 584.63 & 332.03 & -3.58 & 10.57\\
+Neural Network & -51.05 & 591.6 & 340.12 & -5.26 & 11.16\\
 \hline
-Ensemble & 16.09 & 582.1 & 306.5 & -2.07 & 8.52\\
+Ensemble & 10.8 & 583.21 & 308.04 & -2.49 & 8.67\\
 \hline
 \end{tabu}
 \end{table}
 
-\hypertarget{model-performance-summary}{%
-\section{Model Performance Summary}\label{model-performance-summary}}
+\hypertarget{conclusion}{%
+\section{Conclusion}\label{conclusion}}
 
-In this section, we can see how the predicted price behaves with respect
-to the real price, having used each of the methods and mapping per each
-categorical variable. This helps see how each model compares with
-regards to precision. The models with more precision are closer to a
-diagonal line. As can be seen,
+After reviewing the results and performance of each model in the
+previous section, we can conclude that the best models are the Random
+Forest and Neural Network. This is because they have the lowest error
+measures that we take into consideration throughout this analysis. In
+addition, more can be deducted by looking at the errors plotted in a
+graph.
+
+\hypertarget{plots-of-predicted-price}{%
+\subsection{Plots of Predicted Price}\label{plots-of-predicted-price}}
+
+We can see how the predicted diamond price behaves with respect to the
+real price by utilizing each of the methods and mapping the three
+categorical variables. This recognizes the models' respective precision.
+When there are more observations closer to the diagonal line, the
+precision is higher. Within the scatter plots, the Random Forest and the
+Neural Network are more condensed. On the other hand, \(k\)-NN and MLR
+are more sparse. A similar situation happens when adding each of the
+categorical values as a color differentiator.
 
 \hypertarget{predicted-price-vs-real-price-by-clarity}{%
-\subsection{Predicted Price vs Real Price by
+\subsubsection{Predicted Price vs Real Price by
 Clarity}\label{predicted-price-vs-real-price-by-clarity}}
 
-\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/Ensemble Summary Plot-1} \end{center}
+The multiple linear regression seems to have more issues predicting
+price of diamonds with better \texttt{clarity} in the mid to high priced
+diamonds. However, there is generally no clear discernible pattern per
+\texttt{clarity}. The abundance of the browner colored points is due to
+the existence of mid to low level clarities in the data set.
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=\linewidth,]{Diamonds_PDF_files/figure-latex/Ensemble Summary Plot-1} 
+
+}
+
+\caption{Predicted Price vs Real Price by Clarity}\label{fig:Ensemble Summary Plot}
+\end{figure}
+
+\newpage
 
 \hypertarget{predicted-price-vs-real-price-by-color}{%
-\subsection{Predicted Price vs Real Price by
+\subsubsection{Predicted Price vs Real Price by
 Color}\label{predicted-price-vs-real-price-by-color}}
 
-\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/Summ Color Plots-1} \end{center}
+With regards to \texttt{color}, we see more of the more teal-colored
+points. However, there is still no pattern that indicates better or
+worse performance per \texttt{color} type.
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=\linewidth,]{Diamonds_PDF_files/figure-latex/Summ Color Plots-1} 
+
+}
+
+\caption{Predicted Price vs Real Price by Color}\label{fig:Summ Color Plots}
+\end{figure}
+
+\newpage
 
 \hypertarget{predicted-price-vs-real-price-by-cut}{%
-\subsection{Predicted Price vs Real Price by
+\subsubsection{Predicted Price vs Real Price by
 Cut}\label{predicted-price-vs-real-price-by-cut}}
 
-\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/Summ Cut Plots-1} \end{center}
+Finally, the \texttt{cut} variable shows more \texttt{Ideal} and
+\texttt{Premium} cuts. Following the same trend as \texttt{clarity} and
+\texttt{color}, there is no pattern for the particular variable.
 
-\hypertarget{conclusions}{%
-\section{Conclusions}\label{conclusions}}
+\begin{figure}[H]
 
-\begin{itemize}
-\tightlist
-\item
-\end{itemize}
+{\centering \includegraphics[width=\linewidth,]{Diamonds_PDF_files/figure-latex/Summ Cut Plots-1} 
+
+}
+
+\caption{Predicted Price vs Real Price by Cut}\label{fig:Summ Cut Plots}
+\end{figure}
+
+The previous graphs show no discernible pattern regarding the
+categorical variables. Therefore, the performance of the Random Forest
+and the Neural Network is evident with smaller dispersion of the points.
+As the difference in error is quite close between these two models, our
+final model decision comes down to a matter of analyst preference or
+computational power available. We consider, however, that due to the
+smaller ME, our recommendation is to use the Random Forest for
+predicting diamond prices.
+
+\newpage
 
 \hypertarget{references}{%
 \section{References}\label{references}}
@@ -1307,30 +1445,58 @@ Shmueli et al.~(2018). \emph{Data Mining for Business Analytics}. Wiley.
 Hardesty, Larry. (2017). {[}Explained: Neural Networks{]} MIT News.
 (\url{https://news.mit.edu/2017/explained-neural-networks-deep-learning-0414})
 
-EDA -
-\url{https://r-graph-gallery.com/199-correlation-matrix-with-ggally.html}
-and
-\url{http://www.sthda.com/english/wiki/ggplot2-quick-correlation-matrix-heatmap-r-software-and-data-visualization}
+EDA
 
-k-NN -
-\url{https://online.stat.psu.edu/stat508/lesson/k\#}:\textasciitilde:text=The\%20larger\%20k\%20is\%2C\%20the,Nearest\%20Neighbors\%20are\%20shown\%20below.\\
--
-\url{https://www.analyticsvidhya.com/blog/2018/03/introduction-k-neighbours-algorithm-clustering/}
+\begin{itemize}
+\tightlist
+\item
+  \url{https://r-graph-gallery.com/199-correlation-matrix-with-ggally.html}
+\item
+  \url{http://www.sthda.com/english/wiki/ggplot2-quick-correlation-matrix-heatmap-r-software-and-data-visualization}
+\end{itemize}
 
-Regression Tree - Data Mining textbook -
-\url{https://www.ibm.com/docs/en/db2-warehouse?topic=procedures-regression-trees}
+k-NN
 
-Boosted Tree -
-\url{https://towardsdatascience.com/introduction-to-boosted-trees-2692b6653b53}\\
--
-\url{https://leonlok.co.uk/blog/decision-trees-random-forests-gradient-boosting-whats-the-difference/}
+\begin{itemize}
+\tightlist
+\item
+  \url{https://online.stat.psu.edu/stat508/lesson/k\#}:\textasciitilde:text=The\%20larger\%20k\%20is\%2C\%20the,Nearest\%20Neighbors\%20are\%20shown\%20below.
+\item
+  \url{https://www.analyticsvidhya.com/blog/2018/03/introduction-k-neighbours-algorithm-clustering/}
+\end{itemize}
 
-Bagging Tree -
-\url{https://machinelearningmastery.com/bagging-and-random-forest-ensemble-algorithms-for-machine-learning/}
+Regression Tree
 
-Random Forest - Data Mining textbook
+\begin{itemize}
+\tightlist
+\item
+  \url{https://www.ibm.com/docs/en/db2-warehouse?topic=procedures-regression-trees}
+\end{itemize}
 
-Ensemble -
-\url{https://towardsdatascience.com/ensemble-methods-in-machine-learning-what-are-they-and-why-use-them-68ec3f9fef5f}
+Boosted Tree
+
+\begin{itemize}
+\tightlist
+\item
+  \url{https://towardsdatascience.com/introduction-to-boosted-trees-2692b6653b53}\strut \\
+\item
+  \url{https://leonlok.co.uk/blog/decision-trees-random-forests-gradient-boosting-whats-the-difference/}
+\end{itemize}
+
+Bagging Tree
+
+\begin{itemize}
+\tightlist
+\item
+  \url{https://machinelearningmastery.com/bagging-and-random-forest-ensemble-algorithms-for-machine-learning/}
+\end{itemize}
+
+Ensemble
+
+\begin{itemize}
+\tightlist
+\item
+  \url{https://towardsdatascience.com/ensemble-methods-in-machine-learning-what-are-they-and-why-use-them-68ec3f9fef5f}
+\end{itemize}
 
 \end{document}

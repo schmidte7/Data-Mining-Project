@@ -15,6 +15,7 @@ output:
     df_print: kable
     keep_tex: true
     template: eisvogel.latex
+    extra_dependencies: ["float"]
 ---
 
 ```{=html}
@@ -44,7 +45,7 @@ code {
 ```
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(message = FALSE, warning = FALSE, fig.align = "center", include = FALSE, dev = "png", cache = TRUE)
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, fig.align = "center", include = FALSE, dev = "png", cache = TRUE, dpi = 150, fig.pos = "H", out.extra = "")
 ```
 
 ```{r Colors}
@@ -219,7 +220,7 @@ diamonds[, depth_check := round(100*(2*depth)/((length + width)), 1)]
 diamonds[, diff := abs(depth_check-depth_ratio)]
 ```
 
-```{r threshold diff hist, fig.height = 2, fig.width = 3, include = TRUE, echo = FALSE}
+```{r threshold diff hist, include = TRUE, echo = FALSE, out.width="0.5\\linewidth", fig.cap="Amount of records by difference between computed depth ratio and actual depth ratio"}
 # Create histogram to look at the differences between how much price is off between a calculated value and what the data provided
 hist(diamonds[diff >= 0.2 & diff < 1, diff], breaks =50, col = "#D8B365", border = "#D8B365", main = "Threshold Differences", xlab = "Predicted vs. Actual Difference", cex.lab=0.8, cex.axis=0.8, cex.main=0.8, cex.sub=0.8)
 ```
@@ -256,7 +257,7 @@ diamonds <- diamonds[, c(7, 2:4, 1, 8:10, 5:6)]
 
 In continuation of exploring the diamonds dataset, we now look at the relationships between variables. By isolating price against the other continuous variables, it is seen that `carat`, `length`, `width`, and `depth`, all have a positively linear relation to the response feature. Some of the models used in the analysis to predict price will show these effects later as a possible issue of collinearity could occur. In addition, the relationship between carat and price is unique because their relation is non-linear. We were also interested in showing how the categorical variables affect price. `Clarity`, `color`, and `cut` have distinct patterns seen between the four continuous variables mentioned above. 
 
-```{r ggpairs, eval=FALSE, fig.height=6, fig.width=6, include=FALSE}
+```{r ggpairs, eval=FALSE, include=FALSE}
 #Used ggpairs to create a scatterplot matrix between quantitative variables 
 ggpairs(diamonds[, c(1, 5:10)], title = "Scatter plot Matrix",
          proportions = "auto",
@@ -265,7 +266,7 @@ ggpairs(diamonds[, c(1, 5:10)], title = "Scatter plot Matrix",
 ```
 
 
-```{r Price by X and Clarity, fig.width = 6, fig.height = 6,include = TRUE, echo = FALSE, dpi = 150}
+```{r Price by X and Clarity, include = TRUE, echo = FALSE, out.width="\\linewidth", fig.cap="Price with respect to numerical variables, by Clarity"}
 # Create plot that looks at carat and price
 PCl1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1,aes(color=clarity)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
@@ -294,7 +295,7 @@ ggarrange(PCl1, PCl2, PCl3,PCl4, PCl5, PCl6, ncol = 2, nrow = 3, common.legend =
 
 When plotting `price` by `carat`, `width`, `length`, and `depth`, with `clarity` as the color dimension, there is a clear distinction between how these observations relate. Each scatter plot shows a strong, positive correlation to `price`. When reviewing the x-axis for each explanatory variable, the lower tiered option is typically observed more. The cheaper the gemstone, the worse quality. Within each plot, there are outliers that can be explained by how the diamond was cut, which impacts the `weight`, `length`, and `depth`. By the color scale, it is noticed how there are more diamonds with a worse clarity (SI2/SI1) than there are with the best (IF/VVS1). Intuitively, this makes sense because perfecting a diamond's clarity is quite difficult. Therefore, a majority of the diamonds lie between the second and third best, and second and third worst clarity factors. In addition, the relation between `depth_ratio` and `table` to `price` is not distinct as those features are mixed throughout the relative ranges. Within all of the `depth_ratio` plots, there are vertical lines that show the `depth_ratio` mean (black) and range (red) of what is considered the prime value for `depth_ratio` as long as it is above 59.00% but does not exceed 62.30%. 
 
-```{r Price by X and Color, fig.width = 6, fig.height = 6, include = TRUE, echo = FALSE, dpi = 150}
+```{r Price by X and Color, include = TRUE, echo = FALSE, out.width="\\linewidth", fig.cap="Price with respect to numerical variables, by Color"}
 # Create plot that looks at carat and price
 PCo1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, aes(color=color)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
@@ -324,7 +325,7 @@ ggarrange(PCo1, PCo2, PCo3,PCo4, PCo5, PCo6,
 
 A similar relationship can be seen regarding `price` by the continuous variables, but as `color` as the color dimension. Instead of a majority the observations falling closer to the best and worst `clarify` features, here the reader will notice how it appears that the colors E, F and G dominate (the white to light blue) the space. 
 
-```{r Price by X and Cut, fig.width = 6, fig.height = 6, include = TRUE, echo = FALSE, dpi = 150}
+```{r Price by X and Cut, include = TRUE, echo = FALSE, out.width="\\linewidth", fig.cap="Price with respect to numerical variables, by Cut"}
 # Create plot that looks at carat and price
 PCu1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, aes(color=cut)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
@@ -368,32 +369,18 @@ kable_corr
 ## Variable Visualisation
 This section involves creating graphical representations of data to visually communicate insights and trends. It allows us to quickly and easily identify patterns that may not be immediately apparent from looking at raw data. There are several graphics that demonstrate how these qualitative and quantitative variables are distributed. Since some models take into account transformation, those details will be described later.
 
-```{r categorical bar plots, fig.height=3, fig.width=4, include=TRUE, echo=FALSE}
-clarity <- ggplot(data = diamonds, aes(x = clarity)) +
-    geom_bar(width = 0.5,
-                 color = "#D8B365",
-                 fill = "#D8B365") + ggtitle("Clarity") + # Title name
-  ylab("Frequency")  + # Label names
-  theme_classic() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-
-color <- ggplot(data = diamonds, aes(x = color)) +
-    geom_bar(width = 0.5,
-                 color = "#D8B365",
-                 fill = "#D8B365") + ggtitle("Color") + # Title name
-  ylab("") + # Label names
-  theme_classic() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-
-cut <- ggplot(data = diamonds, aes(x = cut)) +
-    geom_bar(width = 0.5,
-                 color = "#D8B365",
-                 fill = "#D8B365") + ggtitle("Cut") + # Title name
-  ylab("") + # Label names
-  theme_classic() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-
-# Arrange ggplots into one frame
-ggarrange(clarity, color, cut, ncol = 3, nrow = 1, common.legend = TRUE, legend="right")
-
-
+```{r categorical bar plots, include=TRUE, echo=FALSE, fig.height=3, out.width="\\linewidth", fig.cap="Bar plots of categorical variables"}
+ggplot(gather(data = diamonds[, c(2:4)]), aes(ordered(value, levels =
+                                                        c("I1", "SI2", "SI1", "VS2", "VS1",
+                                                          "VVS2", "VVS1", "IF",
+                                                          "J", "I", "H", "G", "F", "E", "D",
+                                                          "Fair", "Good", "Very Good",
+                                                          "Premium", "Ideal")))) +
+  geom_bar(width = 0.5, color = "#D8B365", fill = "#D8B365") +
+  facet_wrap(~key, scales = "free") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  labs(title = "Bar plots of categorical variables", x = "Value", y = "Count")
 
 ```
 
@@ -405,20 +392,19 @@ Recall the variable descriptions in the beginning of the exploratory data analys
 
 -   `color`: There are over 20,000 diamonds that have an `ideal` cut which `premium` and `very good` between 10,000 and 15,000.
 
-```{r Histograms, include = TRUE, echo = FALSE, dpi = 150}
+```{r Histograms, include = TRUE, echo = FALSE, dpi = 150, fig.height=2.5, out.width="\\linewidth", fig.cap="Histograms of numerical variables"}
 ggplot(gather(data = diamonds[, c(1, 5:10)]), aes(value)) +
   geom_histogram(aes(y = after_stat(density)),
-                 bins = 10,
                  color = "white",
                  fill = "#D8B365") + # Creates bin sizing and sets the lines as white
   geom_density(alpha = .2, fill = "#D8B365") +
-  facet_wrap(~ key, scales = "free") + # Converting the graphs into panels
+  facet_wrap(~ key, scales = "free", nrow = 2) + # Converting the graphs into panels
   ggtitle("Quantitative Variable Analysis") + # Title name
   ylab("Count") + xlab("Value") + # Label names
   theme_classic() # A classic theme, with x and y axis lines and no grid lines
 ```
 
-```{r Correlation, include = TRUE, echo = FALSE, dpi = 150, fig.height = 3, fig.width = 3}
+```{r Correlation, include = TRUE, echo = FALSE, out.width="0.5\\linewidth", fig.cap="Correlation heatmap of numerical variables"}
 # Create heatmap to show variable correlation
 # Round the correlation coefficient to two decimal places
 cormat <- round(cor(diamonds[, c(1, 5:10)]), 2)
@@ -508,7 +494,7 @@ VIF(y = diamonds$price, matx = diamonds[, -c(1, 6, 7, 8)])
 ```
 
 
-```{r uncorrelated-ellipses, include=TRUE, echo=FALSE, dpi = 150, fig.height=3, fig.width=3}
+```{r uncorrelated-ellipses, include=TRUE, echo=FALSE, out.width="0.4\\linewidth", fig.cap="Correlation ellipses for numerical variables"}
 # plotting correlation ellipses of numerical variables with length, width and depth removed
 plotcorr(cor(diamonds[, -c(2:4)]), col = "#D8B365",
          main = "Pearson correlation ellipses for numerical variables", cex.lab=0.8, cex.axis=0.8, cex.main=0.7, cex.sub=0.8)
@@ -561,7 +547,7 @@ Valid_lr$table <- log(Valid_lr$table)
 
 We apply a logarithmic transformation to all three variables. The improvement can also be seen in the histograms, as they look more symmetrical now.
 
-```{r hist-unskewed, include=TRUE, echo=FALSE, dpi = 150}
+```{r hist-unskewed, include=TRUE, echo=FALSE,fig.height=3, out.width="\\linewidth", fig.cap="Histograms of numerical variables after unskewing"}
 # computing the histograms of numerical variables now that they are unskewed
 
 ggplot(gather(data = Train_lr[, c(1, 5:10)]), aes(value)) + # numerical vars of training set
@@ -569,7 +555,7 @@ ggplot(gather(data = Train_lr[, c(1, 5:10)]), aes(value)) + # numerical vars of 
                  color = "white",
                  fill = "#D8B365") +             
   geom_density(alpha = .2, fill = "#D8B365") +              # making density lines
-  facet_wrap(~ key, scales = "free") +                      # multiple plots with facet
+  facet_wrap(~ key, scales = "free", nrow = 2) +            # multiple plots with facet
   labs(title = "Histograms of numerical variables",         # labels of the plot
        x = "Count",
        y = "Value") +
@@ -939,7 +925,7 @@ kable_styling(kable(knn_res, caption = "Accuracy measures of models with k = 1 a
 
 ```{r knn error plot}
 KNNcomp <- ggplot(data = knn_res, aes(x = rownames(knn_res), y = RMSE))+
-  geom_bar(stat = "identity", fill = "#D8B365")+
+  geom_bar(stat = "identity", fill = "#D8B365", width = 0.3)+
   theme_classic()+
   theme(axis.text.x = element_text(vjust = 1, size = 8, hjust = 1), text = element_text(size = 10))+
   labs(x = "Knn model")+
@@ -950,7 +936,7 @@ KNNcomp
 ```
 
 
-```{r knn double plot, fig.height=2.25, fig.width= 5, include = TRUE, echo = FALSE}
+```{r knn double plot, include = TRUE, echo = FALSE, out.width="0.5\\linewidth", fig.width=10, fig.cap="Evolution of RMSE with respect to k and difference of RMSE for k = 1 and k = 4"}
 ggarrange(bestNNplot, KNNcomp, ncol = 2)
 ```
 
@@ -979,7 +965,7 @@ Train_rg <- diamonds[train.index, ]
 Valid_rg <- diamonds[valid.index, ]
 ```
 
-```{r Default Regression Tree, dpi=150, include = TRUE, echo = FALSE}
+```{r Default Regression Tree, include = TRUE, echo = FALSE, out.width="\\linewidth", fig.cap="Regression tree diagram"}
 # Use rpart() to run tree on continuous response 
 RegressTree <- rpart(price ~ ., 
               data = Train_rg, 
@@ -1228,12 +1214,12 @@ plot(rdf_model,
 which.min(rdf_model$mse)
 ```
 
-```{r  RF Variable Importance, include = TRUE, echo = FALSE, fig.height=2, fig.width = 3}
+```{r  RF Variable Importance, include = TRUE, echo = FALSE, out.width="0.5\\linewidth", fig.cap="Variable importance for random forest"}
 options(scipen = 9999)
 
 # Create variable importance chart
 vip::vip(rdf_model, aesthetics = list(fill = "#D8B365")) +
-  ggtitle("RandomTree Variable Importance") + # Title name
+  ggtitle("Random Forest Variable Importance") + # Title name
   xlab("Variable") + # Label names
   theme_classic() +
   theme(axis.text.x = element_text(vjust = 1, size = 8, hjust = 1), text = element_text(size = 10))
@@ -1255,7 +1241,7 @@ Throughout this entire section, typically the lower RMSE produced the best model
 
 ### Decision Tree Summary Table
 
-```{r RegTree Summary, include = TRUE, echo = FALSE, fig.height=2, fig.width = 3}
+```{r RegTree Summary, include = TRUE, echo = FALSE, out.width="0.5\\linewidth", fig.cap="RMSE of decision trees"}
 Tree_res <- data.frame("Model_Tree" = c("Reg. Tree",
                                  "Exclus. RT",
                                  "Pruned RT",
@@ -1669,7 +1655,7 @@ kable_styling(kable(acc_6)%>% kable_classic(), full_width = TRUE)
 
 ### Neural Net Summary Table
 
-```{r NN Summary, include = TRUE, echo = FALSE, fig.height=2, fig.width = 3}
+```{r NN Summary, include = TRUE, echo = FALSE, out.width="0.5\\linewidth", fig.cap="RMSE of neural networks"}
 NN_res <- data.frame("Model" = c("L1 N1",
                                  "L1 N26",
                                  "L1 N13",
@@ -1693,25 +1679,18 @@ kable_styling(kable(NN_res, caption = "Accuracy measures of neural network model
                 kable_classic(), full_width = TRUE, latex_options = "hold_position")
 
 
-NNcomp <- ggplot(data = NN_res, aes(x = rownames(NN_res), y = RMSE))+
-  geom_bar(stat = "identity", fill = "#D8B365")+
+
+NNcomp <- ggplot(data = NN_res, aes(x = ordered(rownames(NN_res), levels =
+                                                  c("L1 N1", "L1 N26", "L1 N13", "L2 N26",
+                                                    "L2 N26 G", "L2 N26 G LR")),
+                                    y = as.numeric(RMSE))) +
+  geom_col(fill = "#D8B365")+
   theme_classic()+
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, size = 8, hjust = 1), text = element_text(size = 10))+
-  ggtitle("Neural Network Comparison")
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, size = 8, hjust = 1),
+        text = element_text(size = 10)) +
+  labs(title = "Neural Network Comparison", x = "Neural network model", y = "RMSE")
 
 NNcomp
-
-
-
-
-
-
-NNRMSEplotdata <- t(NN_res$RMSE)
-colnames(NNRMSEplotdata) <- t(rownames(NN_res))
-
-barplot(NNRMSEplotdata, col = "#D8B365",border = "#D8B365" ,
-         main = "Neural Network Comparison", ylab = "RMSE", las = 3, ylim=c(0,4000))
-
 ```
 
 
@@ -1719,7 +1698,7 @@ As can be seen, the predictive performance of the neural networks can vary a lot
 
 
 
-![Visual description of Neural Network](NN_rep.jpeg)
+![Visual description of Neural Network](NN_res.jpeg)
 
 ## Ensembles
 
@@ -1771,15 +1750,21 @@ kable_styling(kable(ens_rmse_summ, caption = "Accuracy measures of five main mod
 ```
 
 
-
-# Model Performance Summary
-
-In this section, we can see how the predicted price behaves with respect to the real price, having used each of the methods and mapping per each categorical variable. This helps see how each model compares with regards to precision. The models with more precision are closer to a diagonal line. As can be seen, 
-
-## Predicted Price vs Real Price by Clarity 
+# Conclusion
 
 
-```{r Ensemble Summary Plot, fig.height= 5, fig.width = 5, dpi= 150, include = TRUE, echo = FALSE}
+After reviewing the results and performance of each model in the previous section, we can conclude that the best models are the Random Forest and Neural Network. This is because they have the lowest error measures that we take into consideration throughout this analysis. In addition, more can be deducted by looking at the errors plotted in a graph. 
+
+## Plots of Predicted Price
+
+We can see how the predicted diamond price behaves with respect to the real price by utilizing each of the methods and mapping the three categorical variables. This recognizes the models’ respective precision. When there are more observations closer to the diagonal line, the precision is higher.  Within the scatter plots, the Random Forest and the Neural Network are more condensed. On the other hand, $k$-NN and MLR are more sparse. A similar situation happens when adding each of the categorical values as a color differentiator.
+
+
+### Predicted Price vs Real Price by Clarity 
+
+The multiple linear regression seems to have more issues predicting price of diamonds with better `clarity` in the mid to high priced diamonds. However, there is generally no clear discernible pattern per `clarity`. The abundance of the browner colored points is due to the existence of mid to low level clarities in the data set.
+
+```{r Ensemble Summary Plot, include = TRUE, echo = FALSE, out.width="\\linewidth", fig.cap="Predicted Price vs Real Price by Clarity"}
 predtable_lr <- data.frame("Real" = real_prices, 
                     "Predicted" = ensemble_summ[, 1],
                     "Color" = diamonds[valid.index, 3],
@@ -1843,9 +1828,13 @@ pred_plot_full <- ggarrange(pred_plot_lr, pred_plot_rg, pred_plot_knn, pred_plot
 pred_plot_full
 ```
 
-## Predicted Price vs Real Price by Color 
+\newpage
 
-```{r Summ Color Plots, include = TRUE, echo = FALSE, dpi = 150, fig.height= 5, fig.width = 5}
+### Predicted Price vs Real Price by Color 
+
+With regards to `color`, we see more of the more teal-colored points. However, there is still no pattern that indicates better or worse performance per `color` type.  
+
+```{r Summ Color Plots, include = TRUE, echo = FALSE, out.width="\\linewidth", fig.cap="Predicted Price vs Real Price by Color"}
 pred_plot_lr <- ggplot(data = predtable_lr, aes(x= Real, y = Predicted, color = color))+
   geom_point(show.title = FALSE, size = 0.5)+
   scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
@@ -1882,9 +1871,13 @@ pred_plot_full <- ggarrange(pred_plot_lr, pred_plot_rg, pred_plot_knn, pred_plot
 pred_plot_full
 ```
 
-## Predicted Price vs Real Price by Cut 
+\newpage
 
-```{r Summ Cut Plots, include = TRUE, echo = FALSE, dpi = 150, fig.height= 5, fig.width = 5}
+### Predicted Price vs Real Price by Cut 
+
+Finally, the `cut` variable shows more `Ideal` and `Premium` cuts. Following the same trend as `clarity` and `color`, there is no pattern for the particular variable. 
+
+```{r Summ Cut Plots, include = TRUE, echo = FALSE, out.width="\\linewidth", fig.cap="Predicted Price vs Real Price by Cut"}
 pred_plot_lr <- ggplot(data = predtable_lr, aes(x= Real, y = Predicted, color = cut))+
   geom_point(show.title = FALSE, size = 0.5)+
   scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
@@ -1921,10 +1914,11 @@ pred_plot_full <- ggarrange(pred_plot_lr, pred_plot_rg, pred_plot_knn, pred_plot
 pred_plot_full
 ```
 
-# Conclusions
 
-*
+The previous graphs show no discernible pattern regarding the categorical variables. Therefore, the performance of the Random Forest and the Neural Network is evident with smaller dispersion of the points. As the difference in error is quite close between these two models, our final model decision comes down to a matter of analyst preference or computational power available. We consider, however, that due to the smaller ME, our recommendation is to use the Random Forest for predicting diamond prices.
 
+
+\newpage
 
 
 # References
@@ -1936,26 +1930,30 @@ Hardesty, Larry. (2017). [Explained: Neural Networks] MIT News. (https://news.mi
 
 
 EDA
-- https://r-graph-gallery.com/199-correlation-matrix-with-ggally.html and http://www.sthda.com/english/wiki/ggplot2-quick-correlation-matrix-heatmap-r-software-and-data-visualization
+
+- https://r-graph-gallery.com/199-correlation-matrix-with-ggally.html
+- http://www.sthda.com/english/wiki/ggplot2-quick-correlation-matrix-heatmap-r-software-and-data-visualization
 
 k-NN
-- https://online.stat.psu.edu/stat508/lesson/k#:~:text=The%20larger%20k%20is%2C%20the,Nearest%20Neighbors%20are%20shown%20below.    
+
+- https://online.stat.psu.edu/stat508/lesson/k#:~:text=The%20larger%20k%20is%2C%20the,Nearest%20Neighbors%20are%20shown%20below.
 - https://www.analyticsvidhya.com/blog/2018/03/introduction-k-neighbours-algorithm-clustering/
 
 Regression Tree
-- Data Mining textbook
+
 - https://www.ibm.com/docs/en/db2-warehouse?topic=procedures-regression-trees
 
 Boosted Tree
+
 - https://towardsdatascience.com/introduction-to-boosted-trees-2692b6653b53  
 - https://leonlok.co.uk/blog/decision-trees-random-forests-gradient-boosting-whats-the-difference/
 
 Bagging Tree
+
 - https://machinelearningmastery.com/bagging-and-random-forest-ensemble-algorithms-for-machine-learning/
 
-Random Forest
-- Data Mining textbook
 
 Ensemble
+
 - https://towardsdatascience.com/ensemble-methods-in-machine-learning-what-are-they-and-why-use-them-68ec3f9fef5f
 
