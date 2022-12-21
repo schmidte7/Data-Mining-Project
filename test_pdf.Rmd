@@ -53,7 +53,7 @@ code {
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(message = FALSE, warning = FALSE, fig.align = "center", include=FALSE,
-                      dev = "png", cache = TRUE, sanitize = TRUE)
+                      dev = "png", cache = FALSE, sanitize = TRUE)
 # external = TRUE, sanitize = TRUE
 ```
 
@@ -379,6 +379,11 @@ knn_res$Model_kNN = NULL
 #   knn_res[i, 2:6]= round(get(paste("knn_aa", i, sep ="")),2)
 # }
 
-kable_classic(kable(knn_res), full_width = TRUE, latex_options = "hold_position")
+kable_classic(kbl(knn_res), full_width = TRUE, latex_options = "hold_position")
 ```
+
+```{r, include=TRUE, echo=FALSE}
+row_spec(kable_classic(kbl(A), full_width = FALSE, latex_options = "scale_down"), row = 2, bold = T, color = "#D8B365", background = "white")
+```
+
 
