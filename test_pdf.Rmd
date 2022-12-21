@@ -338,9 +338,7 @@ c("LM_complete", "LM_forward_complete", "LM_backward_complete",
 ```{r Variable Selection Summary, include=TRUE, echo=FALSE}
 # we display a table of the predictors used in each model using kable()
 # kable_classic() changes the kable style
-A = kable(
-    # the data to display in the table: model names and crosses for presence of predictor
-    data.table(Model = c("LM_complete", "LM_forward_complete", "LM_backward_complete",
+A =     data.table(Model = c("LM_complete", "LM_forward_complete", "LM_backward_complete",
                        "LM_stepwise_complete", "LM_CpAIC_complete",
                        "LM_minus_corr", "LM_forward_minus_corr", "LM_backward_minus_corr",
                        "LM_stepwise_minus_corr", "LM_CpAIC_minus_corr"),
@@ -353,11 +351,34 @@ A = kable(
              Depth         = c("X","X","X","X","X"," "," "," "," "," "),
              `Depth Ratio` = c("X","X","X","X","X","X","X","X","X","X"),
              Table         = c("X","X"," "," "," ","X","X"," "," "," ")
-             ),
-    align = 'lccccccccc',                               # alignment of each column
-    caption = "Predictors used in each linear model"
-    )
-kable_classic(A, latex_options = c("hold_position", "scale_down"))
+             )
+
+kable_classic(kbl(A,
+                  align = 'lccccccccc',                               # alignment of each column
+                  caption = "Predictors used in each linear model"
+                  ),
+              latex_options = c("hold_position", "scale_down"), full_width = FALSE)
     # , latex_options = c("hold_position", "scale_down") # caption of the table
 
 ```
+
+
+```{r, include=TRUE, echo=FALSE}
+knn_res <- data.frame("Model_kNN" = c("k = 1",
+                                "k = 4"),
+                     "ME" = "",
+                     "RMSE" = "",
+                     "MAE"= "",
+                     "MPE" = "",
+                     "MAPE" = "")
+
+rownames(knn_res) <- knn_res$Model_kNN
+knn_res$Model_kNN = NULL
+
+# for (i in 1:2) {
+#   knn_res[i, 2:6]= round(get(paste("knn_aa", i, sep ="")),2)
+# }
+
+kable_classic(kable(knn_res), full_width = TRUE, latex_options = "hold_position")
+```
+

@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.14159265-2.6-0.999992 (TeX Live 2020) (preloaded format=xelatex 2022.9.21)  21 DEC 2022 12:27
+This is XeTeX, Version 3.14159265-2.6-0.999992 (TeX Live 2020) (preloaded format=xelatex 2022.9.21)  21 DEC 2022 13:01
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1704,20 +1704,25 @@ Overfull \hbox (59.64667pt too wide) in paragraph at lines 319--329
 ”, “LM_stepwise_minus_corr”, “LM_CpAIC_minus_corr”), 
  []
 
+
+Overfull \hbox (10.94997pt too wide) in paragraph at lines 362--371
+[][] 
+ []
+
 LaTeX Font Info:    Font shape `TU/SourceSansPro(0)/m/sl' in size <10.95> not a
 vailable
 (Font)              Font shape `TU/SourceSansPro(0)/m/it' tried instead on inpu
-t line 362.
+t line 372.
 LaTeX Font Info:    Font shape `TU/SourceSansPro(0)/m/it' will be
-(Font)              scaled to size 10.95pt on input line 362.
+(Font)              scaled to size 10.95pt on input line 372.
 [1
 
 ] (./test_pdf.aux) ) 
 Here is how much of TeX's memory you used:
- 27688 strings out of 476930
- 564049 string characters out of 5822316
- 1244525 words of memory out of 5000000
- 47218 multiletter control sequences out of 15000+600000
+ 27697 strings out of 476930
+ 564129 string characters out of 5822316
+ 1247525 words of memory out of 5000000
+ 47227 multiletter control sequences out of 15000+600000
  407391 words of font info for 100 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
  111i,19n,116p,10631b,527s stack positions out of 5000i,500n,10000p,200000b,80000s
