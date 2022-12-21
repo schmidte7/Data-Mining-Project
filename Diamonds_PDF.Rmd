@@ -416,11 +416,6 @@ ggplot(gather(data = diamonds[, c(1, 5:10)]), aes(value)) +
   theme_classic() # A classic theme, with x and y axis lines and no grid lines
 ```
 
-
-At a high-level overview, price and carat are positively skewed. In the scatter plot regarding price by cut for the depth_ratio, the histogram also displays the same conclusion that the cut features  fall into approximately 60 to 65 mm. The relationships in the Correlation heat map visually show how width, length, depth, and carat continue to be highly correlated with price while depth_ratio and table are closer to 0. Another way to visualize the relationships is through the Pearson Correlation Ellipses chart. The skinnier the ellipse, the more correlated the two values are. 
-
-Through exploration, we can gain a deeper understanding of the data and how it can be used to answer business questions or solve real-world problems, like predicting the price of a diamond.
-
 ```{r Correlation, include = TRUE, echo = FALSE, dpi = 150, fig.height = 3, fig.width = 3}
 # Create heatmap to show variable correlation
 # Round the correlation coefficient to two decimal places
@@ -462,6 +457,9 @@ ggplot(cormat, aes(Var2, Var1, fill = value)) +
 rm(cormat, reorder_cormat)
 ```
 
+At a high-level, `price` and `carat` can be seen as positively skewed. In the scatter plot regarding `price` by `cut` for the `depth_ratio`, the histogram also displays the same conclusion that the cut features fall into approximately 60 to 65 mm. The relationships in the Correlation Heat Map visually show how `width`, `length`, `depth`, and `carat` continue to be highly correlated with `price` while `depth_ratio` and `table` are closer to 0. 
+
+Through exploration, we can gain a deeper understanding of the data and how it can be used to answer business questions or solve real-world problems, like predicting the price of a diamond.
 
 ```{r train-valid-test}
 # set seed for reproducing the partition
@@ -703,10 +701,6 @@ Let us recall the definitions and meaning of these measures (Data Mining for Bus
 
 1.  **ME** (Mean Error) gives an indication of whether the predictions are on average over- or under-predicting the outcome variable. $$ME = \dfrac{1}{n} \sum_{i=1}^{n}r_i$$
 2.  **RMSE** (Root Mean Squared Error) is similar to the standard error of estimate in linear regression, except that it is computed on the validation data rather than on the training data. $$RMSE =  \sqrt{\dfrac{1}{n}\sum_{i=1}^{n}r_i^2}$$
-3.  **MAE** (Mean Absolute Error) gives the magnitude of the average absolute error. $$MAE = \dfrac{1}{n} \sum_{i=1}^{n}|r_i|$$
-4.  **MPE** (Mean Percentage Error) gives the percentage score of how predictions deviate from the actual values (on average), taking into account the direction of the error. $$MPE = 100 \cdot \dfrac{1}{n} \sum_{i=1}^{n} \dfrac{r_i}{y_i}$$
-5.  **MAPE** (Mean Absolute Percentage Error) gives a percentage score of how predictions deviate (on average) from the actual values. $$MAPE = 100 \cdot \dfrac{1}{n} \sum_{i=1}^{n} \left| \dfrac{r_i}{y_i}\right|$$
-
 
 ```{r remove models}
 # we remove redundant models
@@ -777,7 +771,6 @@ Accs[, Model := c("LM_complete", "LM_CpAIC_complete", "LM_minus_corr", "LM_CpAIC
 Accs <- Accs[, c(6, 1:5)]
 ```
 
-
 ```{r models-accuracy-table, include=TRUE, echo=FALSE}
 # displaying Accs as a table with kable() and adding a caption
 # kable_classic controls style of table
@@ -796,20 +789,17 @@ Overall, the RMSE for linear regression remains quite high and as we will see in
 ## $k$-NN
 
 #### Overview
-$k$-nearest neighbors (kNN) is a simple algorithm used for classification (categorical) and regression (continuous). Since the response variable (price) is a numeric outcome, this analysis will use $k$-NN to predict the price of a diamond. In a regression setting, the algorithm relies on finding the most 'similar' records in the training data. Then, one would calculate the weighted average of the numerical target of the $k$-nearest neighbors for the data point.
+$k$-nearest neighbors ($k$-NN) is a simple algorithm used for classification (categorical) and regression (continuous). Since the response variable (`price`) is a numeric outcome, this analysis will use $k$-NN to predict the `price` of a diamond. In a regression setting, the algorithm relies on finding the most 'similar' records in the training data. Then, one would calculate the weighted average of the numerical target of the $k$-nearest neighbors for the data point.
 
-According to the Data Mining textbook, the value of k is based on a nonparametric method since it 'draws information from similarities between the predictor values of the records in the dataset.' There are several ways one could choose this hyperparameter, but this analysis will focus on one method by the optimization of RMSE. k is a critical input within the $k$-NN function because it determines how many neighbors will be considered when making a prediction. Penn State states that a 'larger k leads to a smoother boundary but may also introduce noise.' On the other side, a small k 'can increase the complexity of KNN.'
+According to the Data Mining textbook, the value of $k$ is based on a nonparametric method since it 'draws information from similarities between the predictor values of the records in the dataset.' There are several ways one could choose this hyperparameter, but this analysis will focus on one method by the optimization of RMSE. $k$ is a critical input within the $k$-NN function because it determines how many neighbors will be considered when making a prediction. Penn State states that a 'larger $k$ leads to a smoother boundary but may also introduce noise.' On the other side, a small $k$ 'can increase the complexity of $k$-NN.'
 
-The $k$-nearest neighbors algorithm is very useful when predicting price because the data does not need to be transformed or predictors selected in a particular way. 
+The $k$-nearest neighbors algorithm is very useful when predicting `price` because the data does not need to be transformed or predictors selected in a particular way. 
 
 #### Model Structure
 
-There are several steps that need to be completed prior to running the first $k$-NN model with k = 1. First, you clean the data to ensure that missing values are either removed or explained, and that all variables are essential to the response variable (see EDA section). Next, the data is normalized so that the output remains unbiased. Normalizing simply means that the raw data is put on all the same scale ('subtracting the mean and dividing by the standard deviation'). Once the data is cleaned and normalized, it can be split into the training, validation, and test sets. Now that the foundation of the model has been built, let's start constructing the first $k$-NN model. 
+There are several steps that need to be completed prior to running the first $k$-NN model with $k$ = 1. First, you clean the data to ensure that missing values are either removed or explained, and that all variables are essential to the response variable (see EDA section). Next, the data is normalized so that the output remains unbiased. Normalizing simply means that the raw data is put on all the same scale ('subtracting the mean and dividing by the standard deviation'). Once the data is cleaned and normalized, it can be split into the training and validation sets. Now that the foundation of the model has been built, let's start constructing the first $k$-NN model. 
 
-The value of k = 1 is used as a starting point to see how well the model will perform. Since price is our focal point, the two error measurements that will be compared throughout all model methods are Mean Error (ME) and Root Mean Squared Error (RMSE). RMSE is of particular interest because that gives the variance of how far the predicted value is away from the actual price. Seen in the first $k$-NN error table, ME (\$20.60) and RMSE (\$954.60) could potentially get better if we optimized k. 
-
-The optimal k is 4 because it produces the lowest RMSE at \$814.59. After rerunning the $k$-NN model, the results improved in one aspect, but not the other. 
-
+The value of $k$ = 1 is used as a starting point to see how well the model will perform. The RMSE is of particular interest because that gives the standard deviation of how far the predicted value is away from the actual price. Seen in the $k$-NN error table below, ME (\$20.60) and RMSE (\$954.60) could potentially get better if we optimized $k$. 
 
 ```{r knn Create Dummies}
 diamonds_dummies <- diamonds
@@ -881,6 +871,7 @@ accuracy_df[i, 2] <- accuracy(object = temp_knn_rescaled_prices, x = real_prices
 }
 ```
 
+The optimal $k$ is 4 because it produces the lowest RMSE at \$814.59. After rerunning the $k$-NN model, the results improved in one aspect, but not the other. 
 
 ```{r Best K table, include= TRUE, echo=FALSE}
 #display results
@@ -951,19 +942,19 @@ ggarrange(bestNNplot, KNNcomp, ncol = 2)
 ```
 
 
-As stated earlier, the table above shows how the ME got worse for k = 4, but better with RMSE once the model was optimized. In this analysis, one of the main goals is to reduce the variance between predicted and real price. Therefore, the difference of \$140.00 is more important even when the ME slightly increases. Between k = 1 and k = 4 for the $k$-NN model, k = 4 with an RMSE of \$814.60 will predict prices better. 
+As stated earlier, the table above shows how the ME got worse for $k$ = 4, but better with RMSE once the model was optimized. In this analysis, one of the main goals is to reduce the variation between predicted and real price. Therefore, the difference of \$140.00 is more important even when the ME slightly increases. Between $k$ = 1 and $k$ = 4 for the $k$-NN model, $k$ = 4 with an RMSE of \$814.60 will predict prices better. 
 
 ## Decision Trees
 
-#### Regression Tree Overview
-
 There are four methods within this section that show various ways on how trees are built. They include a regression tree, boosted tree, bagged tree, and a random forest. The regression tree is most transparent and easy to interpret while the other three combine results from multiple trees.
+
+#### Regression Tree Overview
 
 A regression tree is a flexible data-driven method that can be used for prediction of a continuous variable. The tree separates 'records into subgroups by creating splits on predictors. These splits create logical rules that are homogeneous.' Those splits 'divide the data into subsets, that is, branches, nodes, and leaves. Like decision trees, regression trees select splits that decrease the dispersion of target attribute values. Thus, the target attribute values can be predicted from their mean values in the leaves' which reduces the variance of the target variable.  
 
 #### Model Structure and Analysis
 
-Since the tree proactively takes into consideration the most important attributes to split on, multiple trees are created to check its validity. This idea stemmed from wanting to ensure that by removing variables due to their weak relationship to the predictor variable or by pruning, the results produced the best ME and RMSE. Within the three regression models, all have the same error rates. In addition, there are eight terminal nodes for each model and all had width, length, carat, and depth being the most important features to predict price. To exemplify this, we show the original regression tree that first splits on width < 6.33, seven splits total and uses the following for the primary splits:  width  < 6.325, carat < 0.985, length < 6.325 and depth < 3.935. 
+Since the tree proactively takes into consideration the most important attributes to split on, multiple trees are created to check its validity. This idea stemmed from wanting to ensure that by removing variables due to their weak relationship to the predictor variable or by pruning, the results produced the best ME and RMSE. Within the three regression models, all have the same error rates. In addition, there are eight terminal nodes for each model and all had `width`, `length`, `carat`, and `depth` being the most important features to predict `price`. To exemplify this, we show the original regression tree that first splits on `width` < 6.33, seven splits total and uses the following for the primary splits:  `width`  < 6.325, `carat` < 0.985, `length` < 6.325 and `depth` < 3.935. 
 
 
 ```{r RT - Train, Valid, Test }
@@ -974,8 +965,6 @@ diamonds_tree <- diamonds
 Train_rg <- diamonds[train.index, ]
 Valid_rg <- diamonds[valid.index, ]
 ```
-
-### Regression Tree
 
 ```{r Default Regression Tree, dpi=150, include = TRUE, echo = FALSE}
 # Use rpart() to run tree on continuous response 
@@ -1081,7 +1070,9 @@ kable_styling(kable(tree_aa3)%>% kable_classic(), full_width = TRUE)
 Boosted trees are a type of ensemble model that 'transforms weak decision trees into strong learners. Each new tree is built considering the errors of previous trees.' The idea behind boosting is to train a series of weak models additively, with each model attempting to correct the errors made by the previous model. Since this model is prone to overfitting, the parameters need to be carefully considered so that the lowest error rates can be achieved.
 
 #### Model Structure and Analysis
-There is a wide variety of parameters that can be chosen for a boosted tree. Therefore, those options were used differently to choose the best model based off the number of predictors and how deep each tree would be allowed to interact. The main difference between each model is the number of trees ran. As the size of the tree increase, the better the model because it only considered the most important factors. 
+There is a wide variety of parameters that can be chosen for a boosted tree. Therefore, those options were used differently to choose the best model based off the number of predictors and how deep each tree would be allowed to interact. The main difference between each model is the number of trees ran. As the size of the tree increases, the better the model because it only considered the most important factors. 
+
+The best boosted model was the one with 100 trees and three cross-validation folds. The tree used six predictors to produce a model with a ME of \$9.00 and RMSE of \$1,170.30. What is fascinating about this tree comes from the importance variables chart. In the regression tree, `clarity` was one of the three least important factors, but here we see that it as the fourth which is above `length`. 
 
 ```{r Boosted Tree 10}
 # Boosted tree
@@ -1157,16 +1148,13 @@ pred_boost <- predict.gbm(tree_boost100, newdata = Valid_rg)
 head(pred_boost, 14)
 ```
 
-
-The best boosted model was the one with 100 trees and three cross-validation folds. The tree used six predictors to produce a model with a ME of \$9.00 and RMSE of \$1,170.30. What is fascinating about this tree comes from the importance variables chart. In the regression tree, clarity was one of the three least important factors, but here we see that it as the fourth which is above length. 
-
 ### Bagged Tree
 
 #### Overview
 The third method is bagged trees. This type of model 'combines the predictions from multiple machine learning algorithms together to make more accurate predictions than any individual model.' The objective with bagging is to train a large number of decision trees on different subsets of the training data, and then average the predictions of all the trees to make a final prediction. This model has the ability to reduce variance because it introduces randomness into the training process. 
 
 #### Model Structure and Analysis
-This model is pretty straight forward because the best model was built by sticking with the basics. 'The only parameters when bagging decision trees is the number of samples and hence the number of trees to include. This can be chosen by increasing the number of trees on run after run until the accuracy begins to stop showing improvement.' Overall, the bagging tree predicts price better than the regression tree, but worse than boosting. The ME was the lowest at \$0.93, but what is more important to consider is the RMSE which is \$1,248.77.
+This model is pretty straight forward because the best model was built by sticking with the basics. 'The only parameters when bagging decision trees is the number of samples and hence the number of trees to include. This can be chosen by increasing the number of trees on run after run until the accuracy begins to stop showing improvement.' Overall, the bagging tree predicts `price` better than the regression tree, but worse than boosting. The ME was the lowest at \$0.93, but what is more important to consider is the RMSE which is \$1,248.77.
 
 
 ```{r Bagged Tree}
@@ -1250,8 +1238,7 @@ pred_random <- predict(rdf_model, newdata = Valid_rg)
 head(pred_random,14)
 ```
 
-
-Throughout this entire section, typically the lower RMSE produced the best model. Additionally up to this point, there have been three or four variables that were most importance to the model. In the random forest though, there is much more weight on features such as clarity and color. In random forests, we proposed a trade-off with picking a model with less trees because an analyst would want to choose the parsimonious model. Therefore, the random forest with 60 trees had a slightly higher RMSE at a difference of approximately \$2 which gave a \$577.63 for the RMSE. 
+Throughout this entire section, typically the lower RMSE produced the best model. Additionally up to this point, there have been three or four variables that were most importance to the model. In the random forest though, there is much more weight on features such as `clarity` and `color`. In random forests, we proposed a trade-off with picking a model with less trees because an analyst would want to choose the parsimonious model. Therefore, the random forest with 60 trees had a slightly higher RMSE at a difference of approximately \$2 which gave a \$577.63 for the RMSE. 
 
 ### Decision Tree Summary Table
 
@@ -1284,14 +1271,13 @@ RGTreecomp <- ggplot(data = Tree_res, aes(x = Model_Tree, y = RMSE))+
   geom_bar(stat = "identity", fill = "#D8B365")+
   theme_classic()+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, size = 8, hjust = 1), text = element_text(size = 10))+
-  ggtitle("Regression Tree Comparison")
+  ggtitle("Decision Tree Comparison")
 
 RGTreecomp
 
 ```
 
-
-Throughout the four methods mentioned, the random forest model proved to be the most effective in predicting price with a RMSE of \$577.63, which is more than two times smaller than the best boosting model. Although not all of the models results are shown, a breakdown of their error results can be seen within the table above. Overall, the regression tree, bagging and boosting were all within \$100 RMSE difference, but no match for the random forest. 
+Throughout the four methods mentioned, the random forest model proved to be the most effective in predicting `price` with a RMSE of \$577.63, which is more than two times smaller than the best boosting model. Although not all of the models results are shown, a breakdown of their error results can be seen within the table above. Overall, the regression tree, bagging and boosting were all within \$100 RMSE difference, but no match for the random forest. 
 
 ## NeuralNetworks
 
@@ -1724,7 +1710,7 @@ As can be seen, the predictive performance of the neural networks can vary a lot
 
 #### Overview, Model Structure and Analysis
 
-'Ensemble methods is a machine learning technique that combines several base models in order to produce one optimal predictive model.' The simplest approach is to combine predictions from each method above that had the best/lowest RMSE. To accurately compare models, the mean is taken over the four models to compute the average predicted price and find the error rates between the calculated price and real prices. As the table reveals, the RMSE is $588.34 which is pretty close to random forests and the best neural network in terms of variance.
+'Ensemble methods is a machine learning technique that combines several base models in order to produce one optimal predictive model.' The simplest approach is to combine predictions from each method above that had the best/lowest RMSE. To accurately compare models, the mean is taken over the four models to compute the average predicted `price` and find the error rates between the calculated `price` and real prices. As the table reveals, the RMSE is $588.34 which is pretty close to random forests and the best neural network in terms of variance.
 
 ```{r ensemble table}
 #create Table with 0 values
@@ -1750,7 +1736,6 @@ ens_error = accuracy(ensemble_summ$AveragePred, ensemble_summ$RealPrices)
 kable_styling(kable(ens_error)%>% kable_classic(), full_width = TRUE)
 
 ```
-
 
 ```{r ensemble error table, include=TRUE, echo=FALSE}
 ens_rmse_summ <- NN_res[0,] #NeuralNet Error
