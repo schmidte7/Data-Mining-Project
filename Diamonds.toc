@@ -1,0 +1,31 @@
+\contentsline {section}{Data Exploration}{2}{section*.2}%
+\contentsline {subsection}{Dimension Summary}{2}{section*.3}%
+\contentsline {subsection}{Missing Values}{3}{section*.4}%
+\contentsline {subsection}{Variable Visualisation}{7}{section*.5}%
+\contentsline {section}{Variable Prediction and Model Performance Evaluation}{8}{section*.6}%
+\contentsline {subsection}{Linear Regression}{8}{section*.7}%
+\contentsline {subsection}{\(k\)-NN}{24}{section*.8}%
+\contentsline {subsection}{Regression Tree}{26}{section*.9}%
+\contentsline {subsubsection}{Partitioning}{26}{section*.10}%
+\contentsline {subsubsection}{Regression Tree}{26}{section*.11}%
+\contentsline {subsubsection}{`Exlcusion' Regression Tree}{27}{section*.12}%
+\contentsline {subsubsection}{Pruned Regression Tree}{28}{section*.13}%
+\contentsline {subsubsection}{Boosted Tree}{29}{section*.14}%
+\contentsline {subsubsection}{Bagging Tree}{31}{section*.15}%
+\contentsline {subsubsection}{RandomForest}{31}{section*.16}%
+\contentsline {subsubsection}{Create Regression Tree Summary Table}{32}{section*.17}%
+\contentsline {subsection}{NeuralNetworks}{33}{section*.18}%
+\contentsline {subsubsection}{Data preprocessing}{33}{section*.19}%
+\contentsline {subsubsection}{Partitioning}{33}{section*.20}%
+\contentsline {subsubsection}{Normalizing Data}{34}{section*.21}%
+\contentsline {subsubsection}{Model 1 (Layers = 1, Nodes = 1)}{34}{section*.22}%
+\contentsline {subsubsection}{Model 2 (Layers = 1, Nodes = 26)}{35}{section*.23}%
+\contentsline {subsubsection}{Model 3 (Layers = 1, Nodes = 13)}{36}{section*.24}%
+\contentsline {subsubsection}{Model 4 (Layers = 2, Nodes = 26)}{37}{section*.25}%
+\contentsline {subsubsection}{Model 5 with Initializer (Layers = 2, Nodes = 26, GlorotNormal)}{38}{section*.26}%
+\contentsline {subsubsection}{Model 6 with Initializer and Learning Rate (Layers = 2, Nodes = 26, GlorotNormal, LR = 0.005)}{39}{section*.27}%
+\contentsline {subsubsection}{Create Neural Net Summary Table}{40}{section*.28}%
+\contentsline {subsubsection}{Neural network graphic description}{40}{section*.29}%
+\contentsline {subsection}{Ensembles}{40}{section*.30}%
+\contentsline {section}{Model Performance Summary}{42}{section*.31}%
+\contentsline {section}{Conclusions}{43}{section*.32}%
