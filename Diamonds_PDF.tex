@@ -109,6 +109,20 @@
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 \setcounter{secnumdepth}{5}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
 \ifLuaTeX
   \usepackage{selnolig}  % disable illegal ligatures
 \fi
@@ -565,14 +579,9 @@ values above 25, but they aren't as high extreme as the other three.
 After removing \texttt{length}, \texttt{width} and \texttt{depth}, the
 GVIF coefficients of the remaining predictors are all under 2, which
 indicates the multicollinearity problem is solved. We display
-correlation ellipses of numerical variables without \texttt{length},
-\texttt{width} and \texttt{depth}.
+correlation ellipses of numerical variables.
 
 \begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/uncorrelated-ellipses-1} \end{center}
-
-The only high correlation left is between \texttt{carat} and
-\texttt{price}, indicating that \texttt{carat} will surely be an
-important predictor for determining \texttt{price}.
 
 Thus, we will perform linear regressions on two different models:
 
@@ -592,9 +601,9 @@ later.
 However, before starting to build our models, we also need to account
 for skewed variables. Linear regression might perform worse when dealing
 with skewed variables and it is common to use transformations such as a
-logarithm or a \(n\)th root to make variable more symmetrical.
+logarithm or a \(n\)th root to make variables more symmetrical.
 
-We use an estimator of skewness called \$b\_1\$, whose definition can be
+We use an estimator of skewness called \(b_1\), whose definition can be
 found
 \href{https://en.wikipedia.org/wiki/Skewness\#Sample_skewness}{here}.
 
@@ -770,10 +779,10 @@ LM\_CpAIC\_minus\_corr & 50.39878 & 810.1610 & 405.0616 & -0.8418121 & 10.39568\
 
 The mean error is bigger in the models without multicollinearity issues,
 but their RMSE is smaller. Since the mean error is positive in all four
-models, we are under-predicting the price of diamonds by 36 or 50
-dollars on average depending on the model.
+models, we are under-predicting the price of diamonds by \$36 or \$50 on
+average depending on the model.
 
-An increase of 14\$ in the mean error is a good trade-off to reducing
+An increase of \$14 in the mean error is a good trade-off to reducing
 the RMSE, which indicates how much the predictions will fluctuate from
 real values. The other three measures are quite close in all four
 models.
@@ -841,9 +850,11 @@ After rerunning the \(k\)-NN model, the results improved in one aspect,
 but not the other.
 
 \begin{table}[!h]
+
+\caption{\label{tab:Best K table}RMSE value with respect to k}
 \centering
 \resizebox{\linewidth}{!}{
-\begin{tabular}{l|r|r|r|>{}r|r|r|r|r|r|r|r|r|r|r|r|r|r|r|r|r}
+\begin{tabular}[t]{l|r|r|r|>{}r|r|r|r|r|r|r|r|r|r|r|r|r|r|r|r|r}
 \hline
 k & 1.0 & 2.00 & 3.00 & 4.00 & 5.00 & 6.00 & 7.00 & 8.00 & 9.00 & 10.0 & 11.0 & 12.00 & 13.00 & 14.00 & 15.00 & 16.00 & 17.00 & 18.00 & 19.00 & 20.00\\
 \hline
@@ -853,6 +864,8 @@ accuracy & 954.6 & 861.09 & 827.12 & \cellcolor[HTML]{D8B365}{\textcolor{white}{
 \end{table}
 
 \begin{table}[!h]
+
+\caption{\label{tab:knn error table}Accuracy measures of models with k = 1 and k = 4}
 \centering
 \begin{tabu} to \linewidth {>{\raggedright}X>{\raggedleft}X>{\raggedleft}X>{\raggedleft}X>{\raggedleft}X>{\raggedleft}X}
 \hline
@@ -1016,6 +1029,8 @@ slightly higher RMSE at a difference of approximately \$2 which gave a
 Table}\label{decision-tree-summary-table}}
 
 \begin{table}[!h]
+
+\caption{\label{tab:RegTree Summary}Accuracy measures of decision tree models}
 \centering
 \begin{tabu} to \linewidth {>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X}
 \hline
@@ -1172,6 +1187,8 @@ results. Though we tested others like \emph{``relu''} or
 Table}\label{neural-net-summary-table}}
 
 \begin{table}[!h]
+
+\caption{\label{tab:NN Summary}Accuracy measures of neural network models}
 \centering
 \begin{tabu} to \linewidth {>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X}
 \hline
@@ -1227,6 +1244,8 @@ taken over the four models to compute the average predicted
 network in terms of variance.
 
 \begin{table}[!h]
+
+\caption{\label{tab:ensemble error table}Accuracy measures of five main models}
 \centering
 \begin{tabu} to \linewidth {>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X}
 \hline

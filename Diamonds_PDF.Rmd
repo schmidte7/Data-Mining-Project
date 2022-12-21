@@ -492,7 +492,7 @@ We begin by performing linear regressions on our data. As we saw during the expl
 
 We use the Generalized Variation Inflation Factors (GVIF) to measure the multicollinearity level of our data. This generalized version of the VIF allows us to take into account numerical and categorical predictors together. The GVIF clearly confirms that there is an issue, as `length`, `width` and `depth` all have coefficients above 1000. `carat` and `depth_ratio` also have high values above 25, but they aren't as high extreme as the other three.
 
-After removing `length`, `width` and `depth`, the GVIF coefficients of the remaining predictors are all under 2, which indicates the multicollinearity problem is solved. We display correlation ellipses of numerical variables without `length`, `width` and `depth`.
+After removing `length`, `width` and `depth`, the GVIF coefficients of the remaining predictors are all under 2, which indicates the multicollinearity problem is solved. We display correlation ellipses of numerical variables.
 
 ```{r LR data partition}
 # creating training and validation sets
@@ -514,7 +514,6 @@ plotcorr(cor(diamonds[, -c(2:4)]), col = "#D8B365",
          main = "Pearson correlation ellipses for numerical variables", cex.lab=0.8, cex.axis=0.8, cex.main=0.7, cex.sub=0.8)
 ```
 
-The only high correlation left is between `carat` and `price`, indicating that `carat` will surely be an important predictor for determining `price`.
 
 Thus, we will perform linear regressions on two different models:
 
@@ -523,9 +522,9 @@ Thus, we will perform linear regressions on two different models:
 
 These two models will serve as basis for variable selection procedures later.
 
-However, before starting to build our models, we also need to account for skewed variables. Linear regression might perform worse when dealing with skewed variables and it is common to use transformations such as a logarithm or a $n$th root to make variable more symmetrical.
+However, before starting to build our models, we also need to account for skewed variables. Linear regression might perform worse when dealing with skewed variables and it is common to use transformations such as a logarithm or a $n$th root to make variables more symmetrical.
 
-We use an estimator of skewness called \$b_1\$, whose definition can be found [here](https://en.wikipedia.org/wiki/Skewness#Sample_skewness).
+We use an estimator of skewness called $b_1$, whose definition can be found [here](https://en.wikipedia.org/wiki/Skewness#Sample_skewness).
 
 The value of $b_1$ is interpreted as follows:
 
@@ -781,9 +780,9 @@ kable_classic(kable(Accs, caption = "Accuracy measures of linear models"),
               latex_options = c("hold_position", "scale_down"))
 ```
 
-The mean error is bigger in the models without multicollinearity issues, but their RMSE is smaller. Since the mean error is positive in all four models, we are under-predicting the price of diamonds by 36 or 50 dollars on average depending on the model.
+The mean error is bigger in the models without multicollinearity issues, but their RMSE is smaller. Since the mean error is positive in all four models, we are under-predicting the price of diamonds by \$36 or \$50 on average depending on the model.
 
-An increase of 14$ in the mean error is a good trade-off to reducing the RMSE, which indicates how much the predictions will fluctuate from real values. The other three measures are quite close in all four models.
+An increase of \$14 in the mean error is a good trade-off to reducing the RMSE, which indicates how much the predictions will fluctuate from real values. The other three measures are quite close in all four models.
 
 Considering the parsimony principle and the RMSE, the best choice is our fourth linear model, which contains `cut`, `color`, `clarity`, `carat` and `depth_ratio`.
 
@@ -880,7 +879,8 @@ The optimal $k$ is 4 because it produces the lowest RMSE at \$814.59. After reru
 ```{r Best K table, include= TRUE, echo=FALSE}
 #display results
 
-column_spec(kable_classic(kable(round(t(accuracy_df), digits = 2), col.names = NULL),
+column_spec(kable_classic(kable(round(t(accuracy_df), digits = 2),
+                                caption = "RMSE value with respect to k"),
                           latex_options = c("hold_position", "scale_down")),
             5, bold = T, color = "white", background = "#D8B365")
 ```
@@ -932,7 +932,8 @@ knn_res <- knn_res[, c(6, 1:5)]
 #   knn_res[i, 2:6]= round(get(paste("knn_aa", i, sep ="")),2)
 # }
 
-kable_styling(kable(knn_res)%>% kable_classic(), full_width = TRUE, latex_options = "hold_position")
+kable_styling(kable(knn_res, caption = "Accuracy measures of models with k = 1 and k = 4") %>%
+                kable_classic(), full_width = TRUE, latex_options = "hold_position")
 ```
 
 
@@ -1276,7 +1277,8 @@ for (i in 1:8) {
   Tree_res[i,2:6]= round(get(paste("tree_aa", i, sep ="")),2)
 }
 
-kable_styling(kable(Tree_res)%>% kable_classic(), full_width = TRUE, latex_options = "hold_position")
+kable_styling(kable(Tree_res, caption = "Accuracy measures of decision tree models") %>%
+                kable_classic(), full_width = TRUE, latex_options = "hold_position")
 
 
 RGTreecomp <- ggplot(data = Tree_res, aes(x = Model_Tree, y = RMSE))+
@@ -1687,7 +1689,8 @@ for (i in 1:6) {
   NN_res[i,]= round(get(paste("acc_", i, sep ="")),2)
 }
 
-kable_styling(kable(NN_res)%>% kable_classic(), full_width = TRUE, latex_options = "hold_position")
+kable_styling(kable(NN_res, caption = "Accuracy measures of neural network models") %>%
+                kable_classic(), full_width = TRUE, latex_options = "hold_position")
 
 
 NNcomp <- ggplot(data = NN_res, aes(x = rownames(NN_res), y = RMSE))+
@@ -1763,8 +1766,8 @@ row.names(ens_rmse_summ) <- c("Multiple Linear Regression",
                               "Neural Network",
                               "Ensemble")
 #display results
-kable_styling(kable(ens_rmse_summ)%>% kable_classic(),
-              full_width = TRUE, latex_options = "hold_position")
+kable_styling(kable(ens_rmse_summ, caption = "Accuracy measures of five main models") %>%
+                kable_classic(), full_width = TRUE, latex_options = "hold_position")
 ```
 
 
