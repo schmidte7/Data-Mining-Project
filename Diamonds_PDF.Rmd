@@ -1,5 +1,5 @@
 ---
-title: "Diamonds"
+title: "Diamonds: Predictive Analysis of Price"
 author: "Francisco Arrieta, Emily Schmidt and Lucia Camenisch"
 date: "`r Sys.Date()`"
 titlepage: true
@@ -203,16 +203,17 @@ diamonds <- diamonds[subtraction <= 10, ] # Include only values with subtraction
 # Check if the Depth_Ratio value corresponds to formula indicated in the description
 diamonds[, depth_check := round(100*(2*depth)/((length + width)), 1)]
 diamonds[, diff := abs(depth_check-depth_ratio)]
+```
 
+```{r threshold diff hist, fig.height = 2, fig.width = 3, include = TRUE, echo = FALSE}
+# Create histogram to look at the differences between how much price is off between a calculated value and what the data provided
+hist(diamonds[diff >= 0.2 & diff < 1, diff], breaks =50, col = "#D8B365", border = "#D8B365", main = "Threshold Differences", xlab = "Predicted vs. Actual Difference", cex.lab=0.8, cex.axis=0.8, cex.main=0.8, cex.sub=0.8)
+```
 
+```{r Variables check}
 # Threshold set to 0.3 due to ... (report)
 nrow(diamonds[diff > 0.3,]) # We remove 268 rows
 diamonds <- diamonds[diff <= 0.3,]
-```
-
-```{r threshold diff hist, include = TRUE, echo = FALSE}
-# Create histogram to look at the differences between how much price is off between a calculated value and what the data provided
-hist(diamonds[diff >= 0.2 & diff < 1, diff], breaks =50, col = "#D8B365", border = "#D8B365", main = "Threshold Differences", xlab = "Predicted vs. Actual Difference")
 ```
 
 ```{r remove columns}
@@ -241,7 +242,7 @@ ggpairs(diamonds[, c(1, 5:10)], title = "Scatterplot Matrix",
 
 For instance, when plotting price by carat, width, length, and depth, with clarity as the color dimension, there is a clear distinction between how these points relate. Each scatter plot shows a strong, positive correlation to price. When reviewing the x-axis for each explanatory variable, the lower tiered option is typically observed more. The cheaper the gemstone, the worse quality the customer bought. Within each plot, there are outliers that can be explained by how the diamond was cut, which impacts the weight, length, and depth. By the color scale, it is noticed how there are more diamonds with a worse clarity (SI2/SI1) than there are with the best (IF/VVS1). Intuitively, this makes sense because not all customers have the available funds to afford the optimally designed diamond. On the other hand, no one wants the worst clarity either. Therefore, a majority of the diamonds lie between the second and third best, and second and third worst clarity factors. In addition, the relation between depth_ratio and table to price is not distinct as those features are mixed throughout the relative ranges. Within all of the depth_ratio plots, there are vertical lines that show the depth_ratio  mean (black) and range (red) of what is considered the prime value for depth_ratio as long as it is above 59% but does not exceed 62.3%. 
 
-```{r Price by X and Clarity, fig.width = 6, fig.height = 6,include = TRUE, echo = FALSE}
+```{r Price by X and Clarity, fig.width = 6, fig.height = 6,include = TRUE, echo = FALSE, dpi = 150}
 # Create plot that looks at carat and price
 PCl1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=clarity)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Clarity', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
@@ -270,7 +271,7 @@ ggarrange(PCl1, PCl2, PCl3,PCl4, PCl5, PCl6,
 
 A similar relationship can be seen regarding price by the continuous variables, but as color as the color dimension. Instead of most of the observations falling closer to the best and worth clarify features, here the reader will notice how it appears that the colors E, F and G dominate (the white to light blue) the retail space. 
 
-```{r Price by X and Color, fig.width = 6, fig.height = 6, include = TRUE, echo = FALSE}
+```{r Price by X and Color, fig.width = 6, fig.height = 6, include = TRUE, echo = FALSE, dpi = 150}
 # Create plot that looks at carat and price
 PCo1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
@@ -300,7 +301,7 @@ ggarrange(PCo1, PCo2, PCo3,PCo4, PCo5, PCo6,
 
 Cut has a completely different trend than clarity and color as a majority of customers prefer and will purchase the ideal cut. This can be seen within the depth_ratio plot especially. As stated earlier, the red lines indicate the optimal space in which a buyer would want the diamond's depth_ratio. Most of all of the ideal cuts are within those bounds while the fair, good, and very good are outside. There is a clear distinction on how cut relates to the depth_ratio along price.
 
-```{r Price by X and Cut, fig.width = 6, fig.height = 6, include = TRUE, echo = FALSE}
+```{r Price by X and Cut, fig.width = 6, fig.height = 6, include = TRUE, echo = FALSE, dpi = 150}
 # Create plot that looks at carat and price
 PCu1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2))) + theme_classic()
@@ -358,7 +359,7 @@ ggplot(gather(data = diamonds[, c(2:4)]), aes(value)) +
 ```
 
 
-```{r Histograms, include = TRUE, echo = FALSE}
+```{r Histograms, include = TRUE, echo = FALSE, dpi = 150}
 ggplot(gather(data = diamonds[, c(1, 5:10)]), aes(value)) +
   geom_histogram(aes(y = after_stat(density)),
                  bins = 10,
@@ -372,7 +373,7 @@ ggplot(gather(data = diamonds[, c(1, 5:10)]), aes(value)) +
 ```
 
 
-```{r Correlation, include = TRUE, echo = FALSE}
+```{r Correlation, include = TRUE, echo = FALSE, dpi = 150, fig.height = 3, fig.width = 3}
 # Create heatmap to show variable correlation
 # Round the correlation coefficient to two decimal places
 cormat <- round(cor(diamonds[, c(1, 5:10)]), 2)
@@ -405,7 +406,7 @@ ggplot(cormat, aes(Var2, Var1, fill = value)) +
                        midpoint = 0, limit = c(-1,1), space = "Lab", name="Pearson\nCorrelation") +
   ggtitle("Correlation Heatmap") + # Title name
   theme_minimal() + # Minimal theme, keeps in the lines
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, size = 12, hjust = 1)) +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, size = 8, hjust = 1), text = element_text(size = 10)) +
   coord_fixed() +
   labs(x="", y = "")+
   geom_text(aes(Var2, Var1, label = value), color = "black", size = 2)
@@ -459,10 +460,10 @@ VIF(y = diamonds$price, matx = diamonds[, -c(1, 6, 7, 8)])
 ```
 
 
-```{r uncorrelated-ellipses, include=TRUE, echo=FALSE}
+```{r uncorrelated-ellipses, include=TRUE, echo=FALSE, dpi = 150, fig.height=3, fig.width=3}
 # plotting correlation ellipses of numerical variables with length, width and depth removed
 plotcorr(cor(diamonds[, -c(2:4)]), col = "#D8B365",
-         main = "Pearson correlation ellipses for numerical variables")
+         main = "Pearson correlation ellipses for numerical variables", cex.lab=0.8, cex.axis=0.8, cex.main=0.7, cex.sub=0.8)
 ```
 
 The only high correlation left is between `carat` and `price`, indicating that `carat` will surely be an important predictor for determining `price`.
@@ -512,7 +513,7 @@ Valid_lr$table <- log(Valid_lr$table)
 
 We apply a logarithmic transformation to all three variables. The improvement can also be seen in the histograms, as they look more symmetrical now.
 
-```{r hist-unskewed, include=TRUE, echo=FALSE}
+```{r hist-unskewed, include=TRUE, echo=FALSE, dpi = 150}
 # computing the histograms of numerical variables now that they are unskewed
 
 ggplot(gather(data = Train_lr[, c(1, 5:10)]), aes(value)) + # numerical vars of training set
@@ -835,16 +836,16 @@ accuracy_df[i, 2] <- accuracy(object = temp_knn_rescaled_prices, x = real_prices
 
 ```{r Best K table, include= TRUE, echo=FALSE}
 #display results
-row_spec(kable_classic(kbl(accuracy_df), full_width = TRUE), 4, bold = T, color = "white", background = "#D8B365")
+row_spec(kable_classic(kbl(accuracy_df, full_width = TRUE)), 4, bold = T, color = "white", background = "#D8B365")
 ```
 
 
-```{r Best K Plot, include= TRUE, echo=FALSE}
+```{r Best K Plot}
 #plot results
-ggplot (data = accuracy_df, aes(x = k, y = accuracy)) +
+bestNNplot <-ggplot (data = accuracy_df, aes(x = k, y = accuracy)) +
   geom_line (size = 1.2, color = "black") +
   geom_point(data= accuracy_df[4,], aes(x = k, y = accuracy), color = "#D8B365", size = 3) +
-  labs(x = "Amount of Neighbors", y = "RMSE per Model", title = "Behavior of RMSE per amount of kNN")+
+  labs(x = "Amount of Neighbors", y = "RMSE per Model", title = "RMSE per amount of kNN")+
   theme_classic() 
 ```
 
@@ -877,16 +878,28 @@ rownames(knn_res) <- knn_res$Model_kNN
 knn_res$Model_kNN = NULL
 
 for (i in 1:2) {
-  knn_res[i,]= round(get(paste("knn_aa", i, sep ="")),2)
+  knn_res[i, 2:6]= round(get(paste("knn_aa", i, sep ="")),2)
 }
 
 kable_styling(kable(knn_res)%>% kable_classic(), full_width = TRUE)
+```
 
-KNNRMSEplotdata <- t(knn_res$RMSE)
-colnames(KNNRMSEplotdata) <- t(rownames(knn_res))
 
-barplot(KNNRMSEplotdata, col = "#D8B365",border = "#D8B365" ,
-         main = "k-NN Tree Comparison", ylab = "RMSE", las = 3, ylim=c(0,1000))
+```{r knn error plot}
+KNNcomp <- ggplot(data = knn_res, aes(x = rownames(knn_res), y = RMSE))+
+  geom_bar(stat = "identity", fill = "#D8B365")+
+  theme_classic()+
+  theme(axis.text.x = element_text(vjust = 1, size = 8, hjust = 1), text = element_text(size = 10))+
+  labs(x = "Knn model")+
+  ggtitle("Comparison of Errors")
+
+KNNcomp
+
+```
+
+
+```{r knn double plot, fig.height=2.25, fig.width= 5, include = TRUE, echo = FALSE}
+ggarrange(bestNNplot, KNNcomp, ncol = 2)
 ```
 
 
@@ -1166,14 +1179,15 @@ plot(rdf_model,
 which.min(rdf_model$mse)
 ```
 
-```{r  RF Variable Importance, include = TRUE, echo = FALSE}
+```{r  RF Variable Importance, include = TRUE, echo = FALSE, fig.height=2, fig.width = 3}
 options(scipen = 9999)
 
 # Create variable importance chart
 vip::vip(rdf_model, aesthetics = list(fill = "#D8B365")) +
   ggtitle("RandomTree Variable Importance") + # Title name
   xlab("Variable") + # Label names
-  theme_classic() # A classic theme, with x and y axis lines and no grid lines
+  theme_classic() +
+  theme(axis.text.x = element_text(vjust = 1, size = 8, hjust = 1), text = element_text(size = 10))
 ```
 
 ```{r RF Display Results}
@@ -1193,7 +1207,7 @@ Throughout this entire section, typically the lower RMSE produced the best model
 
 ### Decision Tree Summary Table
 
-```{r RegTree Summary, include = TRUE, echo = FALSE}
+```{r RegTree Summary, include = TRUE, echo = FALSE, fig.height=2, fig.width = 3}
 Tree_res <- data.frame("Model_Tree" = c("Reg. Tree",
                                  "Exclus. RT",
                                  "Pruned RT",
@@ -1209,20 +1223,23 @@ Tree_res <- data.frame("Model_Tree" = c("Reg. Tree",
                      "MAPE" = "")
 
 rownames(Tree_res) <- Tree_res$Model_Tree
-Tree_res$Model_Tree = NULL
+Tree_res$Model_Tree <-factor(Tree_res$Model_Tree, levels = Tree_res$Model_Tree)
 
 for (i in 1:8) {
-  Tree_res[i,]= round(get(paste("tree_aa", i, sep ="")),2)
+  Tree_res[i,2:6]= round(get(paste("tree_aa", i, sep ="")),2)
 }
 
 kable_styling(kable(Tree_res)%>% kable_classic(), full_width = TRUE)
 
 
-RGRMSEplotdata <- t(Tree_res$RMSE)
-colnames(RGRMSEplotdata) <- t(sort(rownames(Tree_res),decreasing = TRUE))
+RGTreecomp <- ggplot(data = Tree_res, aes(x = Model_Tree, y = RMSE))+
+  geom_bar(stat = "identity", fill = "#D8B365")+
+  theme_classic()+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, size = 8, hjust = 1), text = element_text(size = 10))+
+  ggtitle("Regression Tree Comparison")
 
-barplot(RGRMSEplotdata, col = "#D8B365",border = "#D8B365" ,
-         main = "Regression Tree Comparison", ylab = "RMSE", las = 3, ylim=c(0,4000))
+RGTreecomp
+
 ```
 
 
@@ -1604,7 +1621,7 @@ kable_styling(kable(acc_6)%>% kable_classic(), full_width = TRUE)
 
 ### Neural Net Summary Table
 
-```{r NN Summary, include = TRUE, echo = FALSE}
+```{r NN Summary, include = TRUE, echo = FALSE, fig.height=2, fig.width = 3}
 NN_res <- data.frame("Model" = c("L1 N1",
                                  "L1 N26",
                                  "L1 N13",
@@ -1618,13 +1635,27 @@ NN_res <- data.frame("Model" = c("L1 N1",
                      "MAPE" = "")
 
 rownames(NN_res) <- NN_res$Model
-NN_res$Model = NULL
+NN_res$Model <- NULL
 
 for (i in 1:6) {
   NN_res[i,]= round(get(paste("acc_", i, sep ="")),2)
 }
 
 kable_styling(kable(NN_res)%>% kable_classic(), full_width = TRUE)
+
+
+NNcomp <- ggplot(data = NN_res, aes(x = rownames(NN_res), y = RMSE))+
+  geom_bar(stat = "identity", fill = "#D8B365")+
+  theme_classic()+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, size = 8, hjust = 1), text = element_text(size = 10))+
+  ggtitle("Neural Network Comparison")
+
+NNcomp
+
+
+
+
+
 
 NNRMSEplotdata <- t(NN_res$RMSE)
 colnames(NNRMSEplotdata) <- t(rownames(NN_res))
@@ -1647,7 +1678,7 @@ As can be seen, the predictive performance of the neural networks can vary a lot
 
 'Ensemble methods is a machine learning technique that combines several base models in order to produce one optimal predictive model.' The simplest approach is to combine predictions from each method above that had the best/lowest RMSE. To accurately compare models, the mean is taken over the four models to compute the average predicted price and find the error rates between the calculated price and real prices. As the table reveals, the RMSE is $588.34 which is pretty close to random forests and the best neural network in terms of variance.
 
-```{r ensemble table, include = TRUE, echo = FALSE}
+```{r ensemble table}
 #create Table with 0 values
 ensemble_summ <- data.frame("MLR" = 0,
                              "RegTrees" = 0,
@@ -1668,7 +1699,7 @@ ensemble_summ$RealPrices <- real_prices
 
 ens_error = accuracy(ensemble_summ$AveragePred, ensemble_summ$RealPrices)
 
-#kable_styling(kable(ens_error)%>% kable_classic(), full_width = TRUE)
+kable_styling(kable(ens_error)%>% kable_classic(), full_width = TRUE)
 
 ```
 
@@ -1676,7 +1707,7 @@ ens_error = accuracy(ensemble_summ$AveragePred, ensemble_summ$RealPrices)
 ```{r ensemble error table, include=TRUE, echo=FALSE}
 ens_rmse_summ <- NN_res[0,] #NeuralNet Error
 ens_rmse_summ[1, ] <- round(Acc4, 2)
-ens_rmse_summ[2, ] <- Tree_res[8,]
+ens_rmse_summ[2, ] <- Tree_res[8,2:6]
 ens_rmse_summ[3, ] <- round(knn_aa2, 2)
 ens_rmse_summ[4, ] <- NN_res[6,]
 ens_rmse_summ[5, ] <- round(ens_error, 2)
@@ -1765,7 +1796,7 @@ pred_plot_full
 
 ## Predicted Price vs Real Price by Color 
 
-```{r Summ Color Plots, include = TRUE, echo = FALSE, dpi = 150}
+```{r Summ Color Plots, include = TRUE, echo = FALSE, dpi = 150, fig.height= 5, fig.width = 5}
 pred_plot_lr <- ggplot(data = predtable_lr, aes(x= Real, y = Predicted, color = color))+
   geom_point(show.title = FALSE, size = 0.5)+
   scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
@@ -1804,7 +1835,7 @@ pred_plot_full
 
 ## Predicted Price vs Real Price by Cut 
 
-```{r Summ Cut Plots, include = TRUE, echo = FALSE, dpi = 150}
+```{r Summ Cut Plots, include = TRUE, echo = FALSE, dpi = 150, fig.height= 5, fig.width = 5}
 pred_plot_lr <- ggplot(data = predtable_lr, aes(x= Real, y = Predicted, color = cut))+
   geom_point(show.title = FALSE, size = 0.5)+
   scale_color_brewer(type = 'div', guide = guide_legend(reverse = T, override.aes = list(alpha = 1, size = 0.1)))+
@@ -1843,9 +1874,18 @@ pred_plot_full
 
 # Conclusions
 
+*
+
 
 
 # References
+
+Shmueli et al. (2018). *Data Mining for Business Analytics*. Wiley. 
+
+Hardesty, Larry. (2017). [Explained: Neural Networks] MIT News. (https://news.mit.edu/2017/explained-neural-networks-deep-learning-0414)
+
+
+
 EDA
 - https://r-graph-gallery.com/199-correlation-matrix-with-ggally.html and http://www.sthda.com/english/wiki/ggplot2-quick-correlation-matrix-heatmap-r-software-and-data-visualization
 
@@ -1870,5 +1910,3 @@ Random Forest
 Ensemble
 - https://towardsdatascience.com/ensemble-methods-in-machine-learning-what-are-they-and-why-use-them-68ec3f9fef5f
 
-
-Hardesty, Larry. 2017. [Explained: Neural Networks] MIT News. (https://news.mit.edu/2017/explained-neural-networks-deep-learning-0414)
