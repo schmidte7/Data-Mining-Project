@@ -210,7 +210,7 @@ diamonds[, diff := abs(depth_check-depth_ratio)]
 hist(diamonds[diff >= 0.2 & diff < 1, diff], breaks =50, col = "#D8B365", border = "#D8B365", main = "Threshold Differences", xlab = "Predicted vs. Actual Difference", cex.lab=0.8, cex.axis=0.8, cex.main=0.8, cex.sub=0.8)
 ```
 
-```{r Variables check}
+```{r Variables check cont.}
 # Threshold set to 0.3 due to ... (report)
 nrow(diamonds[diff > 0.3,]) # We remove 268 rows
 diamonds <- diamonds[diff <= 0.3,]
