@@ -109,20 +109,6 @@
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 \setcounter{secnumdepth}{5}
-\usepackage{booktabs}
-\usepackage{longtable}
-\usepackage{array}
-\usepackage{multirow}
-\usepackage{wrapfig}
-\usepackage{float}
-\usepackage{colortbl}
-\usepackage{pdflscape}
-\usepackage{tabu}
-\usepackage{threeparttable}
-\usepackage{threeparttablex}
-\usepackage[normalem]{ulem}
-\usepackage{makecell}
-\usepackage{xcolor}
 \ifLuaTeX
   \usepackage{selnolig}  % disable illegal ligatures
 \fi
@@ -130,14 +116,14 @@
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
 \urlstyle{same}
 \hypersetup{
-  pdftitle={Diamonds},
+  pdftitle={Diamonds: Predictive Analysis of Price},
   pdfauthor={Francisco Arrieta, Emily Schmidt and Lucia Camenisch},
   hidelinks,
   breaklinks=true,
   pdfcreator={LaTeX via pandoc with the Eisvogel template}}
-\title{Diamonds}
+\title{Diamonds: Predictive Analysis of Price}
 \author{Francisco Arrieta, Emily Schmidt and Lucia Camenisch}
-\date{2022-12-20}
+\date{21 December 2022}
 
 
 
@@ -151,6 +137,7 @@
 %
 \usepackage{pagecolor}
 \usepackage{afterpage}
+\usepackage{tikz}
 \usepackage[margin=2.5cm,includehead=true,includefoot=true,centering]{geometry}
 
 %
@@ -228,9 +215,9 @@
 % variables for title, author and date
 %
 \usepackage{titling}
-\title{Diamonds}
+\title{Diamonds: Predictive Analysis of Price}
 \author{Francisco Arrieta, Emily Schmidt and Lucia Camenisch}
-\date{2022-12-20}
+\date{21 December 2022}
 
 %
 % tables
@@ -257,9 +244,9 @@
 
 \newpairofpagestyles{eisvogel-header-footer}{
   \clearpairofpagestyles
-  \ihead*{Diamonds}
+  \ihead*{Diamonds: Predictive Analysis of Price}
   \chead*{}
-  \ohead*{2022-12-20}
+  \ohead*{21 December 2022}
   \ifoot*{Francisco Arrieta, Emily Schmidt and Lucia Camenisch}
   \cfoot*{}
   \ofoot*{\thepage}
@@ -276,34 +263,40 @@
 %% adding more size options for the title
 \usepackage{moresize}
 
+%% other tabulars
+\usepackage{tabu}
+
 \begin{document}
 
 %%
 %% begin titlepage
 %%
 \begin{titlepage}
-\newgeometry{left=6cm}
+\newgeometry{top=2cm, right=4cm, bottom=3cm, left=4cm}
+\tikz[remember picture,overlay] \node[inner sep=0pt] at (current page.center){\includegraphics[width=\paperwidth,height=\paperheight]{diamond-background.jpeg}};
 \newcommand{\colorRule}[3][black]{\textcolor[HTML]{#1}{\rule{#2}{#3}}}
 \begin{flushleft}
 \noindent
 \\[-1em]
-\color[HTML]{5F5F5F}
-\makebox[0pt][l]{\colorRule[FFFFFF]{1.3\textwidth}{4pt}}
+\color[HTML]{D8B365}
+\makebox[0pt][l]{\colorRule[D8B365]{1.3\textwidth}{4pt}}
 \par
 \noindent
 
+% The titlepage with a background image has other text spacing and text size
 {
-  \setstretch{1.4}
+  \setstretch{2}
   \vfill
-  \noindent {\huge \textbf{\textsf{Diamonds}}}
+  \vskip -8em
+  \noindent {\HUGE \textbf{\textsf{Diamonds: Predictive Analysis of
+Price}}}
     \vskip 2em
   \noindent {\Large \textsf{Francisco Arrieta, Emily Schmidt and Lucia
-Camenisch}}
+Camenisch} \vskip 0.6em \textsf{21 December 2022}}
   \vfill
 }
 
 
-\textsf{2022-12-20}
 \end{flushleft}
 \end{titlepage}
 \restoregeometry
@@ -317,7 +310,7 @@ Camenisch}}
 
 
 {
-\setcounter{tocdepth}{3}
+\setcounter{tocdepth}{4}
 \tableofcontents
 }
 \hypertarget{introduction}{%
@@ -358,129 +351,193 @@ insight and make valid decisions. The overarching goal of examining the
 data is to obtain intuition, identify questionable values, and
 strategize how to answer the problem statement. Therefore, let's
 summarize the findings that explain the main data characteristics, and
-dive into the relations between variables to understand how this
-analysis will be directed.
+dive into the relations between variables.
 
 \hypertarget{dimension-summary}{%
 \subsection{Dimension Summary}\label{dimension-summary}}
 
 There is a variety of ways an analyst could approach understanding the
 observations in the data set. For starters, there are 53,940 records and
-10 variables. The response variable (price) is a an integer variable.
-There are an additional six numeric values and three ordinal/categorical
-features that have a factored structure. Those non-numeric values
-(\texttt{cut}, \texttt{color}, and \texttt{clarity}) need to be
-appropriately ordered, and renamed if there are any spaces within their
-naming convention as later this could obstruct certain code.
+10 variables.
 
-To dive deeper, we consider removing observations that are invalid
-because they add noise. For instance, price against all features were
-reviewed for possible impurities. In total, there are 275 (0.5\%)
-records removed for the following reasons:
+\begin{itemize}
+\item
+  \texttt{price}: The response variable which is measured in USD and
+  ranges between \$326 to \$18,823
+\item
+  \texttt{carat}: Continuous value that gives information about the
+  weight of the diamond (1 ct = 200 mg)
+\item
+  \texttt{cut}: Quality of the circular cut and has five levels (worst:
+  \texttt{Fair} \textbar{} best: \texttt{Ideal})
+\item
+  \texttt{color}: The less color within the diamond the better
+  (yellow-ish: \texttt{J} \textbar{} clear: \texttt{D})
+\item
+  \texttt{clarity}: A categorical value that measures how clear the
+  diamond appears without impurities (worst: \texttt{I1} \textbar{}
+  best: \texttt{IF})
+\item
+  \texttt{x}: A numeric variable that relates to the diamond
+  \texttt{length} in millimeters (mm), which ranges from 0.00 mm to
+  10.74 mm
+\item
+  \texttt{y}: A numeric variable that relates to the diamond
+  \texttt{width} in millimeters (mm), which ranges from 0 mm to 58.90 mm
+\item
+  \texttt{z}: A numeric variable that relates to the diamond
+  \texttt{depth}/height in millimeters (mm), which ranges from 0 mm to
+  31.80 mm
+\item
+  \texttt{depth\ total}: A calculated value that is computed with
+  \texttt{x}, \texttt{y}, and \texttt{z} in terms of a percentage. This
+  feature does not exceed 79.00\%
+\item
+  \texttt{table}: The width of the top of diamond relative to widest
+  point that can be seen when the stone is viewed face up
+\end{itemize}
+
+The outcome variable (price) is a an integer. There are an additional
+six numeric values and three ordinal/categorical features that have a
+factored structure. Those non-numeric values (\texttt{cut},
+\texttt{color}, and \texttt{clarity}) need to be appropriately ordered,
+and renamed if there are any spaces within their naming convention as
+later this could obstruct certain code.
+
+\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/threshold diff hist-1} \end{center}
+
+To dive deeper, we consider removing records that are invalid because
+they add noise. For instance, price against all features were reviewed
+for possible impurities. In total, there are 275 (0.5\%) rows removed
+for the following reasons:
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
 \item
-  20 rows had a depth of 0.0. This was considered inaccurate because a
+  20 rows had a depth of 0.00. This was considered inaccurate because a
   diamond needs to have this dimension specified.
 \item
-  The difference between length and width should be almost identical. If
-  they were not, those rows were removed. In this case, only two records
-  were not included in the data set at differences above 36.0mm.
+  The difference between length and width should be almost identical
+  since the diamond should be cut approximately circular. If they were
+  not, those rows were removed. In this case, only two records were not
+  included in the data set at differences above 36.00 mm.
 \item
-  The depth\_ratio is a calculation between length, width, and length.
-  To investigate this feature further, our group computed depth\_ratio
-  and saw there were differences between the actual and predicted
-  values. Therefore, the executive decision was to remove any
-  differences above a threshold of 0.3. A total of 253 rows were
-  removed.
+  The depth\_ratio is a calculation between \texttt{length}
+  (\texttt{x}), \texttt{width} (\texttt{y}), and \texttt{depth}
+  (\texttt{z}). To investigate this feature further, our group computed
+  \texttt{depth\_ratio} and saw there were differences between the
+  actual and predicted values. Therefore, the executive decision was to
+  remove any differences above a threshold of 0.3. A total of 253 rows
+  were removed.
 \end{enumerate}
 
-Fortunately, there were no null values that needed to be considered.
+In the remaining 53,918 observations, there were no missing values.
 
-\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/threshold diff hist-1} \end{center}
-
-The second part of exploring the diamonds data set is to understand the
-relationships between variables. Prior to analyzing their correlations,
-we had an idea of which continuous variables would have a strong
-relation due to the depth\_ratio calculation. Later on, certain methods
-will analyze the potential issue of collinearity. By isolating price
-against the other continuous variables, carat, length, width, and depth,
-all have positively linear relations to the response feature. Some of
-the models used in the analysis to predict price will show these
-effects. In addition, the relationship between carat and price is unique
-because their relation is non-linear. We were also interested in showing
-how the categorical variables affect price. Clarity, color, and cut have
-distinct patterns seen between the four continuous variables mentioned
-above.
-
-For instance, when plotting price by carat, width, length, and depth,
-with clarity as the color dimension, there is a clear distinction
-between how these points relate. Each scatter plot shows a strong,
-positive correlation to price. When reviewing the x-axis for each
-explanatory variable, the lower tiered option is typically observed
-more. The cheaper the gemstone, the worse quality the customer bought.
-Within each plot, there are outliers that can be explained by how the
-diamond was cut, which impacts the weight, length, and depth. By the
-color scale, it is noticed how there are more diamonds with a worse
-clarity (SI2/SI1) than there are with the best (IF/VVS1). Intuitively,
-this makes sense because not all customers have the available funds to
-afford the optimally designed diamond. On the other hand, no one wants
-the worst clarity either. Therefore, a majority of the diamonds lie
-between the second and third best, and second and third worst clarity
-factors. In addition, the relation between depth\_ratio and table to
-price is not distinct as those features are mixed throughout the
-relative ranges. Within all of the depth\_ratio plots, there are
-vertical lines that show the depth\_ratio mean (black) and range (red)
-of what is considered the prime value for depth\_ratio as long as it is
-above 59\% but does not exceed 62.3\%.
+In continuation of exploring the diamonds dataset, we now look at the
+relationships between variables. By isolating price against the other
+continuous variables, it is seen that \texttt{carat}, \texttt{length},
+\texttt{width}, and \texttt{depth}, all have a positively linear
+relation to the response feature. Some of the models used in the
+analysis to predict price will show these effects later as a possible
+issue of collinearity could occur. In addition, the relationship between
+carat and price is unique because their relation is non-linear. We were
+also interested in showing how the categorical variables affect price.
+\texttt{Clarity}, \texttt{color}, and \texttt{cut} have distinct
+patterns seen between the four continuous variables mentioned above.
 
 \begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/Price by X and Clarity-1} \end{center}
 
-A similar relationship can be seen regarding price by the continuous
-variables, but as color as the color dimension. Instead of most of the
-observations falling closer to the best and worth clarify features, here
-the reader will notice how it appears that the colors E, F and G
-dominate (the white to light blue) the retail space.
+When plotting \texttt{price} by \texttt{carat}, \texttt{width},
+\texttt{length}, and \texttt{depth}, with \texttt{clarity} as the color
+dimension, there is a clear distinction between how these observations
+relate. Each scatter plot shows a strong, positive correlation to
+\texttt{price}. When reviewing the x-axis for each explanatory variable,
+the lower tiered option is typically observed more. The cheaper the
+gemstone, the worse quality. Within each plot, there are outliers that
+can be explained by how the diamond was cut, which impacts the
+\texttt{weight}, \texttt{length}, and \texttt{depth}. By the color
+scale, it is noticed how there are more diamonds with a worse clarity
+(SI2/SI1) than there are with the best (IF/VVS1). Intuitively, this
+makes sense because perfecting a diamond's clarity is quite difficult.
+Therefore, a majority of the diamonds lie between the second and third
+best, and second and third worst clarity factors. In addition, the
+relation between \texttt{depth\_ratio} and \texttt{table} to
+\texttt{price} is not distinct as those features are mixed throughout
+the relative ranges. Within all of the \texttt{depth\_ratio} plots,
+there are vertical lines that show the \texttt{depth\_ratio} mean
+(black) and range (red) of what is considered the prime value for
+\texttt{depth\_ratio} as long as it is above 59.00\% but does not exceed
+62.30\%.
 
 \begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/Price by X and Color-1} \end{center}
 
-Cut has a completely different trend than clarity and color as a
-majority of customers prefer and will purchase the ideal cut. This can
-be seen within the depth\_ratio plot especially. As stated earlier, the
-red lines indicate the optimal space in which a buyer would want the
-diamond's depth\_ratio. Most of all of the ideal cuts are within those
-bounds while the fair, good, and very good are outside. There is a clear
-distinction on how cut relates to the depth\_ratio along price.
+A similar relationship can be seen regarding \texttt{price} by the
+continuous variables, but as \texttt{color} as the color dimension.
+Instead of a majority the observations falling closer to the best and
+worst \texttt{clarify} features, here the reader will notice how it
+appears that the colors E, F and G dominate (the white to light blue)
+the space.
 
 \begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/Price by X and Cut-1} \end{center}
+
+\texttt{Cut} has completely different trends than \texttt{clarity} and
+\texttt{color} as a majority of the diamonds are either \texttt{ideal}
+or \texttt{premium}. This can especially be seen within the
+\texttt{depth\_ratio} plot. As stated earlier, the red lines indicate
+the optimal space in which the luxury brand attempts to get the best
+ratio. Most of all of the prime cuts are within those bounds while the
+\texttt{fair}, \texttt{good}, and \texttt{very\ good} are outside. There
+is a clear distinction on how \texttt{cut} relates to the
+\texttt{depth\_ratio} along \texttt{price}.
 
 \hypertarget{variable-visualisation}{%
 \subsection{Variable Visualisation}\label{variable-visualisation}}
 
-As a continuation of data exploration, variable visualization involves
-creating graphical representations of data to visually communicate
-insights and trends. It allows us to quickly and easily identify
-patterns that may not be immediately apparent from looking at raw data.
-There are three graphics that demonstrate how these continuous values
-are distributed. Since some models take into account transformation,
-those details will be described later. As a high-level overview, price
-and carat are positively skewed. In the scatter plot regarding price by
-cut for the depth\_ratio, the histogram also displays the same
-conclusion that the cut features fall into approximately 60 to 65 mm.
-The relationships in the Correlation heat map visually show how width,
-length, depth, and carat continue to be highly correlated with price
-while depth\_ratio and table are closer to 0. Another way to visualize
-the relationships is through the Pearson Correlation Ellipses chart. The
-skinnier the ellipse, the more correlated the two values are.
+This section involves creating graphical representations of data to
+visually communicate insights and trends. It allows us to quickly and
+easily identify patterns that may not be immediately apparent from
+looking at raw data. There are several graphics that demonstrate how
+these qualitative and quantitative variables are distributed. Since some
+models take into account transformation, those details will be described
+later.
 
-Through exploration, we can gain a deeper understanding of the data and
-how it can be used to answer business questions or solve real-world
-problems, like predicting the price of a diamond.
+\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/categorical bar plots-1} \end{center}
+
+Recall the variable descriptions in the beginning of the exploratory
+data analysis.
+
+\begin{itemize}
+\item
+  \texttt{clarity}: After the worst clarity (\texttt{I1}), the bulk of
+  diamonds range from \texttt{SI2} and \texttt{VS1}. This correlates to
+  the scatter plot with the goldish toned points as there appear to be
+  more of those diamonds than ones with better clarity.
+\item
+  \texttt{cut}: The less yellow the diamond, the better. The dataset
+  shows that most diamonds are either \texttt{G}, \texttt{F}, or
+  \texttt{E}, which are the closest three to the least colored diamond.
+\item
+  \texttt{color}: There are over 20,000 diamonds that have an
+  \texttt{ideal} cut which \texttt{premium} and \texttt{very\ good}
+  between 10,000 and 15,000.
+\end{itemize}
 
 \begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/Histograms-1} \end{center}
 
 \begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/Correlation-1} \end{center}
+
+At a high-level, \texttt{price} and \texttt{carat} can be seen as
+positively skewed. In the scatter plot regarding \texttt{price} by
+\texttt{cut} for the \texttt{depth\_ratio}, the histogram also displays
+the same conclusion that the cut features fall into approximately 60 to
+65 mm. The relationships in the Correlation Heat Map visually show how
+\texttt{width}, \texttt{length}, \texttt{depth}, and \texttt{carat}
+continue to be highly correlated with \texttt{price} while
+\texttt{depth\_ratio} and \texttt{table} are closer to 0.
+
+Through exploration, we can gain a deeper understanding of the data and
+how it can be used to answer business questions or solve real-world
+problems, like predicting the price of a diamond.
 
 \hypertarget{variable-prediction-and-model-performance-evaluation}{%
 \section{Variable Prediction and Model Performance
@@ -556,13 +613,13 @@ The value of \(b_1\) is interpreted as follows:
 We compute \(b_1\) on our numerical variables and get the following
 results.
 
-\begin{table}
+\begin{table}[!h]
 
 \caption{\label{tab:skewness-table}Skewness estimator for numerical variables}
 \centering
-\begin{tabular}[t]{l|r}
+\begin{tabu} to \linewidth {>{\raggedright}X>{\raggedleft}X}
 \hline
-  & \$b\_1\$\\
+  & b\_1\\
 \hline
 price & 1.6259747\\
 \hline
@@ -578,7 +635,7 @@ depth\_ratio & 0.0182498\\
 \hline
 table & 0.8728869\\
 \hline
-\end{tabular}
+\end{tabu}
 \end{table}
 
 \texttt{price} and \texttt{carat} are highly skewed and \texttt{table}
@@ -594,9 +651,8 @@ We also standardize numerical variables by subtracting their mean and
 dividing by their standard deviation. This makes the comparison of
 \(\beta\) coefficients between variables easier.
 
-\hypertarget{linear-models-based-on-complete-set-of-predictors}{%
-\subsubsection{Linear models based on complete set of
-predictors}\label{linear-models-based-on-complete-set-of-predictors}}
+\hypertarget{linear-models}{%
+\subsubsection{Linear models}\label{linear-models}}
 
 The data is now ready for our linear models. For both
 \texttt{LM\_complete} and \texttt{LM\_minus\_corr}, we perform the
@@ -617,20 +673,17 @@ following linear regressions:
   Mallows's \(C_p\) and AIC selection on the model (global method)
 \end{enumerate}
 
-\hypertarget{linear-models-based-on-uncorrelated-predictors}{%
-\subsubsection{Linear models based on uncorrelated
-predictors}\label{linear-models-based-on-uncorrelated-predictors}}
-
 \hypertarget{summary-of-models}{%
 \subsubsection{Summary of models}\label{summary-of-models}}
 
 For each of these models, we summarise which variables are used as
 predictors in the following table.
 
-\begin{table}
+\begin{table}[!h]
 
 \caption{\label{tab:Variable Selection Summary}Predictors used in each linear model}
 \centering
+\resizebox{\linewidth}{!}{
 \begin{tabular}[t]{l|c|c|c|c|c|c|c|c|c}
 \hline
 Model & Cut & Color & Clarity & Carat & Length & Width & Depth & Depth Ratio & Table\\
@@ -655,7 +708,7 @@ LM\_stepwise\_minus\_corr & X & X & X & X &  &  &  & X & \\
 \hline
 LM\_CpAIC\_minus\_corr & X & X & X & X &  &  &  & X & \\
 \hline
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 For both basis models, forward selection doesn't discard any variables,
@@ -666,9 +719,10 @@ Thus, we have four distinct models in total. We assess the predictive
 performance of these four models on our validation set by computing the
 five accuracy measures seen during the course.
 
-Let us recall the definitions and meaning of these measures (Data Mining
-for Business Analytics - Concepts, Techniques, and Applications in R,
-chapter 5.2, page 119). We denote the residuals by \(r = y - \hat y\).
+Let us recall the definitions and meaning of the two main measures we
+will use (taken from Data Mining for Business Analytics - Concepts,
+Techniques, and Applications in R, chapter 5.2, page 119). We denote the
+residuals by \(r = y - \hat y\).
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -682,18 +736,6 @@ chapter 5.2, page 119). We denote the residuals by \(r = y - \hat y\).
   error of estimate in linear regression, except that it is computed on
   the validation data rather than on the training data.
   \[RMSE =  \sqrt{\dfrac{1}{n}\sum_{i=1}^{n}r_i^2}\]
-\item
-  \textbf{MAE} (Mean Absolute Error) gives the magnitude of the average
-  absolute error. \[MAE = \dfrac{1}{n} \sum_{i=1}^{n}|r_i|\]
-\item
-  \textbf{MPE} (Mean Percentage Error) gives the percentage score of how
-  predictions deviate from the actual values (on average), taking into
-  account the direction of the error.
-  \[MPE = 100 \cdot \dfrac{1}{n} \sum_{i=1}^{n} \dfrac{r_i}{y_i}\]
-\item
-  \textbf{MAPE} (Mean Absolute Percentage Error) gives a percentage
-  score of how predictions deviate (on average) from the actual values.
-  \[MAPE = 100 \cdot \dfrac{1}{n} \sum_{i=1}^{n} \left| \dfrac{r_i}{y_i}\right|\]
 \end{enumerate}
 
 \hypertarget{accuracy-measures-of-models-on-validation-set}{%
@@ -706,10 +748,11 @@ rescaled to its original scale and retransformed by taking the
 exponential (to cancel out the logarithm). Thus, the ME, RMSE and MAE
 can be interpreted in the price currency, dollars.
 
-\begin{table}
+\begin{table}[!h]
 
 \caption{\label{tab:models-accuracy-table}Accuracy measures of linear models}
 \centering
+\resizebox{\linewidth}{!}{
 \begin{tabular}[t]{l|r|r|r|r|r}
 \hline
 Model & ME & RMSE & MAE & MPE & MAPE\\
@@ -722,7 +765,7 @@ LM\_minus\_corr & 50.38994 & 810.1522 & 405.0486 & -0.8420621 & 10.39559\\
 \hline
 LM\_CpAIC\_minus\_corr & 50.39878 & 810.1610 & 405.0616 & -0.8418121 & 10.39568\\
 \hline
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 The mean error is bigger in the models without multicollinearity issues,
@@ -749,137 +792,100 @@ predictive performances.
 \hypertarget{overview}{%
 \paragraph{Overview}\label{overview}}
 
-\(k\)-nearest neighbors (kNN) is a simple algorithm used for
+\(k\)-nearest neighbors (\(k\)-NN) is a simple algorithm used for
 classification (categorical) and regression (continuous). Since the
-response variable (price) is a numeric outcome, this analysis will use
-\(k\)-NN to predict the price of a diamond. In a regression setting, the
-algorithm relies on finding the most `similar' records in the training
-data. Then, one would calculate the weighted average of the numerical
-target of the \(k\)-nearest neighbors for the data point.
+response variable (\texttt{price}) is a numeric outcome, this analysis
+will use \(k\)-NN to predict the \texttt{price} of a diamond. In a
+regression setting, the algorithm relies on finding the most `similar'
+records in the training data. Then, one would calculate the weighted
+average of the numerical target of the \(k\)-nearest neighbors for the
+data point.
 
-According to the Data Mining textbook, the value of k is based on a
+According to the Data Mining textbook, the value of \(k\) is based on a
 nonparametric method since it `draws information from similarities
 between the predictor values of the records in the dataset.' There are
 several ways one could choose this hyperparameter, but this analysis
-will focus on one method by the optimization of RMSE. k is a critical
-input within the \(k\)-NN function because it determines how many
-neighbors will be considered when making a prediction. Penn State states
-that a `larger k leads to a smoother boundary but may also introduce
-noise.' On the other side, a small k `can increase the complexity of
-KNN.'
+will focus on one method by the optimization of RMSE. \(k\) is a
+critical input within the \(k\)-NN function because it determines how
+many neighbors will be considered when making a prediction. Penn State
+states that a `larger \(k\) leads to a smoother boundary but may also
+introduce noise.' On the other side, a small \(k\) `can increase the
+complexity of \(k\)-NN.'
 
 The \(k\)-nearest neighbors algorithm is very useful when predicting
-price because the data does not need to be transformed or predictors
-selected in a particular way.
+\texttt{price} because the data does not need to be transformed or
+predictors selected in a particular way.
 
 \hypertarget{model-structure}{%
 \paragraph{Model Structure}\label{model-structure}}
 
 There are several steps that need to be completed prior to running the
-first \(k\)-NN model with k = 1. First, you clean the data to ensure
+first \(k\)-NN model with \(k\) = 1. First, you clean the data to ensure
 that missing values are either removed or explained, and that all
 variables are essential to the response variable (see EDA section).
 Next, the data is normalized so that the output remains unbiased.
 Normalizing simply means that the raw data is put on all the same scale
 (`subtracting the mean and dividing by the standard deviation'). Once
-the data is cleaned and normalized, it can be split into the training,
-validation, and test sets. Now that the foundation of the model has been
+the data is cleaned and normalized, it can be split into the training
+and validation sets. Now that the foundation of the model has been
 built, let's start constructing the first \(k\)-NN model.
 
-The value of k = 1 is used as a starting point to see how well the model
-will perform. Since price is our focal point, the two error measurements
-that will be compared throughout all model methods are Mean Error (ME)
-and Root Mean Squared Error (RMSE). RMSE is of particular interest
-because that gives the variance of how far the predicted value is away
-from the actual price. Seen in the first \(k\)-NN error table, ME
-(\$20.60) and RMSE (\$954.60) could potentially get better if we
-optimized k.
+The value of \(k\) = 1 is used as a starting point to see how well the
+model will perform. The RMSE is of particular interest because that
+gives the standard deviation of how far the predicted value is away from
+the actual price. Seen in the \(k\)-NN error table below, ME (\$20.60)
+and RMSE (\$954.60) could potentially get better if we optimized \(k\).
 
-The optimal k is 4 because it produces the lowest RMSE at \$814.59.
+The optimal \(k\) is 4 because it produces the lowest RMSE at \$814.59.
 After rerunning the \(k\)-NN model, the results improved in one aspect,
 but not the other.
 
-\begin{tabu} to \linewidth {>{\raggedleft}X>{\raggedleft}X}
-\hline
-k & accuracy\\
-\hline
-1 & 954.5954\\
-\hline
-2 & 861.0887\\
-\hline
-3 & 827.1196\\
-\hline
-\cellcolor[HTML]{D8B365}{\textcolor{white}{\textbf{4}}} & \cellcolor[HTML]{D8B365}{\textcolor{white}{\textbf{814.5940}}}\\
-\hline
-5 & 819.2859\\
-\hline
-6 & 818.5541\\
-\hline
-7 & 822.7554\\
-\hline
-8 & 833.2104\\
-\hline
-9 & 839.9301\\
-\hline
-10 & 847.3985\\
-\hline
-11 & 850.7010\\
-\hline
-12 & 854.8280\\
-\hline
-13 & 860.4922\\
-\hline
-14 & 867.3541\\
-\hline
-15 & 874.8586\\
-\hline
-16 & 879.9069\\
-\hline
-17 & 886.0747\\
-\hline
-18 & 891.9780\\
-\hline
-19 & 896.3521\\
-\hline
-20 & 900.0938\\
-\hline
-\end{tabu}
-
-\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/Best K Plot-1} \end{center}
-
-\begin{table}
+\begin{table}[!h]
 \centering
-\begin{tabu} to \linewidth {>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X}
+\resizebox{\linewidth}{!}{
+\begin{tabular}{l|r|r|r|>{}r|r|r|r|r|r|r|r|r|r|r|r|r|r|r|r|r}
 \hline
-  & ME & RMSE & MAE & MPE & MAPE\\
+k & 1.0 & 2.00 & 3.00 & 4.00 & 5.00 & 6.00 & 7.00 & 8.00 & 9.00 & 10.0 & 11.0 & 12.00 & 13.00 & 14.00 & 15.00 & 16.00 & 17.00 & 18.00 & 19.00 & 20.00\\
 \hline
-k = 1 & 20.6 & 954.6 & 487.17 & -1.83 & 13.73\\
+accuracy & 954.6 & 861.09 & 827.12 & \cellcolor[HTML]{D8B365}{\textcolor{white}{\textbf{814.59}}} & 819.29 & 818.55 & 822.76 & 833.21 & 839.93 & 847.4 & 850.7 & 854.83 & 860.49 & 867.35 & 874.86 & 879.91 & 886.07 & 891.98 & 896.35 & 900.09\\
 \hline
-k = 4 & 40.86 & 814.59 & 431.29 & -2.45 & 12.14\\
+\end{tabular}}
+\end{table}
+
+\begin{table}[!h]
+\centering
+\begin{tabu} to \linewidth {>{\raggedright}X>{\raggedleft}X>{\raggedleft}X>{\raggedleft}X>{\raggedleft}X>{\raggedleft}X}
+\hline
+Model\_kNN & ME & RMSE & MAE & MPE & MAPE\\
+\hline
+k = 1 & 20.59665 & 954.5954 & 487.1664 & -1.833533 & 13.73317\\
+\hline
+k = 4 & 40.86142 & 814.5940 & 431.2913 & -2.452640 & 12.13511\\
 \hline
 \end{tabu}
 \end{table}
 
-\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/knn error table-1} \end{center}
+\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/knn double plot-1} \end{center}
 
-As stated earlier, the table above shows how the ME got worse for k = 4,
-but better with RMSE once the model was optimized. In this analysis, one
-of the main goals is to reduce the variance between predicted and real
-price. Therefore, the difference of \$140.00 is more important even when
-the ME slightly increases. Between k = 1 and k = 4 for the \(k\)-NN
-model, k = 4 with an RMSE of \$814.60 will predict prices better.
+As stated earlier, the table above shows how the ME got worse for \(k\)
+= 4, but better with RMSE once the model was optimized. In this
+analysis, one of the main goals is to reduce the variation between
+predicted and real price. Therefore, the difference of \$140.00 is more
+important even when the ME slightly increases. Between \(k\) = 1 and
+\(k\) = 4 for the \(k\)-NN model, \(k\) = 4 with an RMSE of \$814.60
+will predict prices better.
 
 \hypertarget{decision-trees}{%
 \subsection{Decision Trees}\label{decision-trees}}
-
-\hypertarget{regression-tree-overview}{%
-\paragraph{Regression Tree Overview}\label{regression-tree-overview}}
 
 There are four methods within this section that show various ways on how
 trees are built. They include a regression tree, boosted tree, bagged
 tree, and a random forest. The regression tree is most transparent and
 easy to interpret while the other three combine results from multiple
 trees.
+
+\hypertarget{regression-tree-overview}{%
+\paragraph{Regression Tree Overview}\label{regression-tree-overview}}
 
 A regression tree is a flexible data-driven method that can be used for
 prediction of a continuous variable. The tree separates `records into
@@ -901,15 +907,14 @@ validity. This idea stemmed from wanting to ensure that by removing
 variables due to their weak relationship to the predictor variable or by
 pruning, the results produced the best ME and RMSE. Within the three
 regression models, all have the same error rates. In addition, there are
-eight terminal nodes for each model and all had width, length, carat,
-and depth being the most important features to predict price. To
-exemplify this, we show the original regression tree that first splits
-on width \textless{} 6.33, seven splits total and uses the following for
-the primary splits: width \textless{} 6.325, carat \textless{} 0.985,
-length \textless{} 6.325 and depth \textless{} 3.935.
-
-\hypertarget{regression-tree}{%
-\subsubsection{Regression Tree}\label{regression-tree}}
+eight terminal nodes for each model and all had \texttt{width},
+\texttt{length}, \texttt{carat}, and \texttt{depth} being the most
+important features to predict \texttt{price}. To exemplify this, we show
+the original regression tree that first splits on \texttt{width}
+\textless{} 6.33, seven splits total and uses the following for the
+primary splits: \texttt{width} \textless{} 6.325, \texttt{carat}
+\textless{} 0.985, \texttt{length} \textless{} 6.325 and \texttt{depth}
+\textless{} 3.935.
 
 \begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/Default Regression Tree-1} \end{center}
 
@@ -935,15 +940,15 @@ There is a wide variety of parameters that can be chosen for a boosted
 tree. Therefore, those options were used differently to choose the best
 model based off the number of predictors and how deep each tree would be
 allowed to interact. The main difference between each model is the
-number of trees ran. As the size of the tree increase, the better the
+number of trees ran. As the size of the tree increases, the better the
 model because it only considered the most important factors.
 
 The best boosted model was the one with 100 trees and three
 cross-validation folds. The tree used six predictors to produce a model
 with a ME of \$9.00 and RMSE of \$1,170.30. What is fascinating about
 this tree comes from the importance variables chart. In the regression
-tree, clarity was one of the three least important factors, but here we
-see that it as the fourth which is above length.
+tree, \texttt{clarity} was one of the three least important factors, but
+here we see that it as the fourth which is above \texttt{length}.
 
 \hypertarget{bagged-tree}{%
 \subsubsection{Bagged Tree}\label{bagged-tree}}
@@ -969,9 +974,9 @@ by sticking with the basics. `The only parameters when bagging decision
 trees is the number of samples and hence the number of trees to include.
 This can be chosen by increasing the number of trees on run after run
 until the accuracy begins to stop showing improvement.' Overall, the
-bagging tree predicts price better than the regression tree, but worse
-than boosting. The ME was the lowest at \$0.93, but what is more
-important to consider is the RMSE which is \$1,248.77.
+bagging tree predicts \texttt{price} better than the regression tree,
+but worse than boosting. The ME was the lowest at \$0.93, but what is
+more important to consider is the RMSE which is \$1,248.77.
 
 \hypertarget{random-forest}{%
 \subsubsection{Random Forest}\label{random-forest}}
@@ -999,38 +1004,38 @@ with an RMSE of \$575.42.
 Throughout this entire section, typically the lower RMSE produced the
 best model. Additionally up to this point, there have been three or four
 variables that were most importance to the model. In the random forest
-though, there is much more weight on features such as clarity and color.
-In random forests, we proposed a trade-off with picking a model with
-less trees because an analyst would want to choose the parsimonious
-model. Therefore, the random forest with 60 trees had a slightly higher
-RMSE at a difference of approximately \$2 which gave a \$577.63 for the
-RMSE.
+though, there is much more weight on features such as \texttt{clarity}
+and \texttt{color}. In random forests, we proposed a trade-off with
+picking a model with less trees because an analyst would want to choose
+the parsimonious model. Therefore, the random forest with 60 trees had a
+slightly higher RMSE at a difference of approximately \$2 which gave a
+\$577.63 for the RMSE.
 
 \hypertarget{decision-tree-summary-table}{%
 \subsubsection{Decision Tree Summary
 Table}\label{decision-tree-summary-table}}
 
-\begin{table}
+\begin{table}[!h]
 \centering
-\begin{tabu} to \linewidth {>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X}
+\begin{tabu} to \linewidth {>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X}
 \hline
-  & ME & RMSE & MAE & MPE & MAPE\\
+  & Model\_Tree & ME & RMSE & MAE & MPE & MAPE\\
 \hline
-Reg. Tree & 6.1 & 1267.15 & 846.93 & -14.54 & 33.08\\
+Reg. Tree & Reg. Tree & 6.1 & 1267.15 & 846.93 & -14.54 & 33.08\\
 \hline
-Exclus. RT & 6.1 & 1267.15 & 846.93 & -14.54 & 33.08\\
+Exclus. RT & Exclus. RT & 6.1 & 1267.15 & 846.93 & -14.54 & 33.08\\
 \hline
-Pruned RT & 6.1 & 1267.15 & 846.93 & -14.54 & 33.08\\
+Pruned RT & Pruned RT & 6.1 & 1267.15 & 846.93 & -14.54 & 33.08\\
 \hline
-Boost10 & -3.9 & 3660.42 & 2765.96 & -144.49 & 171.65\\
+Boost10 & Boost10 & -3.9 & 3660.42 & 2765.96 & -144.49 & 171.65\\
 \hline
-Boost30 & 2.54 & 1531.52 & 985.7 & -35.26 & 46.86\\
+Boost30 & Boost30 & 2.54 & 1531.52 & 985.7 & -35.26 & 46.86\\
 \hline
-Boost100 & 9 & 1170.3 & 680.22 & -12.85 & 26.22\\
+Boost100 & Boost100 & 9 & 1170.3 & 680.22 & -12.85 & 26.22\\
 \hline
-Bagging & 0.93 & 1248.77 & 808.93 & -14.35 & 31.45\\
+Bagging & Bagging & 0.93 & 1248.77 & 808.93 & -14.35 & 31.45\\
 \hline
-RndmFrst & 2.97 & 577.63 & 289.51 & -1.4 & 7.24\\
+RndmFrst & RndmFrst & 2.97 & 577.63 & 289.51 & -1.4 & 7.24\\
 \hline
 \end{tabu}
 \end{table}
@@ -1038,12 +1043,12 @@ RndmFrst & 2.97 & 577.63 & 289.51 & -1.4 & 7.24\\
 \begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/RegTree Summary-1} \end{center}
 
 Throughout the four methods mentioned, the random forest model proved to
-be the most effective in predicting price with a RMSE of \$577.63, which
-is more than two times smaller than the best boosting model. Although
-not all of the models results are shown, a breakdown of their error
-results can be seen within the table above. Overall, the regression
-tree, bagging and boosting were all within \$100 RMSE difference, but no
-match for the random forest.
+be the most effective in predicting \texttt{price} with a RMSE of
+\$577.63, which is more than two times smaller than the best boosting
+model. Although not all of the models results are shown, a breakdown of
+their error results can be seen within the table above. Overall, the
+regression tree, bagging and boosting were all within \$100 RMSE
+difference, but no match for the random forest.
 
 \hypertarget{neuralnetworks}{%
 \subsection{NeuralNetworks}\label{neuralnetworks}}
@@ -1166,28 +1171,30 @@ results. Though we tested others like \emph{``relu''} or
 \subsubsection{Neural Net Summary
 Table}\label{neural-net-summary-table}}
 
-\begin{table}
+\begin{table}[!h]
 \centering
-\begin{tabular}{l|l|l|l|l|l}
+\begin{tabu} to \linewidth {>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X}
 \hline
   & ME & RMSE & MAE & MPE & MAPE\\
 \hline
-L1 N1 & -6.62 & 3982.99 & 3025.61 & -157.47 & 187.29\\
+L1 N1 & -44.91 & 1194.35 & 802.25 & -34.01 & 45.94\\
 \hline
-L1 N26 & -83.28 & 745.16 & 450.94 & -11.37 & 17.91\\
+L1 N26 & -82.17 & 748.17 & 452.68 & -10.45 & 17.26\\
 \hline
-L1 N13 & -86.71 & 744.04 & 454.38 & -12.89 & 19.21\\
+L1 N13 & -94.09 & 745.83 & 458.35 & -13.64 & 19.8\\
 \hline
-L2 N26 & 30.22 & 627.65 & 364.54 & -5.43 & 13.49\\
+L2 N26 & 59.47 & 610.61 & 353.87 & -2.2 & 12.09\\
 \hline
-L2 N26 G & -32.61 & 630.02 & 358.21 & -6.62 & 12.72\\
+L2 N26 G & -58.25 & 661.95 & 387.95 & -9.52 & 15.13\\
 \hline
-L2 N26 G LR & 8.98 & 577.08 & 322.95 & -2.03 & 10.23\\
+L2 N26 G LR & -29.86 & 584.63 & 332.03 & -3.58 & 10.57\\
 \hline
-\end{tabular}
+\end{tabu}
 \end{table}
 
 \begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/NN Summary-1} \end{center}
+
+\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/NN Summary-2} \end{center}
 
 As can be seen, the predictive performance of the neural networks can
 vary a lot depending on the structure and parameters chosen. The
@@ -1213,25 +1220,15 @@ Analysis}\label{overview-model-structure-and-analysis}}
 base models in order to produce one optimal predictive model.' The
 simplest approach is to combine predictions from each method above that
 had the best/lowest RMSE. To accurately compare models, the mean is
-taken over the four models to compute the average predicted price and
-find the error rates between the calculated price and real prices. As
-the table reveals, the RMSE is \$588.34 which is pretty close to random
-forests and the best neural network in terms of variance.
+taken over the four models to compute the average predicted
+\texttt{price} and find the error rates between the calculated
+\texttt{price} and real prices. As the table reveals, the RMSE is
+\$588.34 which is pretty close to random forests and the best neural
+network in terms of variance.
 
-\begin{table}
+\begin{table}[!h]
 \centering
-\begin{tabu} to \linewidth {>{\raggedright}X>{\raggedleft}X>{\raggedleft}X>{\raggedleft}X>{\raggedleft}X>{\raggedleft}X}
-\hline
-  & ME & RMSE & MAE & MPE & MAPE\\
-\hline
-Test set & 25.80266 & 582.3353 & 306.1574 & -1.682175 & 8.448477\\
-\hline
-\end{tabu}
-\end{table}
-
-\begin{table}
-\centering
-\begin{tabular}{l|l|l|l|l|l}
+\begin{tabu} to \linewidth {>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X>{\raggedright}X}
 \hline
   & ME & RMSE & MAE & MPE & MAPE\\
 \hline
@@ -1241,11 +1238,11 @@ Random Forest & 2.97 & 577.63 & 289.51 & -1.4 & 7.24\\
 \hline
 k-Nearest Neighbor & 40.86 & 814.59 & 431.29 & -2.45 & 12.14\\
 \hline
-Neural Network & 8.98 & 577.08 & 322.95 & -2.03 & 10.23\\
+Neural Network & -29.86 & 584.63 & 332.03 & -3.58 & 10.57\\
 \hline
-Ensemble & 25.8 & 582.34 & 306.16 & -1.68 & 8.45\\
+Ensemble & 16.09 & 582.1 & 306.5 & -2.07 & 8.52\\
 \hline
-\end{tabular}
+\end{tabu}
 \end{table}
 
 \hypertarget{model-performance-summary}{%
@@ -1260,6 +1257,8 @@ diagonal line. As can be seen,
 \hypertarget{predicted-price-vs-real-price-by-clarity}{%
 \subsection{Predicted Price vs Real Price by
 Clarity}\label{predicted-price-vs-real-price-by-clarity}}
+
+\begin{center}\includegraphics{Diamonds_PDF_files/figure-latex/Ensemble Summary Plot-1} \end{center}
 
 \hypertarget{predicted-price-vs-real-price-by-color}{%
 \subsection{Predicted Price vs Real Price by
@@ -1276,8 +1275,18 @@ Cut}\label{predicted-price-vs-real-price-by-cut}}
 \hypertarget{conclusions}{%
 \section{Conclusions}\label{conclusions}}
 
+\begin{itemize}
+\tightlist
+\item
+\end{itemize}
+
 \hypertarget{references}{%
 \section{References}\label{references}}
+
+Shmueli et al.~(2018). \emph{Data Mining for Business Analytics}. Wiley.
+
+Hardesty, Larry. (2017). {[}Explained: Neural Networks{]} MIT News.
+(\url{https://news.mit.edu/2017/explained-neural-networks-deep-learning-0414})
 
 EDA -
 \url{https://r-graph-gallery.com/199-correlation-matrix-with-ggally.html}
@@ -1304,8 +1313,5 @@ Random Forest - Data Mining textbook
 
 Ensemble -
 \url{https://towardsdatascience.com/ensemble-methods-in-machine-learning-what-are-they-and-why-use-them-68ec3f9fef5f}
-
-Hardesty, Larry. 2017. {[}Explained: Neural Networks{]} MIT News.
-(\url{https://news.mit.edu/2017/explained-neural-networks-deep-learning-0414})
 
 \end{document}

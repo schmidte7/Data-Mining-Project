@@ -1,14 +1,16 @@
 ---
 title: "Diamonds: Predictive Analysis of Price"
 author: "Francisco Arrieta, Emily Schmidt and Lucia Camenisch"
-date: "`r Sys.Date()`"
+date: "`r format(Sys.time(), '%d %B %Y')`"
 titlepage: true
-titlepage-rule-color: FFFFFF
+titlepage-rule-color: "D8B365"
+titlepage-text-color: "D8B365"
+titlepage-background: diamond-background.jpeg
 output:
   pdf_document:
     latex_engine: xelatex
     toc: true
-    toc_depth: 3
+    toc_depth: 4
     number_sections: true
     df_print: kable
     keep_tex: true
@@ -535,8 +537,8 @@ We compute $b_1$ on our numerical variables and get the following results.
 
 ```{r skewness-table, include=TRUE, echo=FALSE}
 # applying the skewness() function of every numerical variable from our training set
-kable_classic(kable(sapply(Train_lr[, c(1, 5:10)], skewness), col.names = "$b_{1}$",
-      caption = "Skewness estimator for numerical variables", escape = FALSE),
+kable_classic(kable(sapply(Train_lr[, c(1, 5:10)], skewness), col.names = "b_1",
+      caption = "Skewness estimator for numerical variables"),
       full_width = TRUE, latex_options = "hold_position")
 ```
 
@@ -587,7 +589,7 @@ Train_lr[, c(1, 5:10)] <- predict(norm.values, Train_lr[, c(1, 5:10)])
 Valid_lr[, c(1, 5:10)] <- predict(norm.values, Valid_lr[, c(1, 5:10)])
 ```
 
-### Linear models based on complete set of predictors
+### Linear models
 
 The data is now ready for our linear models. For both `LM_complete` and `LM_minus_corr`, we perform the following linear regressions:
 
@@ -627,7 +629,7 @@ LM_CpAIC_complete = lm(price ~ . , data = Train_lr[, c(1:6, 8, 9)])
 summary(LM_CpAIC_complete)
 ```
 
-### Linear models based on uncorrelated predictors
+
 
 ```{r LM-minus-corr}
 # we define a training set without the correlated predictors (length, width, depth)
@@ -698,7 +700,7 @@ For both basis models, forward selection doesn't discard any variables, whereas 
 
 Thus, we have four distinct models in total. We assess the predictive performance of these four models on our validation set by computing the five accuracy measures seen during the course.
 
-Let us recall the definitions and meaning of these measures (Data Mining for Business Analytics - Concepts, Techniques, and Applications in R, chapter 5.2, page 119). We denote the residuals by $r = y - \hat y$.
+Let us recall the definitions and meaning of the two main measures we will use (taken from Data Mining for Business Analytics - Concepts, Techniques, and Applications in R, chapter 5.2, page 119). We denote the residuals by $r = y - \hat y$.
 
 1.  **ME** (Mean Error) gives an indication of whether the predictions are on average over- or under-predicting the outcome variable. $$ME = \dfrac{1}{n} \sum_{i=1}^{n}r_i$$
 2.  **RMSE** (Root Mean Squared Error) is similar to the standard error of estimate in linear regression, except that it is computed on the validation data rather than on the training data. $$RMSE =  \sqrt{\dfrac{1}{n}\sum_{i=1}^{n}r_i^2}$$
@@ -775,7 +777,8 @@ Accs <- Accs[, c(6, 1:5)]
 ```{r models-accuracy-table, include=TRUE, echo=FALSE}
 # displaying Accs as a table with kable() and adding a caption
 # kable_classic controls style of table
-kable_classic(kable(Accs, caption = "Accuracy measures of linear models"), latex_options = "hold_position", full_width = TRUE)
+kable_classic(kable(Accs, caption = "Accuracy measures of linear models"),
+              latex_options = c("hold_position", "scale_down"))
 ```
 
 The mean error is bigger in the models without multicollinearity issues, but their RMSE is smaller. Since the mean error is positive in all four models, we are under-predicting the price of diamonds by 36 or 50 dollars on average depending on the model.
@@ -877,8 +880,8 @@ The optimal $k$ is 4 because it produces the lowest RMSE at \$814.59. After reru
 ```{r Best K table, include= TRUE, echo=FALSE}
 #display results
 
-column_spec(kable_classic(kable(t(round(accuracy_df, digits = 2))),
-                          full_width = TRUE, latex_options = c("hold_position", "scale_down")),
+column_spec(kable_classic(kable(round(t(accuracy_df), digits = 2), col.names = NULL),
+                          latex_options = c("hold_position", "scale_down")),
             5, bold = T, color = "white", background = "#D8B365")
 ```
 
@@ -909,22 +912,27 @@ kable_styling(kable(knn_aa2)%>% kable_classic(), full_width = TRUE)
 ```
 
 ```{r knn error table, include= TRUE, echo=FALSE}
-knn_res <- data.frame("Model_kNN" = c("k = 1",
-                                "k = 4"),
-                     "ME" = "",
-                     "RMSE" = "",
-                     "MAE"= "",
-                     "MPE" = "",
-                     "MAPE" = "")
+knn_res = list(as.data.table(knn_aa1), as.data.table(knn_aa2))
+knn_res = rbindlist(knn_res)
+knn_res[, Model_kNN := c("k = 1", "k = 4")]
+knn_res <- knn_res[, c(6, 1:5)]
 
-rownames(knn_res) <- knn_res$Model_kNN
-knn_res$Model_kNN = NULL
+# knn_res <- data.frame("Model_kNN" = c("k = 1",
+#                                 "k = 4"),
+#                      "ME" = "",
+#                      "RMSE" = "",
+#                      "MAE"= "",
+#                      "MPE" = "",
+#                      "MAPE" = "")
+# 
+# rownames(knn_res) <- knn_res$Model_kNN
+# knn_res$Model_kNN = NULL
+# 
+# for (i in 1:2) {
+#   knn_res[i, 2:6]= round(get(paste("knn_aa", i, sep ="")),2)
+# }
 
-for (i in 1:2) {
-  knn_res[i, 2:6]= round(get(paste("knn_aa", i, sep ="")),2)
-}
-
-kable_styling(kable(knn_res)%>% kable_classic(), full_width = TRUE)
+kable_styling(kable(knn_res)%>% kable_classic(), full_width = TRUE, latex_options = "hold_position")
 ```
 
 
