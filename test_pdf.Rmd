@@ -109,7 +109,7 @@ source("GlobalCrit.R")  #for variable selection (exhaustive search)
 
 ################ Additonal Actions ######################
 options(scipen = 999)                 #for removing scientific notation
-tf$constant("Hello Tensorflow!")      #for initializing tensoflow environment
+# tf$constant("Hello Tensorflow!")      #for initializing tensoflow environment
 ```
 
 # Data Exploration 
@@ -139,7 +139,7 @@ sapply(diamonds, function(x) length(unique(x)))
 
 ## Missing Values
 
-```{r Missing Values, include=TRUE, echo=FALSE}
+```{r Missing Values, eval=FALSE}
 # Missing values analysis
 gg_miss_var(diamonds) + ggtitle("Missing values")
 ```
@@ -197,7 +197,7 @@ diamonds[, diff := abs(depth_check-depth_ratio)]
 ```
 
 
-```{r Variables check hist, include=TRUE, echo=FALSE}
+```{r Variables check hist, eval=FALSE}
 # Create histogram to look at the differences between how much price is off between a calculated value and what the data provided
 hist(diamonds[diff >= 0.2 & diff < 1, diff], breaks =50, col = "#D8B365", border = "#D8B365", main = "Threshold Differences", xlab = "Predicted vs. Actual Difference")
 ```
@@ -223,7 +223,7 @@ diamonds <- diamonds[, c(7, 2:4, 1, 8:10, 5:6)]
 ```
 
 
-```{r ggpairs, echo=FALSE, include=TRUE}
+```{r ggpairs, eval=FALSE}
 # Used ggpairs to create a scatterplot matrix between quantitative variables
 ggpairs(diamonds[, c(1, 5:10)], title = "Scatterplot Matrix",
          proportions = "auto",
@@ -232,7 +232,7 @@ ggpairs(diamonds[, c(1, 5:10)], title = "Scatterplot Matrix",
 ```
 
 
-```{r Price by X and Clarity, echo=FALSE, include=TRUE}
+```{r Price by X and Clarity, eval=FALSE}
 
 # Create plot that looks at carat and price
 options(tinytex.verbose = TRUE)
@@ -269,7 +269,7 @@ ggarrange(PCl1, PCl2, PCl3,PCl4, PCl5, PCl6,
 ```
 
 
-```{r Price by X and Color, eval=FALSE, include=FALSE}
+```{r Price by X and Color, eval=FALSE}
 # Create plot that looks at carat and price
 PCo1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=color)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Color', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Carat and Color') + theme_classic()
@@ -297,7 +297,7 @@ ggarrange(PCo1, PCo2, PCo3,PCo4, PCo5, PCo6,
                     ncol = 2, nrow = 3)
 ```
 
-```{r Price by X and Cut, eval=FALSE, include=FALSE}
+```{r Price by X and Cut, eval=FALSE}
 # Create plot that looks at carat and price
 PCu1 <- ggplot(aes(x = carat, y = price), data = diamonds) + geom_point(alpha = 0.5, size = 1, position = 'jitter',aes(color=cut)) +
   scale_color_brewer(type = 'div', guide = guide_legend(title = 'Cut', reverse = T,override.aes = list(alpha = 1, size = 2)))       + ggtitle('Price by Carat and Cut') + theme_classic()
@@ -323,4 +323,41 @@ PCu6 <- ggplot(aes(x = table, y = price), data = diamonds) +  geom_point(alpha =
 # Arrange ggplots into one frame
 ggarrange(PCu1, PCu2, PCu3,PCu4, PCu5, PCu6,
                     ncol = 2, nrow = 3)
+```
+
+c("LM_complete", "LM_forward_complete", "LM_backward_complete",
+                       "LM_stepwise_complete", "LM_CpAIC_complete",
+                       "LM_minus_corr", "LM_forward_minus_corr", "LM_backward_minus_corr",
+                       "LM_stepwise_minus_corr", "LM_CpAIC_minus_corr"),
+                       c("LM_complete", "LM_forward_complete", "LM_backward_complete",
+                       "LM_stepwise_complete", "LM_CpAIC_complete",
+                       "LM_minus_corr", "LM_forward_minus_corr", "LM_backward_minus_corr",
+                       "LM_stepwise_minus_corr", "LM_CpAIC_minus_corr"),
+
+                       
+```{r Variable Selection Summary, include=TRUE, echo=FALSE}
+# we display a table of the predictors used in each model using kable()
+# kable_classic() changes the kable style
+A = kable(
+    # the data to display in the table: model names and crosses for presence of predictor
+    data.table(Model = c("LM_complete", "LM_forward_complete", "LM_backward_complete",
+                       "LM_stepwise_complete", "LM_CpAIC_complete",
+                       "LM_minus_corr", "LM_forward_minus_corr", "LM_backward_minus_corr",
+                       "LM_stepwise_minus_corr", "LM_CpAIC_minus_corr"),
+             Cut           = c("X","X","X","X","X","X","X","X","X","X"),
+             Color         = c("X","X","X","X","X","X","X","X","X","X"),
+             Clarity       = c("X","X","X","X","X","X","X","X","X","X"),
+             Carat         = c("X","X","X","X","X","X","X","X","X","X"),
+             Length        = c("X","X","X","X","X"," "," "," "," "," "),
+             Width         = c("X","X"," "," "," "," "," "," "," "," "),
+             Depth         = c("X","X","X","X","X"," "," "," "," "," "),
+             `Depth Ratio` = c("X","X","X","X","X","X","X","X","X","X"),
+             Table         = c("X","X"," "," "," ","X","X"," "," "," ")
+             ),
+    align = 'lccccccccc',                               # alignment of each column
+    caption = "Predictors used in each linear model"
+    )
+kable_classic(A, latex_options = c("hold_position", "scale_down"))
+    # , latex_options = c("hold_position", "scale_down") # caption of the table
+
 ```

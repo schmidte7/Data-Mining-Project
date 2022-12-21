@@ -124,7 +124,7 @@
   pdfcreator={LaTeX via pandoc with the Eisvogel template}}
 \title{Diamonds}
 \author{Francisco Arrieta, Emily Schmidt and Lucia Camenisch}
-\date{2022-12-20}
+\date{2022-12-21}
 
 
 
@@ -217,7 +217,7 @@
 \usepackage{titling}
 \title{Diamonds}
 \author{Francisco Arrieta, Emily Schmidt and Lucia Camenisch}
-\date{2022-12-20}
+\date{2022-12-21}
 
 %
 % tables
@@ -246,7 +246,7 @@
   \clearpairofpagestyles
   \ihead*{Diamonds}
   \chead*{}
-  \ohead*{2022-12-20}
+  \ohead*{2022-12-21}
   \ifoot*{Francisco Arrieta, Emily Schmidt and Lucia Camenisch}
   \cfoot*{}
   \ofoot*{\thepage}
@@ -290,7 +290,7 @@ Camenisch}}
 }
 
 
-\textsf{2022-12-20}
+\textsf{2022-12-21}
 \end{flushleft}
 \end{titlepage}
 \restoregeometry
@@ -316,12 +316,47 @@ Camenisch}}
 \hypertarget{missing-values}{%
 \subsection{Missing Values}\label{missing-values}}
 
-\begin{center}\includegraphics{test_pdf_files/figure-latex/Missing Values-1} \end{center}
+c(``LM\_complete'', ``LM\_forward\_complete'',
+``LM\_backward\_complete'', ``LM\_stepwise\_complete'',
+``LM\_CpAIC\_complete'', ``LM\_minus\_corr'',
+``LM\_forward\_minus\_corr'', ``LM\_backward\_minus\_corr'',
+``LM\_stepwise\_minus\_corr'', ``LM\_CpAIC\_minus\_corr''),
+c(``LM\_complete'', ``LM\_forward\_complete'',
+``LM\_backward\_complete'', ``LM\_stepwise\_complete'',
+``LM\_CpAIC\_complete'', ``LM\_minus\_corr'',
+``LM\_forward\_minus\_corr'', ``LM\_backward\_minus\_corr'',
+``LM\_stepwise\_minus\_corr'', ``LM\_CpAIC\_minus\_corr''),
 
-\begin{center}\includegraphics{test_pdf_files/figure-latex/Variables check hist-1} \end{center}
+\begin{table}[!h]
 
-\begin{center}\includegraphics{test_pdf_files/figure-latex/ggpairs-1} \end{center}
-
-\begin{center}\includegraphics{test_pdf_files/figure-latex/Price by X and Clarity-1} \end{center}
+\caption{\label{tab:Variable Selection Summary}Predictors used in each linear model}
+\centering
+\resizebox{\linewidth}{!}{
+\begin{tabular}[t]{l|c|c|c|c|c|c|c|c|c}
+\hline
+Model & Cut & Color & Clarity & Carat & Length & Width & Depth & Depth Ratio & Table\\
+\hline
+LM\_complete & X & X & X & X & X & X & X & X & X\\
+\hline
+LM\_forward\_complete & X & X & X & X & X & X & X & X & X\\
+\hline
+LM\_backward\_complete & X & X & X & X & X &  & X & X & \\
+\hline
+LM\_stepwise\_complete & X & X & X & X & X &  & X & X & \\
+\hline
+LM\_CpAIC\_complete & X & X & X & X & X &  & X & X & \\
+\hline
+LM\_minus\_corr & X & X & X & X &  &  &  & X & X\\
+\hline
+LM\_forward\_minus\_corr & X & X & X & X &  &  &  & X & X\\
+\hline
+LM\_backward\_minus\_corr & X & X & X & X &  &  &  & X & \\
+\hline
+LM\_stepwise\_minus\_corr & X & X & X & X &  &  &  & X & \\
+\hline
+LM\_CpAIC\_minus\_corr & X & X & X & X &  &  &  & X & \\
+\hline
+\end{tabular}}
+\end{table}
 
 \end{document}
