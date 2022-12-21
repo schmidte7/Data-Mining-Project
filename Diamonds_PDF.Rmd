@@ -535,8 +535,9 @@ We compute $b_1$ on our numerical variables and get the following results.
 
 ```{r skewness-table, include=TRUE, echo=FALSE}
 # applying the skewness() function of every numerical variable from our training set
-kable_classic(kable(sapply(Train_lr[, c(1, 5:10)], skewness), col.names = "$b_1$",
-      caption = "Skewness estimator for numerical variables"))
+kable_classic(kable(sapply(Train_lr[, c(1, 5:10)], skewness), col.names = "$b_{1}$",
+      caption = "Skewness estimator for numerical variables", escape = FALSE),
+      full_width = TRUE, latex_options = "hold_position")
 ```
 
 
@@ -688,7 +689,7 @@ kable_classic(
              ),
     align = 'lccccccccc',                               # alignment of each column
     caption = "Predictors used in each linear model"),  # caption of the table
-    )
+    latex_options = c("hold_position", "scale_down"))
 
 ```
 
@@ -774,7 +775,7 @@ Accs <- Accs[, c(6, 1:5)]
 ```{r models-accuracy-table, include=TRUE, echo=FALSE}
 # displaying Accs as a table with kable() and adding a caption
 # kable_classic controls style of table
-kable_classic(kable(Accs, caption = "Accuracy measures of linear models"))
+kable_classic(kable(Accs, caption = "Accuracy measures of linear models"), latex_options = "hold_position", full_width = TRUE)
 ```
 
 The mean error is bigger in the models without multicollinearity issues, but their RMSE is smaller. Since the mean error is positive in all four models, we are under-predicting the price of diamonds by 36 or 50 dollars on average depending on the model.
@@ -875,7 +876,10 @@ The optimal $k$ is 4 because it produces the lowest RMSE at \$814.59. After reru
 
 ```{r Best K table, include= TRUE, echo=FALSE}
 #display results
-row_spec(kable_classic(kbl(accuracy_df), full_width = TRUE), 4, bold = T, color = "white", background = "#D8B365")
+
+column_spec(kable_classic(kable(t(round(accuracy_df, digits = 2))),
+                          full_width = TRUE, latex_options = c("hold_position", "scale_down")),
+            5, bold = T, color = "white", background = "#D8B365")
 ```
 
 
@@ -1264,7 +1268,7 @@ for (i in 1:8) {
   Tree_res[i,2:6]= round(get(paste("tree_aa", i, sep ="")),2)
 }
 
-kable_styling(kable(Tree_res)%>% kable_classic(), full_width = TRUE)
+kable_styling(kable(Tree_res)%>% kable_classic(), full_width = TRUE, latex_options = "hold_position")
 
 
 RGTreecomp <- ggplot(data = Tree_res, aes(x = Model_Tree, y = RMSE))+
@@ -1675,7 +1679,7 @@ for (i in 1:6) {
   NN_res[i,]= round(get(paste("acc_", i, sep ="")),2)
 }
 
-kable_styling(kable(NN_res)%>% kable_classic(), full_width = TRUE)
+kable_styling(kable(NN_res)%>% kable_classic(), full_width = TRUE, latex_options = "hold_position")
 
 
 NNcomp <- ggplot(data = NN_res, aes(x = rownames(NN_res), y = RMSE))+
@@ -1751,7 +1755,8 @@ row.names(ens_rmse_summ) <- c("Multiple Linear Regression",
                               "Neural Network",
                               "Ensemble")
 #display results
-kable_styling(kable(ens_rmse_summ)%>% kable_classic(), full_width = TRUE)
+kable_styling(kable(ens_rmse_summ)%>% kable_classic(),
+              full_width = TRUE, latex_options = "hold_position")
 ```
 
 
